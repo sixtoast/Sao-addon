@@ -1,7 +1,7 @@
 # Aincrad RPG — Combat Systems Design Specification
 
 **Document status:** Design draft, not implemented  
-**Version:** 0.1  
+**Version:** 0.2  
 **Target:** Minecraft Bedrock Edition, iPhone-first  
 **Project:** SAO-inspired Aincrad RPG  
 **Last updated:** 2026-10-19
@@ -66,6 +66,43 @@ Sword skills are deliberate, high-impact techniques with distinct animations or 
 - Contextual follow-ups and short input combinations can add depth without requiring many permanent buttons.
 - Skills use Momentum as their primary resource, subject to balancing.
 - Startup, recovery, interruptibility, costs and cooldowns are not yet specified.
+
+### 3.5 Attack cancellation, delaying and input buffering
+
+The combo system uses a hybrid model: flexible transitions for quick attacks, with stricter commitment for heavy attacks, finishers and signature sword skills.
+
+#### Attack cancellation
+
+- Quick attacks have flexible but defined cancel windows. They may branch into another attack, an extender, an eligible defensive action or a sword skill when the move's rules permit.
+- Extenders have moderate cancellation freedom.
+- Heavy attacks permit fewer transitions, especially after their committed phase begins.
+- Finishers have very limited cancellation once committed.
+- Signature skills have individual cancellation rules.
+- A cancel interrupts the current action; a combo branch selects the next action at a permitted transition point. The implementation should treat these as distinct concepts even if their presentation is similar.
+- Cancelling a skill does not refund Momentum already spent.
+- A defensive cancel must not be assumed to work from every attack state.
+
+#### Attack delaying
+
+- A tap requests the next valid attack as soon as possible.
+- Briefly holding the attack input may delay the follow-up to change its timing, bait a response or select a timing-based branch.
+- Each move has its own maximum delay. A delay cannot extend indefinitely or grant permanent safety.
+- Delay must not silently remove the commitment of a heavy, finisher or signature skill.
+- The exact touch input mechanism must be validated. Bedrock may not expose a reliable press-and-release signal for every native attack input; a custom attack control or separate ability input may be required.
+
+#### Input buffering
+
+- Use a short, forgiving input buffer suitable for touchscreen timing.
+- An attack tap made shortly before a valid transition may be stored and resolved when the transition opens.
+- Buffer duration may vary by move category; quick attacks can be more forgiving than finishers and signature skills.
+- Only one follow-up action may be queued at a time. Repeated taps must not queue an entire combo.
+- A queued action is a request, not a guarantee. It must be discarded or explicitly resolved if it expires, the player is interrupted, the target becomes invalid or the transition is no longer legal.
+- Queued actions must not bypass commitment restrictions or override a deliberate defensive input.
+- Exact buffer durations and delay limits are not final; they require real-device playtesting.
+
+#### Intended feel and balance
+
+The system should forgive small input-timing errors without removing the need to read the opponent and choose a branch. It should not become an automatic combo script. Animation phases, cancellation windows and damage timing must be validated against the target stable Bedrock version; the design does not assume native attack animation phases are exposed by the API.
 
 ## 4. Defensive input model
 
