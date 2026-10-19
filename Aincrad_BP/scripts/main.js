@@ -5,6 +5,18 @@ const MENU_ITEM = "aincrad:skill_crystal";
 const menuOpen = new Set();
 const cooldowns = new Map();
 
+// When the runtime exposes this before-event, cancel vanilla item melee hits so combat
+// is routed through the custom skill system. Microsoft currently marks this event
+// pre-release, so the listener is feature-detected rather than assumed to exist.
+try {
+  const attackSignal = world.beforeEvents.playerItemAttackEntity;
+  if (attackSignal && typeof attackSignal.subscribe === "function") {
+    attackSignal.subscribe((event) => { event.cancel = true; });
+  }
+} catch (_) {
+  // Older runtimes may not expose this pre-release event.
+}
+
 const SKILLS = [
   { name: "Quick Slash", damage: 7, range: 3.2, dot: 0.55, cooldown: 20 },
   { name: "Heavy Strike", damage: 12, range: 3.8, dot: 0.35, cooldown: 40 },
