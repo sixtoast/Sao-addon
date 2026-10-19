@@ -3,7 +3,7 @@
   "texture_name": "atlas.items",
   "texture_data": {
     "aincrad_skill_crystal": {
-      "textures": "textures/items/skill_crystal"
+      "textures": "textures/items/diamond_sword"
     }
   }
 }
