@@ -1,20 +1,24 @@
 # Aincrad RPG roadmap
 
-## Prototype 0.1
+## Prototype 0.1 — user-confirmed behaviour
 - Behaviour and Resource Pack skeleton
-- Custom skill activator item
-- Scripted short-range damage test
+- Skill Crystal activation
+- User confirmed that the initial area-damage skill damages nearby mobs on iPhone
 
-## Prototype 0.2
-- Reliable touch activation
-- Directional target selection and hit validation
-- Cooldown tracking
-- Non-consumable activation item
+## Preview 0.2 — skill menu and attack logic
+- ActionFormData skill menu
+- Quick Slash: directional frontal target filtering
+- Heavy Strike: higher-damage frontal attack
+- Arc Burst: area damage
+- Per-skill cooldowns
+- Pending in-game validation of menu, API compatibility, and reusable token behaviour
 
-## Prototype 0.3
-- Custom sword item and basic combat loop
+## Prototype 0.3 — custom combat foundation
+- Investigate supported ways to reduce or replace vanilla melee damage
+- Custom weapon items and skill-specific attack input
 - Attack wind-up, active frames, recovery and feedback
-- Damage tuning and target dummy testing
+- Hit validation, damage tuning, target dummy testing
+- Mobile-first activation and UI
 
 ## RPG foundation
 - Persistent character level and experience
