@@ -1,28 +1,30 @@
-# Aincrad Combat v0.1: iPhone test instructions
+# Preview 0.2 testing
 
-> Status: unverified prototype. Source files have not been run inside Minecraft yet.
+This is a new preview build. It has **not yet been tested in-game** after the skill-menu changes.
 
-## Import
-1. Download or package the Behaviour Pack and Resource Pack folders as separate `.mcpack` files, or package both packs into a `.mcaddon`.
-2. Open the package in Minecraft on iPhone.
-3. Create a new Creative test world and enable both Aincrad Combat packs.
-4. Enable cheats for this test world.
+## Install and test on iPhone
 
-## Test
-Run:
+1. Import the .mcaddon package into Minecraft.
+2. Create a fresh Creative test world with cheats enabled.
+3. Enable both Aincrad Combat BP and Aincrad Combat RP.
+4. Confirm the world loads without Script API or manifest errors.
+5. Run /give @s aincrad:skill_crystal 5.
+6. Hold Aincrad Skill Menu and use it to open the menu.
+7. Select Quick Slash or Heavy Strike and face a mob before selecting. They should only hit targets in front of the player. Arc Burst should hit nearby mobs around the player.
+8. Try each skill twice in quick succession to check the cooldown message.
+9. Check Minecraft Content Log if the menu does not appear or an error occurs.
 
-```mcfunction
-/give @s aincrad:skill_crystal 5
-```
+## Expected prototype behaviour
 
-Hold the Skill Crystal and use it near a zombie. The script is intended to deal 6 damage to eligible non-player entities within 4 blocks and display a chat message reporting the number of targets hit.
+- ActionFormData skill menu using @minecraft/server-ui.
+- Quick Slash: 7 damage, short forward cone, 20-tick cooldown.
+- Heavy Strike: 12 damage, wider forward cone, 40-tick cooldown.
+- Arc Burst: 6 damage to nearby mobs, 60-tick cooldown.
+- The menu token is intended to be returned one tick after use.
 
 ## Known limitations
-- This is an area burst, not a directional sword swing.
-- The item uses a food-style use component as a temporary mobile activation method and may be consumed.
-- No cooldown, animation, progression, boss logic, or persistent character data is implemented yet.
-- API and item schema compatibility must be confirmed in the installed Minecraft stable version.
-- The item currently reuses Minecraft's built-in diamond sword texture; a custom crystal icon has not been added to the repository yet.
 
-## Debugging
-If the item cannot be given or the pack fails to load, check the import message and Minecraft Content Log. Do not treat a successful import as proof that runtime scripting works.
+- Not verified in Minecraft yet; API module availability and touch-use flow still need an in-game test.
+- The menu token uses a food-use interaction as a practical touch trigger. The script attempts to return one token after use; test for item loss or duplication.
+- This is not yet a full replacement for vanilla sword combat. Stable Script API does not provide a straightforward general-purpose cancellable player-melee event to reliably suppress every vanilla sword hit. This prototype adds custom skill attacks; later combat architecture must account for that engine limitation.
+- No custom animation, hit-stop, blocking, parrying, stamina, weapon progression, or save data yet.
