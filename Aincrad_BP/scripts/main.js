@@ -87,6 +87,7 @@ world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
   if (!event.itemStack || event.itemStack.typeId !== MENU_ITEM) return;
+  if (menuOpen.has(player.id)) return;
   restoreMenuItem(player);
   showSkillMenu(player);
 });
