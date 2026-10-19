@@ -22,7 +22,7 @@ Hold the Skill Crystal and use it near a zombie. The script is intended to deal 
 - The item uses a food-style use component as a temporary mobile activation method and may be consumed.
 - No cooldown, animation, progression, boss logic, or persistent character data is implemented yet.
 - API and item schema compatibility must be confirmed in the installed Minecraft stable version.
-- The resource pack expects `textures/items/skill_crystal.png`; ensure that texture is included in the packaged resource pack.
+- The item currently reuses Minecraft's built-in diamond sword texture; a custom crystal icon has not been added to the repository yet.
 
 ## Debugging
 If the item cannot be given or the pack fails to load, check the import message and Minecraft Content Log. Do not treat a successful import as proof that runtime scripting works.
