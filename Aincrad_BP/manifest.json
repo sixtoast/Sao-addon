@@ -6,7 +6,7 @@
     { "type": "script", "language": "javascript", "uuid": "c8bdea32-2485-48e6-8c63-8837cb457783", "version": [0, 2, 0], "entry": "scripts/main.js" }
   ],
   "dependencies": [
-    { "uuid": "6728b771-49e6-49be-90ba-4351ab547469", "version": [0, 1, 0] },
+    { "uuid": "6728b771-49e6-49be-90ba-4351ab547469", "version": [0, 2, 0] },
     { "module_name": "@minecraft/server", "version": "2.6.0" },
     { "module_name": "@minecraft/server-ui", "version": "2.2.0" }
   ]
