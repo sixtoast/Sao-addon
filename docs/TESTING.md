@@ -26,5 +26,5 @@ This is a new preview build. It has **not yet been tested in-game** after the sk
 
 - Not verified in Minecraft yet; API module availability and touch-use flow still need an in-game test.
 - The menu token uses a food-use interaction as a practical touch trigger. The script attempts to return one token after use; test for item loss or duplication.
-- This is not yet a full replacement for vanilla sword combat. Stable Script API does not provide a straightforward general-purpose cancellable player-melee event to reliably suppress every vanilla sword hit. This prototype adds custom skill attacks; later combat architecture must account for that engine limitation.
+- The script feature-detects PlayerItemAttackEntityBeforeEvent and cancels vanilla item melee hits if the installed runtime exposes it. Microsoft currently marks this event pre-release, so verify in-game that it is present and that ordinary melee hits are actually suppressed. If it is unavailable, vanilla melee remains enabled; the add-on must not claim full custom combat on that runtime.
 - No custom animation, hit-stop, blocking, parrying, stamina, weapon progression, or save data yet.
