@@ -189,3 +189,27 @@ Do not invent arbitrary final values before testing:
 - archetype-specific resistances and escape timings.
 
 **Rule:** agreement records design intent. Implementation and device compatibility require separate evidence.
+
+
+## 10. Character progression and weapon mastery
+
+**Agreed**
+- Use a hybrid progression model: character levels improve overall capabilities, while build choices, weapon mastery and execution remain important.
+- Players allocate attribute points manually by default; optional automatic allocation should use a player-selected preference or build profile.
+- Stat redistribution is limited or costs currency through a town NPC.
+- The current proposed values/attributes are HP, STR, DEX, VIT, AGI and TEC. HP is a resource, not an allocated attribute.
+- STM (stamina) is removed; do not add a separate stamina resource or turn Momentum into a stamina substitute.
+- Attributes have overlapping effects rather than exactly one effect each.
+- Weapon mastery advances through meaningful use and is tracked separately for each weapon category.
+- TEC increases weapon mastery growth speed; low TEC must not permanently prevent mastery.
+- Weapon mastery unlocks weapon-specific sword skills and techniques.
+- Unlocking grants access immediately; repeated use builds familiarity and execution, but does not guarantee a hit or success.
+- Sword skills have commitment and recovery; selected advanced skills require specific Momentum conditions.
+- Each technique changes Momentum according to its properties rather than following one universal skill cost/reset rule.
+
+**Open**
+- Exact attribute scaling model, formulas, caps, milestone thresholds and level-up point grants.
+- Mastery curve, anti-farming rules, weapon categories, skill familiarity effects and all numerical tuning.
+- Level curve, respec costs/limits and automatic-allocation configuration.
+
+See [Character Progression Design](./CHARACTER_PROGRESSION_DESIGN.md) for the focused specification. These are workshop decisions and conceptual directions, not claims of implementation or in-game verification.
