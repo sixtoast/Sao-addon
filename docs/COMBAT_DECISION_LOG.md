@@ -249,3 +249,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Crafting specialisation has no permanent discipline lockouts: a character can eventually master every crafting discipline, but doing so requires substantial investment and time.
 
 - Core combat model: committed action combat with distinct timing and recovery for attacks, blocks, dodges, and sword skills. Players must read opponents and commit to decisions; responsive controls remain important. This does not introduce a stamina resource; Momentum remains the primary sword-skill resource.
+
+- Defensive design philosophy: block is the safer sustained defence; parry is a precise timing challenge that creates an opening; spot dodge avoids attacks through movement and rewards correct reads. Each has a distinct tactical role, and none should be universally optimal.
