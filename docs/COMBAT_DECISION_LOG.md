@@ -253,3 +253,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Defensive design philosophy: block is the safer sustained defence; parry is a precise timing challenge that creates an opening; spot dodge avoids attacks through movement and rewards correct reads. Each has a distinct tactical role, and none should be universally optimal.
 
 - Enemy attack philosophy: enemy attacks use readable telegraphs, while enemies can adapt to repeated blocking, predictable dodges, or excessive parrying with appropriate counters. Adaptation must challenge habits without secretly changing attack timing or making attacks unreadable.
+
+- Enemy archetypes and coordination: each enemy has a distinct, recognisable combat identity; selected groups combine complementary roles and coordinate attacks. Keep ordinary encounters readable and reserve more advanced coordination for suitable elite, boss, or group encounters.
