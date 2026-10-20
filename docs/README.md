@@ -7,6 +7,7 @@ This directory preserves the agreed design from the SAO/Aincrad-inspired Minecra
 | Document | Purpose | Status |
 |---|---|---|
 | [Combat Systems Design](./COMBAT_SYSTEMS_DESIGN.md) | Canonical overview of combat rules and relationships | Living specification |
+| [Character Progression Design](./CHARACTER_PROGRESSION_DESIGN.md) | Levels, attributes, weapon mastery, sword-skill learning and open progression decisions | Living conceptual design |
 | [Combat Decision Log](./COMBAT_DECISION_LOG.md) | Decisions accepted during the workshop; open tuning values | Living decision record |
 | [Combat Architecture](./COMBAT_ARCHITECTURE.md) | State machine, interruption, exchange resolution and platform adapters | Proposed architecture |
 | [Momentum Economy](./MOMENTUM_ECONOMY.md) | Resource generation, spending, caps, decay and anti-farming | Proposed design |
