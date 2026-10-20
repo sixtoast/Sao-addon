@@ -239,3 +239,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Equipment trading is restricted by item category: most ordinary equipment is tradable, while selected boss rewards, unique items, or progression-bound equipment may have trading restrictions.
 
 - Crafting is a major equipment progression path: players gather specific materials and recipes to create specialised gear, while bosses and exploration provide unique rewards and rare components.
+
+- Crafting recipe acquisition is mixed: common recipes come from vendors or trainers; specialised recipes come from exploration, quests, and enemies; the rarest designs reward major discoveries or achievements.
