@@ -213,3 +213,18 @@ Do not invent arbitrary final values before testing:
 - Level curve, respec costs/limits and automatic-allocation configuration.
 
 See [Character Progression Design](./CHARACTER_PROGRESSION_DESIGN.md) for the focused specification. These are workshop decisions and conceptual directions, not claims of implementation or in-game verification.
+
+## 13. Equipment progression workshop
+
+**Agreed**
+- Equipment durability decreases through combat. At zero durability, an item becomes unusable rather than being destroyed.
+- A blacksmith or sufficiently capable repair method can restore broken equipment to full condition.
+- Rarity indicates overall equipment quality and potential, but actual usefulness depends on weapon type, attributes, special effects and upgrade potential.
+- Equipment rarity alone must not guarantee that an item is the best choice for every build or encounter.
+
+**Open**
+- Whether repair kits can restore equipment from zero durability, and whether specialist repairs are required.
+- Durability values, wear rates, repair costs, rarity tiers, drop rates, affix rules and upgrade limits.
+- Main equipment acquisition balance across monster drops, bosses, quests, exploration, shops and crafting.
+
+These are conceptual workshop decisions, not implemented or in-game-verified features.
