@@ -265,3 +265,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Boss phase transitions: boss phases usually transition at clear health thresholds, while selected bosses use clear encounter milestones when that better fits their identity. Transitions should be telegraphed and consistent enough to learn; milestone triggers must be understandable rather than arbitrary.
 
 - Boss stagger model: bosses resist ordinary interruption, but powerful parries, specific punish windows, or breaking a defined defence can briefly stagger them. Bosses should not be universally stagger-immune; special vulnerability windows must be readable and ordinary attacks must not trivialise signature sequences.
+
+- Boss stagger rewards: use a consistent short punish window as the baseline, with additional rewards tailored to each boss's identity where appropriate. A stagger may expose a weak point, interrupt a dangerous sequence, create a special counter opportunity, or enable another distinct punish. Rewards must remain readable and earned, without making every boss identical or allowing stagger loops to trivialise encounters.
