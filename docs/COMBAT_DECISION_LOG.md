@@ -257,3 +257,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Enemy archetypes and coordination: each enemy has a distinct, recognisable combat identity; selected groups combine complementary roles and coordinate attacks. Keep ordinary encounters readable and reserve more advanced coordination for suitable elite, boss, or group encounters.
 
 - Boss encounter design: bosses use multi-layered encounters combining unique movesets and readable phases with arena hazards, summoned enemies, objectives, or environmental mechanics where appropriate. These layers should serve the encounter's identity, remain legible, and avoid making every boss use every mechanic.
+
+- Boss design clarification (supersedes the broader multi-layered encounter proposal): bosses have unique movesets and readable phases; attack patterns or behaviour change at clear health or encounter milestones, rewarding player learning and adaptation. Arena hazards, summoned enemies, objectives, and environmental mechanics are not part of the default commitment and may be considered individually later.
