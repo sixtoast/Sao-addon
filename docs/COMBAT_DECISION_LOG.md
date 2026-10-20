@@ -243,3 +243,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Crafting recipe acquisition is mixed: common recipes come from vendors or trainers; specialised recipes come from exploration, quests, and enemies; the rarest designs reward major discoveries or achievements.
 
 - Crafting uses dedicated, levelled disciplines. Crafting progression substantially affects access to recipes and equipment specialisation, making crafting a meaningful parallel progression path.
+
+- Crafting specialisation has no permanent discipline lockouts: a character can eventually master every crafting discipline, but doing so requires substantial investment and time.
