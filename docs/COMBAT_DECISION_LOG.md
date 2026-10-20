@@ -235,3 +235,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Upgrade randomness, if present, is limited and must never make an item irreversibly worse.
 
 - Equipment has defined upgrade limits. Upgrades provide predictable improvements along the way, with occasional milestone upgrades that unlock or refine special effects.
+
+- Equipment trading is restricted by item category: most ordinary equipment is tradable, while selected boss rewards, unique items, or progression-bound equipment may have trading restrictions.
