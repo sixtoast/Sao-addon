@@ -230,3 +230,6 @@ See [Character Progression Design](./CHARACTER_PROGRESSION_DESIGN.md) for the fo
 These are conceptual workshop decisions, not implemented or in-game-verified features.
 
 - Equipment acquisition uses multiple paths: monster drops, boss rewards, quests, exploration, shops and crafting. Each path should have distinct advantages rather than being interchangeable.
+
+- Equipment upgrades use controlled, predictable basic stat improvements. Selected upgrade paths can add or refine special effects.
+- Upgrade randomness, if present, is limited and must never make an item irreversibly worse.
