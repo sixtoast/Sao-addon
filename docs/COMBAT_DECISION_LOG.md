@@ -237,3 +237,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Equipment has defined upgrade limits. Upgrades provide predictable improvements along the way, with occasional milestone upgrades that unlock or refine special effects.
 
 - Equipment trading is restricted by item category: most ordinary equipment is tradable, while selected boss rewards, unique items, or progression-bound equipment may have trading restrictions.
+
+- Crafting is a major equipment progression path: players gather specific materials and recipes to create specialised gear, while bosses and exploration provide unique rewards and rare components.
