@@ -251,3 +251,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Core combat model: committed action combat with distinct timing and recovery for attacks, blocks, dodges, and sword skills. Players must read opponents and commit to decisions; responsive controls remain important. This does not introduce a stamina resource; Momentum remains the primary sword-skill resource.
 
 - Defensive design philosophy: block is the safer sustained defence; parry is a precise timing challenge that creates an opening; spot dodge avoids attacks through movement and rewards correct reads. Each has a distinct tactical role, and none should be universally optimal.
+
+- Enemy attack philosophy: enemy attacks use readable telegraphs, while enemies can adapt to repeated blocking, predictable dodges, or excessive parrying with appropriate counters. Adaptation must challenge habits without secretly changing attack timing or making attacks unreadable.
