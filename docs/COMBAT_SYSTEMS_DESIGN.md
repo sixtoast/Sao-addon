@@ -1,269 +1,287 @@
 # Aincrad RPG — Combat Systems Design Specification
 
-**Document status:** Design draft, not implemented  
-**Version:** 0.2  
-**Target:** Minecraft Bedrock Edition, iPhone-first  
-**Project:** SAO-inspired Aincrad RPG  
-**Last updated:** 2026-10-19
+**Status:** Living design specification; design only, not implementation  
+**Version:** 0.3  
+**Target:** Minecraft Bedrock Edition, iPhone-first, with a shared core intended to support mobile-hosted worlds and Dedicated Server where capabilities permit  
+**Last updated:** 2026-10-20
 
-> This document records agreed design direction and proposed rules. Values such as timing windows, damage reduction, resource costs, stagger duration and recovery frames are not final. Technical feasibility must be verified in the target stable Bedrock version before the design is treated as implemented.
+> This specification records the agreed direction from the combat-design workshop. It does not claim that the mechanics are implemented or technically verified. Exact timing, damage, resource amounts and animation details remain tuning values unless explicitly marked otherwise. Bedrock API capabilities must be checked against the target stable version and tested on an actual iPhone.
 
 ## 1. Combat identity
 
-A responsive action-combat system with fluid basic attacks, short branching combos, committed heavy attacks and finishers, and distinctive sword skills with deliberate startup and recovery.
+The goal is responsive action combat with an SAO/Aincrad identity: fast, flowing attacks; short branching combos; meaningful heavy attacks and finishers; and deliberate, high-impact sword skills.
 
-Combat should be easy to understand but difficult to master. Player preparation establishes potential; execution determines how much of that potential is realised.
+Core principles:
+- Character preparation establishes potential; player execution determines how much of that potential is realised.
+- Reward timing, spacing, opponent reading, varied decisions and commitment management.
+- Forgive small input-timing errors, not poor combat decisions.
+- Make attacks, defences, interruptions, recovery and punish opportunities readable.
+- Avoid infinite interruption loops, infinite aerial juggling, resource farming and universal defensive answers.
+- Keep the iPhone touch interface compact and configurable.
+- Use explicit move properties and state transitions instead of relying on animation names or assumptions about native attack timing.
+- Shared PvE/PvP principles should be preserved where practical, with explicit balance adjustments when needed.
 
-Design priorities:
-- Responsive controls suitable for touchscreens.
-- Clear, readable enemy telegraphs and attack outcomes.
-- Meaningful spacing, timing, commitment and counterplay.
-- Sword skills that feel powerful and distinctive rather than like ordinary attacks with larger damage numbers.
-- A manageable mobile interface with as few permanently visible combat buttons as practical.
-- Shared principles across PvE and PvP, with balance adjustments where necessary.
+## 2. Targeting and facing
 
-## 2. Targeting
+- Soft targeting is the default.
+- Optional lock-on is available for bosses and difficult opponents; ordinary combat should not require it.
+- Basic attacks favour facing direction and nearby valid targets.
+- Aim assistance reduces touchscreen friction but does not guarantee hits regardless of range, position or facing.
+- Targeting, switching, camera interaction and touch ergonomics require device testing.
 
-Use soft targeting by default, with optional lock-on for bosses and difficult opponents.
+## 3. Attacks, combos and commitment
 
-- Basic attacks should generally favour the player's facing direction and nearby valid targets.
-- Target assistance should reduce touchscreen aiming friction without making attacks automatically hit regardless of positioning.
-- Lock-on should improve consistency against a chosen target but should not be mandatory for ordinary encounters.
-- Exact targeting behaviour, switching and camera interactions require mobile testing.
+### 3.1 Basic attacks and branches
+- Quick attacks are responsive and relatively low-commitment.
+- Short branching combos let the player choose a follow-up, such as another quick attack, extender, gap closer, heavy attack or finisher.
+- Combos should not be long automatic animations. Opponents may move, defend, interrupt or punish predictable sequences.
+- Exact chain length and transition windows remain playtest values.
 
-## 3. Attacks and combo structure
+### 3.2 Heavy attacks and finishers
+- Heavy attacks and finishers have greater startup/commitment and recovery than quick attacks.
+- They should communicate impact through readable telegraphs, hit feedback and recovery.
+- A miss or predictable use creates a punish opportunity; a punish is an opportunity, not a guaranteed hit.
+- A blocked heavy normally causes more block pressure than a quick attack.
+- A heavy attack is not automatically a guard breaker. Guard-breaking is an explicit move property.
+- Finishers have very limited cancellation after commitment. Individual finishers may have distinct interruption and displacement properties.
 
-### 3.1 Basic attacks
+### 3.3 Sword skills
+- Sword skills are deliberate, high-impact moves with distinct presentation where supported.
+- They may connect from, extend or end a combo.
+- Equipped signature skills should be readily accessible; loadout menus are mainly for changing skills, not opening for every use.
+- Each skill has explicit startup, active, recovery, interruption, clash, guard-break, targeting and Momentum properties as applicable.
+- There are no default skill cooldowns. Momentum is the primary limiter. A specific cooldown may be introduced only if playtesting shows that a particular skill cannot be balanced through cost, commitment and recovery alone.
+- Different skills have different Momentum costs.
+- Some skills have grounded and aerial variants; some are ground-only or air-only. A dual-variant skill selects its variant at activation and keeps that move definition for the whole action even if the user lands or becomes airborne during it.
 
-Basic attacks are fast, responsive and relatively low-commitment. They should flow into short attack chains without requiring frame-perfect fighting-game inputs.
-
-### 3.2 Short branching combos
-
-The core combo model is **quick flowing attacks with committed heavies and finishers**.
-
-- Basic attacks can link into a short, readable chain.
-- Branches allow a player to choose a different next attack, such as a heavier strike, a gap-closing attack or a combo finisher.
-- Combos should allow meaningful choices, not simply play out as long automatic animations.
-- Enemies can move, defend, interrupt or punish predictable sequences where appropriate.
-- Combo length and input windows remain to be determined through playtesting.
-
-### 3.3 Heavy attacks and finishers
-
-Heavy attacks and finishers have more commitment than basic attacks.
-
-- They should communicate stronger impact through clear startup, hit feedback and recovery.
-- Their recovery gives opponents opportunities to punish a miss, block or predictable use.
-- A committed heavy attack can be meaningfully countered by a well-timed parry or spot dodge.
-- Finishers may have stronger stagger, displacement or damage, but should not be universally safe.
-- Heavy attacks should not all have identical timings; their risk and reward should fit the weapon and move.
-
-### 3.4 Sword skills
-
-Sword skills are deliberate, high-impact techniques with distinct animations or effects where supported.
-
-- Skills may connect to, end or branch from a basic combo.
-- Equipped signature skills should be accessible without navigating a menu during every exchange.
-- Contextual follow-ups and short input combinations can add depth without requiring many permanent buttons.
-- Skills use Momentum as their primary resource, subject to balancing.
-- Startup, recovery, interruptibility, costs and cooldowns are not yet specified.
-
-### 3.5 Attack cancellation, delaying and input buffering
-
-The combo system uses a hybrid model: flexible transitions for quick attacks, with stricter commitment for heavy attacks, finishers and signature sword skills.
-
-#### Attack cancellation
-
-- Quick attacks have flexible but defined cancel windows. They may branch into another attack, an extender, an eligible defensive action or a sword skill when the move's rules permit.
+### 3.4 Attack cancellation, delaying and buffering
+A hybrid model is agreed:
+- Quick attacks have flexible but defined cancel windows.
 - Extenders have moderate cancellation freedom.
-- Heavy attacks permit fewer transitions, especially after their committed phase begins.
-- Finishers have very limited cancellation once committed.
-- Signature skills have individual cancellation rules.
-- A cancel interrupts the current action; a combo branch selects the next action at a permitted transition point. The implementation should treat these as distinct concepts even if their presentation is similar.
+- Heavy attacks allow fewer transitions, especially after commitment.
+- Finishers have very limited cancellation after commitment.
+- Signature skills have move-specific rules.
+- Defensive cancels are permitted only where the current move explicitly allows them.
+- A **cancel** interrupts the current action; a **combo branch** chooses a next action at a legal transition. These are separate concepts.
 - Cancelling a skill does not refund Momentum already spent.
-- A defensive cancel must not be assumed to work from every attack state.
+- A tap requests the next valid attack as soon as possible. A brief hold may delay a follow-up to alter timing or bait a response. Delay is bounded per move and does not erase commitment.
+- Use a short, forgiving input buffer. At most one future action is queued; repeated taps cannot queue an entire combo. A buffered input is a request, not a guarantee, and must be discarded or resolved if it expires, the player is interrupted, the target is invalid or the transition is no longer legal.
+- These controls depend on reliable input signals. Bedrock may not expose native attack phases or press/release state needed for exact cancels and delays. Custom-controlled attacks may be required.
 
-#### Attack delaying
+## 4. Combat state, damage and interruption
 
-- A tap requests the next valid attack as soon as possible.
-- Briefly holding the attack input may delay the follow-up to change its timing, bait a response or select a timing-based branch.
-- Each move has its own maximum delay. A delay cannot extend indefinitely or grant permanent safety.
-- Delay must not silently remove the commitment of a heavy, finisher or signature skill.
-- The exact touch input mechanism must be validated. Bedrock may not expose a reliable press-and-release signal for every native attack input; a custom attack control or separate ability input may be required.
+### 4.1 Explicit state machine
+Each combatant is controlled by an explicit state machine tracking at least:
+- current move and logical phase;
+- startup, active and recovery state;
+- commitment and interruption resistance/poise;
+- current defensive state and pending defence requests;
+- target/facing and relevant position;
+- hit history for each move;
+- interruption, stagger and recovery timers;
+- Momentum and reward eligibility;
+- aerial, launch, juggle and recovery states.
 
-#### Input buffering
+Logical move phases are neutral/ready → startup → active → recovery → neutral, with explicit transitions for block, parry, dodge, flinch, action break, stagger, launch and aerial recovery. Animation is presentation, not the source of combat truth. If an animation continues after cancellation, the controller must prevent the cancelled move from resolving further hits.
 
-- Use a short, forgiving input buffer suitable for touchscreen timing.
-- An attack tap made shortly before a valid transition may be stored and resolved when the transition opens.
-- Buffer duration may vary by move category; quick attacks can be more forgiving than finishers and signature skills.
-- Only one follow-up action may be queued at a time. Repeated taps must not queue an entire combo.
-- A queued action is a request, not a guarantee. It must be discarded or explicitly resolved if it expires, the player is interrupted, the target becomes invalid or the transition is no longer legal.
-- Queued actions must not bypass commitment restrictions or override a deliberate defensive input.
-- Exact buffer durations and delay limits are not final; they require real-device playtesting.
+### 4.2 Interruption strength and poise
+Interruption strength and interruption resistance are independent properties.
+- Quick attacks generally have low interruption strength and low resistance.
+- Heavy attacks have higher strength/resistance during defined commitment phases and may power through weaker hits.
+- Sufficiently strong counters, parries or appropriate defence can still stop committed moves.
+- Finishers and skills define their own interruption behaviour.
+- Bosses receive tuned resistance, not universal immunity.
+- Poise/resistance is not invulnerability and does not automatically prevent damage, knockback or resource loss.
+- Damage and interruption strength are separate; a low-damage counter can interrupt strongly, while a high-damage move need not.
+- Guard break is separate from ordinary interruption.
 
-#### Intended feel and balance
+### 4.3 Interruption outcomes
+Use tiered outcomes:
+1. **Flinch:** minor disruption; may not cancel the current action.
+2. **Action break:** a sufficiently strong interrupt cancels the current move and may cause short recovery.
+3. **Stagger:** a stronger punish state, such as from a successful heavy parry or an exceptional move.
 
-The system should forgive small input-timing errors without removing the need to read the opponent and choose a branch. It should not become an automatic combo script. Animation phases, cancellation windows and damage timing must be validated against the target stable Bedrock version; the design does not assume native attack animation phases are exposed by the API.
+Outcomes depend on move properties, phase and target state. Durations are move-specific and provisional. Prevent infinite interruption loops and ensure every interruption state has a valid exit.
 
-## 4. Defensive input model
+### 4.4 Clash, clean interruption and trade
+Combat interactions are based on move properties, current phases, target states and hit timing, not a fixed quick < heavy < skill ladder.
+- **Clash:** comparable moves collide; neither receives a clean hit. Both are briefly interrupted and enter a readable recovery state. No free hit is granted.
+- **Clash-winning skill:** only a skill explicitly marked with a clash-win property may win, and only under its declared conditions.
+- **Clash-altering skill:** an explicitly designated skill may alter the result, such as pushing fighters apart or changing recovery/spacing.
+- **Clean interruption:** one attack interrupts the other before it connects; the winning attack resolves according to its move definition.
+- **Trade:** both attacks remain eligible and connect before either can stop the other.
+- **Dedicated parry:** remains distinct from a substitute-parry move and can trigger the defined parry reward.
+- A fast attack cannot become a universal parry. Any move that substitutes for a parry must have an explicit limitation such as narrow timing, startup/coverage limits or a smaller reward.
+- Outcomes must be deterministic, not random.
 
-The proposed central defensive input is the **crouch button**. It supports standard blocking, timed parrying and spot dodging. The intended mobile interaction is a single defensive input for block/parry and a double-tap of crouch for spot dodge.
+### 4.5 Simultaneous resolution
+The shared default is a snapshot-based exchange:
+1. Gather relevant attack and defence events for a combat update.
+2. Snapshot each combatant's move/phase, position, poise, target, defence and hit history.
+3. Validate events and determine parries, clashes, clean interruptions and trades.
+4. Resolve the exchange consistently.
+5. Apply damage, interruption, recovery and Momentum exactly once.
 
-The exact input recognition model is unresolved. The system must avoid making ordinary blocks feel delayed while waiting to determine whether the player intends a double-tap. It must also work reliably with touch controls and not depend on unverified gesture access.
+Use sequential resolution only where later events depend on an earlier result, including multi-hit moves, death/despawn, invalidated targets or other state-dependent events. Hits already connected cannot be retroactively cancelled. Test order independence by reversing equivalent event order and checking that results remain the same. Native Bedrock damage may occur before a script can prevent it; if so, the affected move must use custom-controlled damage rather than risk duplicate vanilla and custom damage.
 
-### 4.1 Standard block
+## 5. Defence
 
-- A forgiving defensive option.
-- Reduces incoming damage rather than automatically cancelling the attacker's action.
-- Does not inherently stagger the attacker.
-- The attacker may maintain pressure if their attack leaves them at advantage after block.
-- Some attacks may be guard-breaking, unblockable or especially effective against passive defence.
-- Damage reduction and any guard resource are undecided.
+### 5.1 Touch control concept
+- Standard block uses the crouch input.
+- Spot dodge is intended as a double-tap of crouch.
+- A dedicated custom touch input is preferred for precise parry initially, because combining block, double-tap dodge and parry recognition may be unreliable on touchscreen.
+- Double-tap recognition must not delay or harm ordinary blocking. If the runtime cannot distinguish the gesture reliably, use an explicit documented fallback rather than pretending it works.
+- Custom touch controls should be configurable, starting with a compact right-side cluster. Position, size and spacing should be adjustable, with a reset option and persistence only where supported. Keep the movement joystick and camera area usable.
 
-### 4.2 Timed parry
+### 5.2 Block
+- Block is forgiving, reduces incoming damage and does not inherently stagger the attacker.
+- Blocking does not consume or restore Momentum.
+- The attacker may remain at advantage on block if their recovery permits continued pressure.
+- Movement while blocking is slower; the exact multiplier and directional coverage are playtest values.
+- Releasing block ends it immediately, with no minimum duration.
+- Distinguish a pending block request from active block. Only active block reduces damage.
+- If the current move is cancellable, block can cancel it. Otherwise, block takes priority at the earliest legal transition without instantly erasing commitment.
+- A valid spot dodge may supersede a pending block if legal; parry follows its own explicit transition rules.
+- A blocked heavy attack that is not a guard breaker causes reduced damage, stronger pushback and a brief impact reaction. The defender remains in control and can defend again under normal rules.
+- Block is not an automatic turn-ending action; relative recovery determines advantage.
 
-- A precision defensive action using the defensive input.
+### 5.3 Parry
 - A successful parry deflects or negates the relevant attack according to its rules.
-- Parrying a heavy attack staggers the opponent.
-- Parrying other attacks creates a punish window but does not necessarily stagger.
-- Aerial parrying is harder to execute than an aerial spot dodge.
-- A successful aerial parry grants a follow-up opportunity that an aerial spot dodge does not.
+- Parrying a heavy attack causes a stronger stagger; parrying other attacks creates a punish window rather than automatically staggering.
+- A successful parry restores a modest amount of Momentum.
+- A failed parry grants no parry reward; the incoming attack resolves normally.
+- A designated parry-resistant skill is an explicit exception with clear conditions and telegraphing. A failed parry does not erase the attack's normal resolution.
 
-### 4.3 Spot dodge
+### 5.4 Spot dodge and adaptation
+- Spot dodge evades the relevant incoming attack and has no forced end lag. The following action still has normal startup, commitment and recovery.
+- Ground spot dodge is harder than ground parry. Aerial spot dodge is easier than aerial parry.
+- Aerial parry creates a follow-up opportunity; aerial spot dodge does not.
+- Wide-area, tracking and multi-hit attacks need explicit handling so spot dodge is not a universal answer.
+- First successful spot dodge against a particular opponent causes a surprise stagger.
+- Subsequent successful dodges normally create a punish window rather than another full surprise stagger.
+- After adaptation, a dodge can still stagger if it evades a highly committed heavy all-in attack or most swings of a combo.
+- Adaptation is per opponent. Reset rules need to be defined during implementation.
+- A natural whiff from good spacing can earn a small Momentum reward for the player who baited it, but not if the attack posed no meaningful threat. The attacker gets no reward for mindless whiffing.
 
-A spot dodge is a precision evasion triggered by double-tapping the defensive/crouch input. It is intended to evoke the close, stylish evasions seen in anime fighting games, rather than act as an ordinary movement dodge.
+### 5.5 Guard break
+- Only moves explicitly marked with a `guardBreak` property can break guard; damage alone does not imply guard break.
+- Heavy attacks and designated sword skills may have this property; quick attacks generally do not.
+- Guard break ends active block, causes a distinct brief stagger and creates a punish opportunity, not a guaranteed hit.
+- During guard-break stagger, the defender cannot block, parry or dodge. Control returns automatically when the state-machine timer expires.
+- Guard-break stagger is separate from ordinary interruption.
+- Successful parry defeats ordinary guard-breaking attempts. A specifically designated parry-resistant guard-break skill is allowed only with explicit properties/conditions and clear telegraphing.
+- Guard-break feedback should be distinct through animation or visual equivalent, strong sound and clear cue. State resolution must work even if an effect fails.
+- Immediate repeat guard breaks are prevented during a short protection period after the break/recovery. Protection prevents another guard break, not all damage or valid interruptions. It expires via the state machine.
+- Protection has subtle visual feedback, without a permanent UI bar.
 
-- It causes the relevant incoming attack to miss.
-- It has no forced end lag: the player is free to act immediately after the evasion.
-- The attack that follows still has its normal startup, commitment and recovery; spot dodge must not grant universal action cancellation or permanent safety.
-- A spot dodge is harder to land than a ground parry.
-- In midair, a spot dodge is easier to land than an aerial parry.
-- An aerial spot dodge does not grant the aerial parry's special follow-up opportunity.
-- Wide-area, tracking and multi-hit attacks may need special interaction rules so spot dodge is not a universal answer.
-- Directional and visual behaviour, and whether the evasion can be implemented faithfully, require technical validation.
+## 6. Whiff recovery, spacing and punish
 
-### 4.4 Ordinary movement dodge
+- Missed attacks leave the attacker in move-specific recovery.
+- Quick attacks recover relatively quickly; heavy attacks, finishers and sword skills generally create larger punish windows based on their commitment and design.
+- There is no universal bonus damage for hitting an opponent during whiff recovery. Standard move damage applies.
+- A punish window is an opportunity, not an automatic hit or combo.
+- A successful punish of a genuine recovery opening grants a small Momentum reward, subject to the anti-farming and per-exchange cap rules.
+- Good spacing/whiff baiting earns a small reward only when the missed attack was a meaningful threat and the defender's positioning caused the miss.
+- Attack spam and harmless misses do not earn Momentum.
 
-A separate movement-based dodge may be considered for repositioning and escaping through spacing. It should not automatically grant the spot dodge's punish window. Its exact input and relationship to the crouch double-tap are unresolved.
+## 7. Momentum economy
 
-## 5. Spot-dodge adaptation and opponent states
+Momentum is the primary sword-skill resource:
+- It has a hard maximum and a visible current amount/maximum.
+- Skills have individually defined costs. Costs reflect damage, range, safety, utility, interruption, clash/guard-break properties and combo potential, not damage alone.
+- No default skill cooldowns. Specific cooldowns require evidence of abuse in testing.
+- Momentum persists between nearby fights but gradually decays after a period out of combat. There is no passive decay merely because a player defends or takes a tactical pause during active combat.
+- Combat is the main source; no unlimited passive refill while actively trading attacks.
+- Blocking neither consumes nor restores Momentum.
+- Successful parries and spot dodges reward Momentum, with ground/air relationships defined in the dedicated economy document.
+- Meaningful combo milestones can reward Momentum; do not reward every hit.
+- Whiff baiting and genuine punishes can earn small rewards.
+- A per-exchange cap and duplicate-reward prevention prevent one long exchange from becoming an unlimited farm.
+- Exact values, delay before decay, decay rate, cap size and individual costs are not set until playtesting.
 
-A spot dodge has different consequences depending on the opponent's experience of the technique. Adaptation is tracked per opponent rather than globally.
+### Ground/air defensive reward relationship
+- On the ground, successful spot dodge rewards more Momentum than successful parry because it is harder to execute.
+- In the air, successful parry rewards more Momentum than aerial spot dodge because aerial parry is harder.
+- Reward amounts also reflect the threat and commitment of the attack genuinely avoided, within caps.
+- Successful defence requires a valid incoming threat; harmless animation bait does not qualify.
 
-### State A — Surprise stagger
+### Combo variety rewards
+- Grounded and aerial combos use the same underlying variety principles.
+- Reward meaningful milestones such as a valid launcher, completed sequence or well-timed finisher; never pay automatically for every hit.
+- Repeating the same combo during an encounter reduces its variety-related Momentum reward, not its damage.
+- Meaningful changes to launcher, route, follow-up or finisher count as variety; cosmetic or trivial changes do not.
+- Variety tracking resets when an encounter genuinely ends.
+- Aerial and grounded rewards obey the same per-exchange cap and duplicate-event protections.
 
-The first **successful** spot dodge against a particular opponent causes a stagger, creating a strong initial punish opportunity.
+### Feedback
+- Show current Momentum and maximum in the interface.
+- Use subtle feedback for important rewards: parry, dodge, combo milestone, meaningful whiff bait or punish.
+- Do not show floating numbers for every event.
+- Show exact skill costs in the loadout/menu, not necessarily every reward value during combat.
+- Visual feedback is presentation only; resource changes are authoritative in the state machine.
 
-- Attempting a dodge without evading an attack does not trigger the surprise stagger.
-- The surprise effect is per opponent.
-- The reset rules for death, a new duel or a later encounter remain undecided.
+## 8. Aerial combat
 
-### State B — Adapted punish window
+- Some sword skills have dedicated aerial variants. Other skills may be ground-only or air-only.
+- Only designated launchers lift grounded enemies into the air.
+- Players can deliberately jump after a launcher to pursue and continue an air combo; there is no automatic teleport.
+- Air combos have a hidden juggle-resistance system: successive hits make further extensions/launches harder. There is no visible juggle meter.
+- Enemy aerial escapes use recovery-based limits: after an escape, the enemy must land or complete meaningful recovery before escaping again.
+- Enemies and players use the same underlying aerial-recovery framework, tuned by archetype.
+- Players can use a dedicated aerial recovery when launched, during a valid window, at no Momentum cost. Recovery can be restricted by explicitly designated powerful committed attacks or combo starters.
+- Directional recovery uses the existing movement joystick: eight directions plus neutral. Camera-relative interpretation must be consistent and tested.
+- Directional feedback should communicate recovery where practical, but state resolution must not depend on animation.
+- After recovery genuinely completes, the player may attack under normal rules. Recovery cannot be cancelled into an attack.
+- Recovery changes positioning but does not undo damage, guarantee safety or automatically counterattack.
+- Enemy archetypes vary: standard enemies, agile enemies, heavy enemies and bosses have different launch resistance, recovery and escape behaviour.
+- Aerial combo Momentum rewards depend on meaningful milestones and variety, not every hit.
 
-After the opponent has witnessed a successful spot dodge, subsequent successful spot dodges normally create a punish window instead of a full stagger.
+## 9. Shared core and platform support
 
-- Adaptation does not grant immunity to future spot dodges.
-- The player can still evade attacks and act immediately, but does not receive the first-use surprise reward again.
+Use a shared combat core with platform-specific adapters. The core owns rules; adapters expose verified capabilities and implement platform-specific inputs, entity operations and presentation.
+- Shared core candidates: `CombatStateMachine`, `MoveDefinitions`, `CombatInput`, `HitResolver`, `ExchangeResolver`, `ResourceSystem`, `CombatEffects`, `PlatformAdapter`.
+- Mobile-hosted worlds must support core combat without an external service.
+- A Dedicated Server adapter may expose server-only diagnostics or integrations where supported.
+- Capability-driven design: unsupported/unverified capabilities must be explicit and use a documented fallback, never hidden divergent rules.
+- Server-authoritative resolution is the target for multiplayer. Exact API and networking feasibility must be validated.
+- `@minecraft/server-net` is not assumed available in the client or Realms; its documented support is Dedicated-Server-only and experimental. It must not be a core dependency for iPhone worlds.
+- WebSocket tooling may assist testing/logging in a compatible environment, but WebSockets do not themselves make an add-on a server or guarantee input interception/low latency.
+- No core mechanic is considered verified until tested in the target stable Bedrock version on an actual iPhone.
 
-### State C — Commitment or combo stagger
+## 10. Minimum playable combat prototype
 
-Even after adaptation, a spot dodge can still stagger the opponent if the player:
-- Evades a highly committed heavy attack; or
-- Successfully evades most of a multi-hit combo sequence.
+The first architecture-validation prototype should be deliberately small:
+1. Two combatants.
+2. Quick attack.
+3. Heavy attack.
+4. Deterministic clash, clean interruption and trade handling.
+5. Dedicated true parry.
+6. Explicit combat state machine and single damage authority.
+7. Snapshot-based shared exchange resolution, with sequential processing only where dependency requires it.
+8. Basic adapter/capability boundary.
 
-The definition of a “highly committed” attack, the proportion of a combo that must be evaded, and stagger durations are to be balanced later.
+Do not build the entire skill library before proving that simultaneous attacks, damage, interruption and parry can be resolved consistently.
 
-## 6. Block advantage and attack recovery
+## 11. Validation requirements
 
-Combat uses a fighting-game-inspired concept of relative recovery. Literal frame data does not need to be shown to the player, but the underlying action timings should produce consistent pressure and counterplay.
+- Verify the exact stable Bedrock and Script API versions targeted.
+- Test on an actual iPhone.
+- Verify custom input reliability, movement/camera coexistence, block versus double-tap, parry timing and configurable touch layout.
+- Verify that native and custom damage cannot both apply to the same hit.
+- Reverse equivalent event order and confirm deterministic exchange results.
+- Verify one damage application per hit, cancellation prevents later hit resolution, and already-connected hits cannot be retroactively cancelled.
+- Test guard-break protection, Momentum caps/reward deduplication, combo variety reset and aerial recovery/escape restrictions.
+- Test multiplayer authority, latency and fairness before claiming PvP readiness.
+- Record every tested feature and known limitation. A successful build or package import is not proof of in-game correctness.
 
-- After a block, the attacker may act first if their recovery is sufficiently short relative to the defender's block recovery.
-- A quick attack can remain advantageous on block and allow continued pressure.
-- A committed heavy attack will generally have more recovery, potentially allowing the defender to retaliate after blocking it.
-- Blocking does not automatically return the defender's turn.
-- An opening is an opportunity to act, not a guaranteed hit or full combo.
-- Attack recovery, block recovery, hit-stun, stagger and punish windows should be separate concepts.
-- Boss and PvP attacks should follow the same principles where practical, with tuned timings and resistances as needed.
+## 12. Related documents
 
-## 7. Momentum resource
+- [Decision log](./COMBAT_DECISION_LOG.md): accepted choices and open tuning values.
+- [Architecture](./COMBAT_ARCHITECTURE.md): state machine, exchange resolution and adapter boundary.
+- [Momentum economy](./MOMENTUM_ECONOMY.md): resource rewards, caps and anti-farming.
+- [Aerial combat](./AERIAL_COMBAT_DESIGN.md): launchers, juggle resistance and recovery.
+- [Input and platform notes](./COMBAT_INPUT_AND_PLATFORM.md): touch controls, Bedrock capability constraints and WebSocket boundaries.
+- [Test plan](./COMBAT_TEST_PLAN.md): minimum prototype and validation matrix.
+- [Documentation index](./README.md): document map and status.
 
-Momentum is the proposed primary resource for sword skills. It is earned by meaningful combat participation rather than passively refilling at all times.
-
-### Sources of Momentum (proposed)
-- Landing valid attacks.
-- Completing varied combos rather than repeating one low-risk attack.
-- Successful parries.
-- Successful spot dodges.
-- Exploiting an enemy's exposed or staggered state.
-
-Spot dodging should reward precision, but repeated defensive farming against predictable opponents must not become the best way to generate resource. Anti-exploit rules and exact rewards are undecided.
-
-### Spending Momentum (proposed)
-- Sword skills.
-- Strong combo finishers or selected advanced techniques where appropriate.
-
-### Recovery (proposed)
-- Combat is the main way to build Momentum.
-- A brief period without combat may allow limited recovery.
-- There should not be unlimited passive recovery while actively trading attacks.
-- Ordinary block, parry and dodge should not all automatically consume the same resource needed to use sword skills; otherwise, defence can feel like a tax on offence.
-
-Momentum values, caps, costs, gain rates, decay and persistence rules remain unfinalised.
-
-## 8. Difficulty and progression principles
-
-- Character preparation (stats, equipment, skills, proficiency and consumables) determines potential.
-- Player execution (timing, positioning, enemy reading, resource use and choosing when to commit) determines how much potential is realised.
-- Progression must matter without making execution irrelevant.
-- Excellent play can overcome some disadvantages, but should not trivialise every encounter.
-- Enemy encounters should test different skills rather than relying exclusively on reaction speed or damage-sponge health.
-
-## 9. iPhone-first UI principles
-
-- Keep the permanent combat interface compact.
-- Prefer one central defensive input to separate block, parry and spot-dodge buttons.
-- Keep equipped signature skills readily accessible; menus should primarily manage loadouts, not interrupt every fight.
-- Inputs must be forgiving of touchscreen imprecision without erasing the skill ceiling.
-- Clearly communicate enemy telegraphs, successful defences, stagger states and punish opportunities through animation, sound and visual effects where supported.
-- Double-tap crouch recognition must be tested for latency, accidental activation and conflicts with ordinary blocking.
-
-## 10. Technical constraints and validation
-
-This is a design document, not a statement that the system has been implemented.
-
-The project targets Minecraft Bedrock's supported Script API and must validate against the intended stable game version.
-
-Technical risks to investigate in a later prototype:
-- Whether native attacks can be cancelled or replaced reliably using stable APIs.
-- Whether native damage and hit detection can be made consistent with custom block, parry and spot-dodge states.
-- Whether player input events expose enough information to distinguish the required actions on touch.
-- How custom movement, evasion, animation, knockback and aerial behaviour can be represented.
-- Whether player-specific and per-opponent adaptation state can be stored reliably in solo and multiplayer sessions.
-- Multiplayer authority, latency, fairness and anti-exploit handling for PvP.
-- Performance with multiple enemies and active combat states.
-
-No core mechanic should be considered verified until tested in the target Bedrock version on an iPhone. If a mechanic cannot be implemented reliably with supported APIs, the project should explicitly choose a workaround or revise the mechanic rather than assume the limitation does not exist.
-
-## 11. Unresolved design questions
-
-1. Exact basic combo length and branch inputs.
-2. Whether heavy attacks are held, tapped, directional or combo-branch inputs.
-3. Finisher commitment, interruption rules and rewards.
-4. Crouch single-tap/double-tap timing and whether block is held or tapped.
-5. Ground and aerial parry/spot-dodge timing windows.
-6. Spot-dodge distance, directionality and treatment of area or multi-hit attacks.
-7. Stagger and punish-window durations by enemy type.
-8. How and when per-opponent spot-dodge adaptation resets.
-9. Momentum cap, gain rates, skill costs, decay and recovery.
-10. Which mechanics can be implemented reliably without depending on pre-release APIs.
-
-## 12. Next workshop
-
-The next design phase should define the attack and combo grammar in detail:
-- The length of a basic chain.
-- How players branch into heavies.
-- What makes a finisher distinct.
-- Whether missed or blocked attacks can be cancelled.
-- How parries and spot dodges connect to combo follow-ups.
-- How Momentum rewards varied, well-executed combat.
-
-**Current working direction:** short branching combos, quick flowing basic attacks, committed heavy attacks and finishers, and deliberate sword skills. This is a design commitment, not an implementation claim.
+**Working principle:** the design is ambitious, but no API behaviour, in-game feature or device compatibility is assumed until it is verified.
