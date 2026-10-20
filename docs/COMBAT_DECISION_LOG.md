@@ -263,3 +263,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Boss design decision correction: the chosen model is multi-layered boss encounters, combining unique movesets and readable phases with arena hazards, summoned enemies, objectives, or environmental mechanics where appropriate. This supersedes the narrower clarification above; extra mechanics should still serve the boss's identity and remain readable rather than being forced into every encounter.
 
 - Boss phase transitions: boss phases usually transition at clear health thresholds, while selected bosses use clear encounter milestones when that better fits their identity. Transitions should be telegraphed and consistent enough to learn; milestone triggers must be understandable rather than arbitrary.
+
+- Boss stagger model: bosses resist ordinary interruption, but powerful parries, specific punish windows, or breaking a defined defence can briefly stagger them. Bosses should not be universally stagger-immune; special vulnerability windows must be readable and ordinary attacks must not trivialise signature sequences.
