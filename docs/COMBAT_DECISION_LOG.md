@@ -247,3 +247,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Crafting specialisation has no permanent discipline lockouts: a character can eventually master every crafting discipline, but doing so requires substantial investment and time.
 
 - Crafting specialisation has no permanent discipline lockouts: a character can eventually master every crafting discipline, but doing so requires substantial investment and time.
+
+- Core combat model: committed action combat with distinct timing and recovery for attacks, blocks, dodges, and sword skills. Players must read opponents and commit to decisions; responsive controls remain important. This does not introduce a stamina resource; Momentum remains the primary sword-skill resource.
