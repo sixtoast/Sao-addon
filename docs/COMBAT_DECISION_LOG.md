@@ -245,3 +245,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Crafting uses dedicated, levelled disciplines. Crafting progression substantially affects access to recipes and equipment specialisation, making crafting a meaningful parallel progression path.
 
 - Crafting specialisation has no permanent discipline lockouts: a character can eventually master every crafting discipline, but doing so requires substantial investment and time.
+
+- Crafting specialisation has no permanent discipline lockouts: a character can eventually master every crafting discipline, but doing so requires substantial investment and time.
