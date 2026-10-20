@@ -228,3 +228,5 @@ See [Character Progression Design](./CHARACTER_PROGRESSION_DESIGN.md) for the fo
 - Main equipment acquisition balance across monster drops, bosses, quests, exploration, shops and crafting.
 
 These are conceptual workshop decisions, not implemented or in-game-verified features.
+
+- Equipment acquisition uses multiple paths: monster drops, boss rewards, quests, exploration, shops and crafting. Each path should have distinct advantages rather than being interchangeable.
