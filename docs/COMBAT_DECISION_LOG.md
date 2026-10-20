@@ -233,3 +233,5 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 
 - Equipment upgrades use controlled, predictable basic stat improvements. Selected upgrade paths can add or refine special effects.
 - Upgrade randomness, if present, is limited and must never make an item irreversibly worse.
+
+- Equipment has defined upgrade limits. Upgrades provide predictable improvements along the way, with occasional milestone upgrades that unlock or refine special effects.
