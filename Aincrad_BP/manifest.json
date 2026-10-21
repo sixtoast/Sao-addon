@@ -2,7 +2,7 @@
   "format_version": 2,
   "header": {
     "name": "Aincrad Combat BP v0.5.7",
-    "description": "Aincrad Combat v0.5.7 | Native throwable charge prototype.",
+    "description": "Aincrad Combat v0.5.7 | Attack swing cadence diagnostic only.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
@@ -22,7 +22,7 @@
       "version": [
         0,
         5,
-        3
+        7
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         0,
         5,
-        3
+        7
       ],
       "entry": "scripts/main.js"
     }
@@ -43,7 +43,7 @@
       "version": [
         0,
         5,
-        3
+        7
       ]
     },
     {
