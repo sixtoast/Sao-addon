@@ -86,3 +86,16 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - This uses the pre-hurt event to avoid applying vanilla damage and scripted damage simultaneously. Verify actual event cause strings and cancellation behaviour on the target Bedrock version.
 
 Official reference: [Microsoft Learn — EntityHurtBeforeEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entityhurtbeforeevent?view=minecraft-bedrock-stable) and [EntityDamageSource](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entitydamagesource?view=minecraft-bedrock-stable).
+
+
+## Mob melee integration (untested)
+
+1. Hold Sneak and let a hostile mob hit you during ticks 0–2; confirm the hit is evaded.
+2. Hold Sneak and let a hostile mob hit you during ticks 3–6; confirm the hit is cancelled and the mob staggers.
+3. Continue holding Sneak past tick 7; confirm frontal melee damage is reduced to 25% and guard strain accumulates.
+4. Trigger a guard break, keep holding Sneak until the 40-tick break ends, and confirm Guard resumes without releasing/re-pressing Sneak.
+5. Test an attack from behind; Guard should not reduce that hit.
+6. Confirm projectile, fall, fire and other non-melee damage still behave as vanilla.
+7. Check Content Log for Script API errors and verify a cancelled/blocked hit does not deal duplicate damage.
+
+The mob path uses the documented cancellable `world.beforeEvents.entityHurt` signal and `damageSource` metadata. This remains provisional until tested against the exact Bedrock runtime.
