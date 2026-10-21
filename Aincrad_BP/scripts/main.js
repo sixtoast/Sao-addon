@@ -204,22 +204,17 @@ function beginAttack(player, move) {
 
 function beginParry(player) {
   if (!player.isValid) return;
-  const current = actions.get(player.id);
-  if (current && current.phase !== "recovery" && current.phase !== "idle") {
-    safeMessage(player, "§e[AINCRAD] You cannot parry during this committed action.");
+  const guard = guards.get(player.id);
+  if (guard?.brokenUntil && system.currentTick < guard.brokenUntil) {
+    safeMessage(player, "§c[AINCRAD] Your guard is broken.");
     return;
   }
-  actions.set(player.id, {
-    actor: player,
-    move: null,
-    phase: "parry",
-    elapsed: 0,
-    hitResolved: false,
-    recoveryUntil: system.currentTick + PARRY_WINDOW_TICKS,
-    interrupted: false
+  // Menu/item fallback enters the parry phase of the same shared sequence.
+  defensiveSequences.set(player.id, {
+    startedTick: system.currentTick - DEFENSE_DODGE_TICKS
   });
-  parryWindows.set(player.id, system.currentTick + PARRY_WINDOW_TICKS);
-  safeMessage(player, "§d[AINCRAD] Parry ready — read the incoming attack.");
+  guards.set(player.id, {});
+  safeMessage(player, "§d[AINCRAD] Parry window started.");
 }
 
 function isPlayer(entity) {
