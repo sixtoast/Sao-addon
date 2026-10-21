@@ -5,6 +5,7 @@
     "components": {
       "minecraft:icon": { "textures": { "default": "aincrad_heavy_attack_token" } },
       "minecraft:display_name": { "value": "Heavy Attack" },
+      "minecraft:interact_button": "action.interact.aincrad:heavy_attack",
       "minecraft:max_stack_size": 1,
       "minecraft:use_modifiers": { "use_duration": 0.1, "movement_modifier": 1 }
     }
