@@ -56,6 +56,25 @@ try {
   // This runtime does not expose the pre-release event.
 }
 
+// Player swing input is experimental in the current Creator documentation.
+// Feature-detect it so unsupported runtimes keep the menu as a fallback.
+let swingInputAvailable = false;
+try {
+  const swingSignal = world.afterEvents.playerSwingStart;
+  if (swingSignal && typeof swingSignal.subscribe === "function") {
+    swingSignal.subscribe((event) => {
+      const player = event.player;
+      if (!player || !player.isValid || event.swingSource !== "Attack") return;
+      // Touchscreen-friendly mapping: tap Attack for Quick Slash; attack while
+      // sneaking for Heavy Strike. The sneak modifier needs real-device testing.
+      beginAttack(player, player.isSneaking ? MOVES.heavy : MOVES.quick);
+    });
+    swingInputAvailable = true;
+  }
+} catch (_) {
+  // This runtime does not expose player swing input; use the menu fallback.
+}
+
 function safeMessage(player, message) {
   try {
     if (player && player.isValid) player.sendMessage(message);
@@ -84,9 +103,13 @@ function showCombatMenu(player) {
     .title("AINCRAD • Combat Prototype")
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
+      (swingInputAvailable
+        ? "Direct attacks: tap Attack for Quick Slash; sneak + Attack for Heavy Strike."
+        : "Direct attack input is unavailable in this runtime; use the menu fallback.") +
+      "\\n\\n" +
       (nativeAttackCancellationAvailable
-        ? "Native item attacks: cancellation event detected."
-        : "Warning: native attack cancellation is unavailable; vanilla melee may still deal damage.")
+        ? "Vanilla attack cancellation event detected."
+        : "Warning: vanilla melee may still deal extra damage; cancellation is unavailable.")
     )
     .button("Quick Slash\n§7Fast • 7 damage")
     .button("Heavy Strike\n§7Committed • 12 damage")
