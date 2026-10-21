@@ -224,3 +224,8 @@ This test build adds two buttons to the Skill Menu: **Diagnostics: Toggle ON/OFF
 For a repeatable guard test, use a Creative test world and two players: compare the defender's health before and after a hit without Guard, then repeat from the front during Guard. Reset health between trials. Also test an attack from behind and a heavy hit that should exceed the guard-strain threshold. The damage diagnostic can be unavailable if Bedrock updates health later than the script callback; in that case the requested damage and event adjustment are still shown.
 
 **Version labels:** from v0.4.4 onward, both pack names and descriptions include the add-on version so BP/RP can be distinguished in Minecraft's Add-Ons list.
+
+
+## Version 0.4.5 — diagnostics runtime hotfix
+
+Version 0.4.4 could throw `ReferenceError: diagnosticsEnabled is not defined` from the combat tick. This is fixed by declaring the per-player diagnostics set. The optional native `world.beforeEvents.playerItemAttackEntity` feature-detection warning is now worded as an API-probe limitation, not as proof that combat cancellation is broken. The existing cancellation path remains in place; test it in-game as usual.
