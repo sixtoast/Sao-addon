@@ -258,7 +258,7 @@ function showCombatMenu(player) {
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
         ? "Direct attack: tap Attack for Quick Slash. Tap the Heavy Strike HUD button for Heavy Strike; the Heavy Attack item remains a fallback. Use the Parry item to parry."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry.") +
+        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Tap the Heavy Strike HUD button for Heavy Strike; the Heavy Attack item remains a fallback. Use the Parry item to parry.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
@@ -269,8 +269,8 @@ function showCombatMenu(player) {
     .button("Parry\n§7Short timing window");
 
   form.button("Diagnostics: Toggle ON/OFF");
-  form.button("Diagnostics: Guard Status")
-    .button("Show Heavy Strike HUD Button");
+  form.button("Diagnostics: Guard Status");
+  form.button("Show Heavy Strike HUD Button");
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
