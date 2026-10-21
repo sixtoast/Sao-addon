@@ -179,6 +179,10 @@ try {
   const signal = world.beforeEvents.playerItemAttackEntity;
   if (signal && typeof signal.subscribe === "function") {
     signal.subscribe((event) => {
+      // v0.5.6 diagnostic: allow the Heavy Attack token's native attack through
+      // to test whether global cancellation was preventing start_using:on_attack.
+      // This is temporary; the normal damage may occur during this test.
+      if (event.itemStack?.typeId === HEAVY_ITEM) return;
       event.cancel = true;
     });
     nativeAttackCancellationAvailable = true;
@@ -223,8 +227,9 @@ try {
           selectedItemType = inventory?.getItem(player.selectedSlotIndex)?.typeId ?? "";
         } catch (_) {}
         if (selectedItemType === HEAVY_ITEM) {
-          safeMessage(player, "§e[AINCRAD] Charge input was not detected; using Heavy Strike fallback.");
-          beginAttack(player, MOVES.heavy);
+          // v0.5.6 isolates the native on_attack route: do not start the scripted
+          // Heavy Strike fallback, or a failed charge would be confused with success.
+          safeMessage(player, "§d[DIAG 0.5.6] Native attack allowed; scripted fallback suppressed for this test.");
           return;
         }
 
