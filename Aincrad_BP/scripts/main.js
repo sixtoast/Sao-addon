@@ -2,6 +2,7 @@ import { world, system, EntityDamageCause, ItemStack } from "@minecraft/server";
 import { ActionFormData } from "@minecraft/server-ui";
 
 const MENU_ITEM = "aincrad:skill_crystal";
+const HEAVY_ITEM = "aincrad:heavy_attack_token";
 const menuOpen = new Set();
 const actions = new Map();
 const parryWindows = new Map();
@@ -366,9 +367,19 @@ const intents = [];
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
-  if (!event.itemStack || event.itemStack.typeId !== MENU_ITEM) return;
-  restoreMenuItem(player);
-  showCombatMenu(player);
+  if (!event.itemStack) return;
+
+  if (event.itemStack.typeId === HEAVY_ITEM) {
+    // Dedicated hotbar-slot fallback: using this item requests Heavy Strike.
+    // This is not a persistent HUD overlay button; that route remains unverified.
+    beginAttack(player, MOVES.heavy);
+    return;
+  }
+
+  if (event.itemStack.typeId === MENU_ITEM) {
+    restoreMenuItem(player);
+    showCombatMenu(player);
+  }
 });
 
 system.runInterval(processCombatTick, 1);
