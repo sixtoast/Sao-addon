@@ -423,7 +423,7 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
     // Both attacks beginning their active window in this snapshot resolve together.
     // Equal interruption strengths clash; unequal exchanges preserve both confirmed hits
     // and apply the stronger move's reaction after damage (trade semantics).
-    const opposing = targetAction;
+    const opposing = snapshot.get(target.id);
     if (opposing && opposing.move && opposing.phase === "active" &&
         activeIntentIds.has(target.id) && opposing.actor.isValid) {
       if (move.interruptionStrength === opposing.move.interruptionStrength) {
@@ -611,11 +611,3 @@ world.afterEvents.playerSpawn.subscribe((event) => {
 
 system.runInterval(processCombatTick, 1);
 
-world.afterEvents.playerLeave.subscribe((event) => {
-  actions.delete(event.playerId);
-  parryWindows.delete(event.playerId);
-  guards.delete(event.playerId);
-  defensiveSequences.delete(event.playerId);
-  guardStrain.delete(event.playerId);
-  menuOpen.delete(event.playerId);
-});
