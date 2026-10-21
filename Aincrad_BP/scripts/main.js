@@ -2,14 +2,15 @@ import { world, system, EntityDamageCause } from "@minecraft/server";
 
 const ATTACK_ITEM = "aincrad:skill_crystal";
 
-// First player-combat slice. These are provisional test values, not final balance.
-const ATTACK = {
-  range: 3.0,
-  halfAngleDegrees: 38,
-  damage: 4,
-  startupTicks: 3,
-  activeTicks: 1,
-  recoveryTicks: 8
+// Provisional prototype values, not final combat balance.
+const COMBO = {
+  maxSteps: 3,
+  bufferInputs: 1,
+  steps: [
+    { range: 3.0, halfAngleDegrees: 38, damage: 4, startupTicks: 3, activeTicks: 1, recoveryTicks: 8 },
+    { range: 3.0, halfAngleDegrees: 42, damage: 4, startupTicks: 3, activeTicks: 1, recoveryTicks: 8 },
+    { range: 3.2, halfAngleDegrees: 48, damage: 5, startupTicks: 4, activeTicks: 1, recoveryTicks: 11 }
+  ]
 };
 
 const PHASE = {
@@ -24,7 +25,12 @@ const combatants = new Map();
 function getState(playerId) {
   let state = combatants.get(playerId);
   if (!state) {
-    state = { phase: PHASE.READY, attackId: 0 };
+    state = {
+      phase: PHASE.READY,
+      attackId: 0,
+      comboStep: 0,
+      bufferedInputs: 0
+    };
     combatants.set(playerId, state);
   }
   return state;
@@ -37,12 +43,12 @@ function distanceSquared(a, b) {
   return dx * dx + dy * dy + dz * dz;
 }
 
-function chooseTarget(player, origin, direction) {
+function chooseTarget(player, origin, direction, attack) {
   const candidates = player.dimension.getEntities({
     location: origin,
-    maxDistance: ATTACK.range
+    maxDistance: attack.range
   });
-  const minDot = Math.cos(ATTACK.halfAngleDegrees * Math.PI / 180);
+  const minDot = Math.cos(attack.halfAngleDegrees * Math.PI / 180);
   let best = null;
   let bestDot = minDot;
   let bestDistance = Infinity;
@@ -61,7 +67,7 @@ function chooseTarget(player, origin, direction) {
       z: targetPoint.z - origin.z
     };
     const distance = Math.sqrt(distanceSquared(targetPoint, origin));
-    if (distance <= 0.001 || distance > ATTACK.range) continue;
+    if (distance <= 0.001 || distance > attack.range) continue;
 
     const dot = (
       offset.x * direction.x +
@@ -81,8 +87,20 @@ function chooseTarget(player, origin, direction) {
 
 function beginQuickAttack(player) {
   const state = getState(player.id);
+
   if (state.phase !== PHASE.READY) {
-    player.sendMessage("§7[AINCRAD] Still recovering.");
+    if (state.comboStep < COMBO.maxSteps && state.bufferedInputs < COMBO.bufferInputs) {
+      state.bufferedInputs += 1;
+      player.sendMessage("§7[AINCRAD] Follow-up queued.");
+    }
+    return;
+  }
+
+  const stepIndex = state.comboStep;
+  const attack = COMBO.steps[stepIndex];
+  if (!attack) {
+    state.comboStep = 0;
+    state.bufferedInputs = 0;
     return;
   }
 
@@ -95,7 +113,9 @@ function beginQuickAttack(player) {
   const attackId = state.attackId + 1;
   state.attackId = attackId;
   state.phase = PHASE.STARTUP;
-  player.sendMessage("§8[AINCRAD] Quick attack...");
+  state.bufferedInputs = 0;
+
+  player.sendMessage(`§8[AINCRAD] Quick combo ${stepIndex + 1}/${COMBO.maxSteps}...`);
 
   system.runTimeout(() => {
     const current = combatants.get(player.id);
@@ -104,9 +124,9 @@ function beginQuickAttack(player) {
     current.phase = PHASE.ACTIVE;
     let hit = false;
     try {
-      const target = chooseTarget(player, origin, direction);
+      const target = chooseTarget(player, origin, direction, attack);
       if (target) {
-        target.applyDamage(ATTACK.damage, {
+        target.applyDamage(attack.damage, {
           cause: EntityDamageCause.entityAttack,
           damagingEntity: player
         });
@@ -117,8 +137,8 @@ function beginQuickAttack(player) {
     }
 
     player.sendMessage(hit
-      ? "§b[AINCRAD] Clean hit."
-      : "§7[AINCRAD] Miss.");
+      ? `§b[AINCRAD] Combo hit (${stepIndex + 1}).`
+      : `§7[AINCRAD] Combo miss (${stepIndex + 1}).`);
 
     system.runTimeout(() => {
       const active = combatants.get(player.id);
@@ -128,11 +148,22 @@ function beginQuickAttack(player) {
       system.runTimeout(() => {
         const recovering = combatants.get(player.id);
         if (!recovering || recovering.attackId !== attackId || recovering.phase !== PHASE.RECOVERY) return;
+
+        const hasFollowUp = recovering.bufferedInputs > 0 &&
+          recovering.comboStep + 1 < COMBO.maxSteps;
+
         recovering.phase = PHASE.READY;
-        player.sendMessage("§8[AINCRAD] Ready.");
-      }, ATTACK.recoveryTicks);
-    }, ATTACK.activeTicks);
-  }, ATTACK.startupTicks);
+        if (hasFollowUp) {
+          recovering.bufferedInputs -= 1;
+          beginQuickAttack(player);
+        } else {
+          recovering.comboStep = 0;
+          recovering.bufferedInputs = 0;
+          player.sendMessage("§8[AINCRAD] Ready.");
+        }
+      }, attack.recoveryTicks);
+    }, attack.activeTicks);
+  }, attack.startupTicks);
 }
 
 world.afterEvents.itemUse.subscribe((event) => {
@@ -141,10 +172,18 @@ world.afterEvents.itemUse.subscribe((event) => {
   if (!event.itemStack || event.itemStack.typeId !== ATTACK_ITEM) return;
 
   try {
+    const state = getState(player.id);
+    if (state.phase === PHASE.READY) {
+      state.comboStep = 0;
+    }
     beginQuickAttack(player);
   } catch (_) {
     player.sendMessage("§c[AINCRAD] Attack failed. Check the Content Log.");
     const state = combatants.get(player.id);
-    if (state) state.phase = PHASE.READY;
+    if (state) {
+      state.phase = PHASE.READY;
+      state.bufferedInputs = 0;
+      state.comboStep = 0;
+    }
   }
 });
