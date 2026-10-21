@@ -229,3 +229,25 @@ For a repeatable guard test, use a Creative test world and two players: compare 
 ## Version 0.4.5 — diagnostics runtime hotfix
 
 Version 0.4.4 could throw `ReferenceError: diagnosticsEnabled is not defined` from the combat tick. This is fixed by declaring the per-player diagnostics set. The optional native `world.beforeEvents.playerItemAttackEntity` feature-detection warning is now worded as an API-probe limitation, not as proof that combat cancellation is broken. The existing cancellation path remains in place; test it in-game as usual.
+
+
+## Chargeable Aincrad Sword prototype (v0.4.6)
+
+This feature branch adds a custom sword with `minecraft:use_modifiers.start_using: "on_attack"` (item format 1.26.30+) so the Attack input should start charge rather than using a separate hotbar token. This is a prototype only until iPhone input behaviour is verified.
+
+- [ ] Import v0.4.6 and confirm there are no Content Log item-component or Script API errors.
+- [ ] Confirm the Aincrad Sword is granted on first spawn; the Heavy Attack token is no longer auto-granted.
+- [ ] Tap Attack and release quickly: one Quick Slash for 7 damage, not a Heavy Strike.
+- [ ] Hold for 7–8 ticks and release: partial Heavy Strike for 9 damage.
+- [ ] Hold for 9+ ticks and release: ready cue at 9 ticks and one Heavy Strike for 12 damage.
+- [ ] Confirm the sword charge starts from Attack, not Interact/Use.
+- [ ] Confirm a tap/charge never also triggers the generic swing Quick Slash.
+- [ ] Test empty-hand Quick Slash (1 damage), and menu Heavy Strike while unarmed (5 damage).
+- [ ] Test a vanilla sword and axe: Quick Slash 7, Heavy Strike 12.
+- [ ] Test target snapshot, slight thumb/camera drift, target movement, and out-of-range misses.
+- [ ] Re-test guard, guard break, diagnostics, attack cancellation, parry and mob interactions.
+- [ ] Repeat all input checks on the user's iPhone touch controls. If touch input does not distinguish tap/hold, record exact behaviour and Content Log before changing the design.
+
+The charge threshold is 9 ticks (~0.45 seconds). Releases at 7–8 ticks count as partial heavy attacks. Heavy strike's remaining wind-up is shortened because the charge itself already provides the wind-up.
+
+Reference notes and known limitations: [Chargeable Sword prototype](CHARGEABLE_SWORD_PROTOTYPE.md).
