@@ -3,13 +3,13 @@
   "texture_name": "atlas.items",
   "texture_data": {
     "aincrad_skill_crystal": {
-      "textures": "textures/items/diamond_sword"
+      "textures": "textures/items/book_normal"
     },
     "aincrad_heavy_attack_token": {
       "textures": "textures/items/diamond_sword"
     },
     "aincrad_parry_token": {
-      "textures": "textures/items/diamond_sword"
+      "textures": "textures/items/shield"
     }
   }
 }
