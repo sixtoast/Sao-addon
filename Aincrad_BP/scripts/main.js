@@ -720,13 +720,8 @@ function requestHeavyAttack(player) {
   beginAttack(player, MOVES.heavy);
 }
 
-world.afterEvents.playerInteractWithEntity.subscribe((event) => {
-  const player = event.player;
-  if (!player || !player.isValid) return;
-  const heldItem = event.itemStack ?? event.beforeItemStack;
-  if (heldItem?.typeId !== HEAVY_ITEM) return;
-  requestHeavyAttack(player);
-});
+// Heavy Strike intentionally does not override the contextual Interact button.
+// Use the Heavy Attack item normally; itemUse is the only item-based activation route.
 
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
