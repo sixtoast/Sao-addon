@@ -185,3 +185,10 @@ On first spawn, the add-on reports whether swing input, native vanilla-attack ca
 - Once Guard phase reports active, test a mob's frontal melee hit and then a hit from behind. Front Guard should reduce damage until strain breaks it; a rear hit should remain unblocked.
 - Re-test Quick Slash against a mob. If the native cancellation check is unavailable, the vanilla attack can still land in addition to the custom attack; do not treat this as fixed.
 
+## 26.52 diagnostic hotfix (2026-10-21)
+
+- Removed unsupported `minecraft:use_animation: "swing"` from Heavy Attack and Parry items, and removed the legacy string-form Guard animation. These were rejected during item parsing on the user's Bedrock 26.52 stable runtime; icon errors may have been secondary to item parsing failing.
+- Defence resolution now re-checks the live `player.isSneaking` state at the point an incoming attack is processed, so a stale sequence map entry cannot itself activate Dodge/Parry/Guard after Sneak is no longer active.
+- The tick loop now clears stale held-Guard state whenever live Sneak is false and emits a one-time-per-release diagnostic message when it clears defence.
+- Native attack-cancellation setup now reports the specific thrown error or explicitly says when `world.beforeEvents.playerItemAttackEntity` is not exposed. Beta APIs being enabled does not itself prove this particular pre-release event is available in the installed runtime.
+- These changes are source-reviewed and the automated package build must pass, but still require an in-game retest on Bedrock 26.52. Confirm the three control items load without Content Log parse errors, Sneak defence ends on release/toggle-off, the Guard phase reduces incoming frontal mob melee, and native attack cancellation prevents vanilla knockback.
