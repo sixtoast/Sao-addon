@@ -4,9 +4,15 @@ import { ActionFormData } from "@minecraft/server-ui";
 const MENU_ITEM = "aincrad:skill_crystal";
 const HEAVY_ITEM = "aincrad:heavy_attack_token";
 const PARRY_ITEM = "aincrad:parry_token";
+const GUARD_ITEM = "aincrad:guard_token";
 const menuOpen = new Set();
 const actions = new Map();
 const parryWindows = new Map();
+const guards = new Map();
+const guardStrain = new Map();
+const GUARD_DURATION_TICKS = 30;
+const GUARD_BREAK_TICKS = 40;
+const GUARD_MAX_STRAIN = 10;
 const tickCounters = new Map();
 
 // Prototype timings are deliberately centralised and easy to tune after device tests.
@@ -241,7 +247,7 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
   // A clash or interruption may have resolved this actor earlier in the same snapshot.
   if (liveActorAction && liveActorAction.phase === "recovery" && liveActorAction.hitResolved) return;
 
-  // A parry is a distinct defence, not an ordinary hit interruption.
+  // Parry has priority over ordinary guard and completely negates a timed hit.
   if (isPlayer(target)) {
     const targetAction = snapshot.get(target.id);
     if (targetAction && targetAction.phase === "parry" &&
@@ -255,6 +261,44 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
       safeMessage(target, "§d[AINCRAD] Perfect parry! §7Attacker opened.");
       setReaction(actor, "stagger", "a parry");
       return;
+    }
+
+    // Guard only blocks attacks coming from the defender's forward-facing arc.
+    // Guard is a timed state activated by the dedicated Guard hotbar item.
+    const guard = guards.get(target.id);
+    if (guard && system.currentTick <= guard.untilTick && !guard.brokenUntil) {
+      const view = target.getViewDirection();
+      const toAttackerX = actor.location.x - target.location.x;
+      const toAttackerZ = actor.location.z - target.location.z;
+      const toAttackerLength = Math.sqrt(toAttackerX * toAttackerX + toAttackerZ * toAttackerZ) || 1;
+      const facingDot = (view.x * toAttackerX + view.z * toAttackerZ) / toAttackerLength;
+      if (facingDot >= 0.35) {
+        const strain = (guardStrain.get(target.id) || 0) + (move.id === "heavy" ? 6 : 3);
+        guardStrain.set(target.id, strain);
+        if (strain >= GUARD_MAX_STRAIN) {
+          guards.delete(target.id);
+          guardStrain.delete(target.id);
+          guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
+          const liveTargetAction = actions.get(target.id);
+          if (liveTargetAction) {
+            liveTargetAction.phase = "interrupted";
+            liveTargetAction.recoveryUntil = guard.brokenUntil;
+          }
+          safeMessage(target, "§c[AINCRAD] Guard broken! §7You are staggered.");
+          safeMessage(actor, "§6[AINCRAD] Guard break!");
+        } else {
+          const reducedDamage = Math.max(1, Math.ceil(move.damage * 0.25));
+          try {
+            target.applyDamage(reducedDamage, {
+              cause: EntityDamageCause.entityAttack,
+              damagingEntity: actor
+            });
+          } catch (_) {}
+          safeMessage(target, "§9[AINCRAD] Blocked! §7Guard strain " + strain + "/" + GUARD_MAX_STRAIN + ".");
+          safeMessage(actor, "§7[AINCRAD] Attack blocked.");
+        }
+        return;
+      }
     }
 
     // Both attacks beginning their active window in this snapshot resolve together.
@@ -375,6 +419,20 @@ world.afterEvents.itemUse.subscribe((event) => {
     return;
   }
 
+  if (event.itemStack.typeId === GUARD_ITEM) {
+    const currentGuard = guards.get(player.id);
+    if (currentGuard && system.currentTick <= currentGuard.untilTick) {
+      guards.delete(player.id);
+      safeMessage(player, "§7[AINCRAD] Guard lowered.");
+    } else if (currentGuard && currentGuard.brokenUntil && system.currentTick < currentGuard.brokenUntil) {
+      safeMessage(player, "§c[AINCRAD] Your guard is broken.");
+    } else {
+      guards.set(player.id, { untilTick: system.currentTick + GUARD_DURATION_TICKS });
+      safeMessage(player, "§9[AINCRAD] Guard raised for 1.5 seconds. Face the incoming attack.");
+    }
+    return;
+  }
+
   if (event.itemStack.typeId === PARRY_ITEM) {
     // Dedicated hotbar control: using this item opens the short parry window.
     beginParry(player);
@@ -407,9 +465,10 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(MENU_ITEM)) inventory.addItem(new ItemStack(MENU_ITEM, 1));
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike; Parry item = Parry.");
+      if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack = Heavy Strike; Parry = Parry; Guard = Block.");
     } catch (_) {
-      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token and /give @s aincrad:skill_crystal.");
+      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
     }
   }, 1);
 });
@@ -419,5 +478,7 @@ system.runInterval(processCombatTick, 1);
 world.afterEvents.playerLeave.subscribe((event) => {
   actions.delete(event.playerId);
   parryWindows.delete(event.playerId);
+  guards.delete(event.playerId);
+  guardStrain.delete(event.playerId);
   menuOpen.delete(event.playerId);
 });
