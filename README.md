@@ -5,7 +5,7 @@ An iPhone-first, from-scratch Sword Art Online-inspired Bedrock RPG project. Dev
 ## Current combat prototype
 
 - **Aincrad Sword:** tap Attack and release for Quick Slash; hold Attack for 9 ticks and release for Heavy Strike. 7–8 ticks is a forgiving partial Heavy Strike.
-- **Damage:** unarmed Quick/Heavy = 1/5; weapon Quick/Heavy = 7/12. The current custom Aincrad Sword and recognised vanilla swords, axes, trident and mace count as weapons.
+- **Damage:** unarmed Quick/Heavy = 1/5; weapon Quick/Heavy = 7/12. The current custom Aincrad Sword and recognised vanilla swords, axes, spears, trident and mace count as weapons.
 - **Sneak defence:** hold Sneak to cycle Spot Dodge → Parry → Guard. Guard stays active while Sneak stays active and can break under strain.
 - **Parry / Guard fallback items:** still provided for compatibility testing.
 - **Aincrad Skill Menu:** utility and fallback controls.
