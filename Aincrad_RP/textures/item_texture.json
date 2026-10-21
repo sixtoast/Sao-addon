@@ -10,6 +10,9 @@
     },
     "aincrad_parry_token": {
       "textures": "textures/items/shield"
+    },
+    "aincrad_guard_token": {
+      "textures": "textures/items/shield"
     }
   }
 }
