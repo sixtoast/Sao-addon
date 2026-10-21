@@ -383,7 +383,8 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
 
     // Guard is the final phase of the same Sneak-triggered defensive sequence.
     const guard = guards.get(target.id);
-    if (defensePhase === "guard" && !(guard?.brokenUntil && system.currentTick < guard.brokenUntil)) {
+    if (defensePhase === "guard" && guard?.held &&
+        !(guard.brokenUntil && system.currentTick < guard.brokenUntil)) {
       const view = target.getViewDirection();
       const toAttackerX = actor.location.x - target.location.x;
       const toAttackerZ = actor.location.z - target.location.z;
@@ -549,7 +550,7 @@ world.afterEvents.itemUse.subscribe((event) => {
   if (event.itemStack.typeId === GUARD_ITEM) {
     if (!sneakGuardInputAvailable) {
       defensiveSequences.set(player.id, { startedTick: system.currentTick });
-      guards.set(player.id, {});
+      guards.set(player.id, { held: true });
       safeMessage(player, "§9[AINCRAD] Defensive stance.");
     } else safeMessage(player, "§7[AINCRAD] Sneak cycles Spot Dodge, Parry, then Guard.");
     return;
