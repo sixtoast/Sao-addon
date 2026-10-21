@@ -112,6 +112,7 @@ function beginQuickAttack(player) {
   };
   const attackId = state.attackId + 1;
   state.attackId = attackId;
+  state.comboStep = stepIndex + 1;
   state.phase = PHASE.STARTUP;
   state.bufferedInputs = 0;
 
@@ -150,7 +151,7 @@ function beginQuickAttack(player) {
         if (!recovering || recovering.attackId !== attackId || recovering.phase !== PHASE.RECOVERY) return;
 
         const hasFollowUp = recovering.bufferedInputs > 0 &&
-          recovering.comboStep + 1 < COMBO.maxSteps;
+          recovering.comboStep < COMBO.maxSteps;
 
         recovering.phase = PHASE.READY;
         if (hasFollowUp) {
