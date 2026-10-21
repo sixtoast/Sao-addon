@@ -313,3 +313,15 @@ This candidate changes only the Heavy Attack input mechanism. It replaces the fo
 9. If charging does not start, record the exact on-screen message and inspect the Content Log before changing timing values.
 
 The use of a native throwable is a hypothesis to test, not a verified fix. Keep this branch separate from `main` until the iPhone test passes.
+
+
+## v0.5.4 Attack-button charge test
+
+1. Confirm both packs display v0.5.4.
+2. Select Heavy Attack and hold the normal Attack button, not Use.
+3. Check whether the charge message and meter appear while Attack is held.
+4. Release Attack and confirm exactly one melee Heavy Strike, with no visible projectile and the token still available.
+5. If the chat says `Charge input was not detected; using Heavy Strike fallback.`, Attack-triggered charging failed; record that result. The known-good v0.5.3 Use-button charge is the comparison baseline.
+6. Recheck Skill Activation Book and Sneak defence.
+
+Only the `start_using` setting changes in this test. Do not merge into `main` until verified on the user's iPhone.
