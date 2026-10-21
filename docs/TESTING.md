@@ -242,3 +242,15 @@ Version 0.4.4 could throw `ReferenceError: diagnosticsEnabled is not defined` fr
 7. Re-test Guard, guard break, Parry, and diagnostics. The stable release remains unchanged; if the Interact event does not fire on iPhone, report the exact touch behaviour and Content Log.
 
 The Interact button is contextual and appears when looking at an entity. It is not a persistent custom HUD button.
+
+
+## v0.4.9 — Experimental Server Form Overlay Heavy Strike button
+
+1. Import the v0.4.9 test build and enable the Resource Pack and Behavior Pack for the world.
+2. Join the world on iPhone touch controls. After the initial spawn, a small **HEAVY STRIKE** button should appear near the bottom-right while the world continues running.
+3. Tap the button once. Confirm Heavy Strike begins and resolves once; confirm the overlay button returns after the attack.
+4. Check that tapping empty areas of the screen still moves/looks around and that the tap on the Heavy Strike button does not also trigger the normal Attack action.
+5. Confirm normal Attack still performs Quick Slash and Sneak still cycles Spot Dodge → Parry → Guard.
+6. Close/dismiss the overlay. Use the Skill Crystal and choose **Show Heavy Strike HUD Button** to reopen it.
+7. Open inventory and pause screens; check that they remain usable and that the overlay does not block their controls. Check whether the button reappears after respawn.
+8. Record any missing touch controls, frozen movement, flicker, chat errors, Content Log errors, or duplicate damage. This UI technique is unsupported and touch-only; keep the stable release unchanged.
