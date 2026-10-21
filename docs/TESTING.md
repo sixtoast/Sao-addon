@@ -300,7 +300,7 @@ This package is a test candidate. Keep stable `main` unchanged and do not merge 
 
 ## v0.5.3 native throwable charge test
 
-This candidate changes only the Heavy Attack input mechanism. It replaces the food-based `start_using: "on_attack"` experiment with `minecraft:throwable` plus `minecraft:projectile`, following Microsoft's documented charged-throw pattern for tridents. The placeholder arrow should be removed immediately by script; the intended result is still a melee Heavy Strike, not a projectile attack.
+This candidate changes only the Heavy Attack input mechanism. It replaces the food-based `start_using: "on_attack"` experiment with `minecraft:throwable` plus `minecraft:projectile`, following Microsoft's documented charged-throw pattern for tridents. The placeholder snowball should be removed immediately by script; the intended result is still a melee Heavy Strike, not a projectile attack.
 
 1. Confirm both packs display version 0.5.3 after import.
 2. Select Heavy Attack and use/hold it as you would charge a trident on touch controls.
