@@ -90,3 +90,10 @@ Source references:
 - Community JSON UI input properties: https://wiki.bedrock.dev/json-ui/json-ui-documentation.html
 
 Risks to test on Bedrock 26.52 iPhone: whether the current Ore UI build still permits this screen-stack trick, whether form taps remain reliable while the game is active, whether HUD controls are still visible, and whether the form can be reopened after an attack without flicker or input blocking. This remains an experimental branch; do not merge until the user tests it.
+
+
+## v0.4.9 device-test result and v0.5.0 fallback (21 October 2026)
+
+The user tested the v0.4.9 Server Form Overlay build on iPhone and reported that the Heavy Strike button did not appear. They also could not interact with the Skill Activation Book while the earlier contextual Interact fallback was present. The overlay is therefore considered failed on the target runtime; successful packaging and JSON parsing did not establish runtime compatibility. Do not merge v0.4.9.
+
+The v0.5.0 test branch removes the experimental `Aincrad_RP/ui/server_form.json` override and all overlay-form scheduling. It also removes `minecraft:interact_button` from the Heavy Attack item and removes the `playerInteractWithEntity` activation listener, so Heavy Strike no longer takes over the contextual Interact action. The only item-based activation path is `world.afterEvents.itemUse` when the Heavy Attack item is used. This should restore ordinary Interact use for the Skill Activation Book, but the user must verify both book interaction and Heavy Strike activation in-game. If item-use does not activate on the target touch runtime, do not re-add the contextual Interact override; use the Skill Crystal combat menu's Heavy Strike action as the non-conflicting fallback while researching a separate input route.
