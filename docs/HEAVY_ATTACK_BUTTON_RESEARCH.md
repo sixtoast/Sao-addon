@@ -136,3 +136,57 @@ The next isolated candidate replaces the food-based use mechanism with the docum
 - A placeholder snowball is configured with zero launch power and removed by an owner-scoped entity-spawn cleanup while the charge is active. This is an experimental way to use native charge input without intentionally shipping a ranged attack. Item restoration is guarded so an occupied hotbar slot is not overwritten.
 
 This is still a hypothesis, not a confirmed fix. Validate JSON, JavaScript syntax, and pack versioning before testing. On iPhone, hold the native Use action with Heavy Attack selected, watch for the charge message/meter, then release and confirm one melee Heavy Strike. Also check that no arrow remains visible, the Heavy Attack item is not lost, normal Attack still behaves as intended, and the Skill Activation Book still works. If `itemStartUse` still does not fire, inspect the Content Log and actual touch input route before changing combat timing or adding fallback controls.
+
+
+## v0.5.4 Attack-button native charge test (21 October 2026)
+
+The user confirmed on iPhone that v0.5.3 charges successfully while using the native Use button. This validates the throwable-based charge lifecycle on-device. The next isolated experiment changes only `minecraft:use_modifiers.start_using` from `always` to `on_attack`, retaining `minecraft:throwable`, `minecraft:projectile`, the same draw durations, script charge timer, meter, and melee attack resolver.
+
+Microsoft documents `on_attack` as beginning item use when attack input is received while the item is selected, and says the component format must be at least 1.26.30: https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_use_modifiers?view=minecraft-bedrock-stable
+
+This test specifically checks whether native throwable draw/release remains active when initiated from Attack. It is not guaranteed: the earlier food-based `on_attack` setup did not fire charge events. On iPhone, with Heavy Attack selected, hold Attack and check for the charge message/meter; release and confirm a single melee Heavy Strike, no lingering projectile, and retained token. If the fallback message appears, record it and stop treating the Attack route as successful. The known-good v0.5.3 Use-button charge remains the reference.
+
+
+## v0.5.4 Attack-button native charge test result (21 October 2026)
+
+The user tested v0.5.4 on iPhone and reported that Attack-button charging still does not work. The v0.5.3 native throwable charge remains the confirmed working route only when activated through Use.
+
+Do not repeat the same `start_using: "on_attack"` experiment without new evidence. Microsoft documents `InputInfo.getButtonState` and `WorldAfterEvents.playerButtonInput`, but the documented `InputButton` enum currently contains only `Jump` and `Sneak`, not Attack. References:
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputinfo?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputbutton?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
+
+Therefore the supported Script API does not currently provide a documented held-Attack state that we can poll for charge duration. The player swing event reports that a swing started, not that Attack remains held or has been released. The next investigation must look for a distinct native item/component route that binds a real charge lifecycle to Attack, or accept that the reliable native charge input is Use. Do not claim Attack charging is possible through Script API until a concrete API/component path is verified. Keep stable main unchanged.
+
+
+## v0.5.5 Attack charge event diagnostics
+
+This temporary build does not change combat behaviour. It adds chat diagnostics to report whether `itemStartUse` and `itemReleaseUse` actually fire for `aincrad:heavy_attack_token`, including the event item type and currently selected item type. Both packs are version 0.5.5.
+
+On iPhone, select Heavy Attack and try holding/releasing the normal Attack button once. Record these messages:
+- `[DIAG 0.5.5] itemStartUse fired...`
+- `[DIAG 0.5.5] itemReleaseUse fired...`
+- Existing `Charge input was not detected; using Heavy Strike fallback.`
+
+Interpretation:
+- No start diagnostic: Attack does not start the item's native use lifecycle on this runtime.
+- Start diagnostic but no charge meter: inspect event item type/selected item type; the handler may be receiving a mismatched item.
+- Start and release diagnostics: native events are firing; timing or state logic needs a targeted fix.
+- Release diagnostic without start diagnostic: investigate event ordering / item stack lifecycle.
+
+This is a diagnostic candidate only, not a fix. Do not merge into main. v0.5.3 remains the known-good Use-button charging baseline.
+
+
+## v0.5.6 native attack-cancellation isolation test (22 October 2026)
+
+v0.5.5 device result: while testing normal Attack, the user saw only `Charge input was not detected; using Heavy Strike fallback.` Neither diagnostic `itemStartUse` nor `itemReleaseUse` messages appeared. This proves the item-use lifecycle is not starting in that test.
+
+Code review found that the script globally cancels `world.beforeEvents.playerItemAttackEntity` for every item. Because `minecraft:use_modifiers.start_using: "on_attack"` depends on an attack input, this cancellation is a plausible interference point, but not yet proven.
+
+The v0.5.6 test changes only two diagnostic behaviours:
+- Allow the native `playerItemAttackEntity` event through when the held item is `aincrad:heavy_attack_token`; other items remain cancelled as before.
+- Suppress the scripted Heavy Strike fallback for this token so the test cannot mistake fallback damage for a working native charge. A native attack may still deal ordinary Minecraft damage during this temporary test.
+
+Test on an actual mob/entity, not by swinging at air: select Heavy Attack, attack the entity once and hold if possible, then release. Watch for the `[DIAG 0.5.5] itemStartUse fired...` and `itemReleaseUse fired...` messages, and the `[DIAG 0.5.6] Native attack allowed; scripted fallback suppressed for this test.` message. If itemStartUse appears, cancellation was likely interfering; if it does not, this hypothesis is not supported. The item attack event only exists for an attack against an entity.
+
+This is a diagnostic candidate only, not a combat fix. Do not merge to main. v0.5.3 Use-button charging remains the known-good baseline.

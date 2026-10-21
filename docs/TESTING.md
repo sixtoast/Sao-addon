@@ -313,3 +313,48 @@ This candidate changes only the Heavy Attack input mechanism. It replaces the fo
 9. If charging does not start, record the exact on-screen message and inspect the Content Log before changing timing values.
 
 The use of a native throwable is a hypothesis to test, not a verified fix. Keep this branch separate from `main` until the iPhone test passes.
+
+
+## v0.5.4 Attack-button charge test
+
+1. Confirm both packs display v0.5.4.
+2. Select Heavy Attack and hold the normal Attack button, not Use.
+3. Check whether the charge message and meter appear while Attack is held.
+4. Release Attack and confirm exactly one melee Heavy Strike, with no visible projectile and the token still available.
+5. If the chat says `Charge input was not detected; using Heavy Strike fallback.`, Attack-triggered charging failed; record that result. The known-good v0.5.3 Use-button charge is the comparison baseline.
+6. Recheck Skill Activation Book and Sneak defence.
+
+Only the `start_using` setting changes in this test. Do not merge into `main` until verified on the user's iPhone.
+
+
+## v0.5.5 Attack charge event diagnostics
+
+This temporary build does not change combat behaviour. It adds chat diagnostics to report whether `itemStartUse` and `itemReleaseUse` actually fire for `aincrad:heavy_attack_token`, including the event item type and currently selected item type. Both packs are version 0.5.5.
+
+On iPhone, select Heavy Attack and try holding/releasing the normal Attack button once. Record these messages:
+- `[DIAG 0.5.5] itemStartUse fired...`
+- `[DIAG 0.5.5] itemReleaseUse fired...`
+- Existing `Charge input was not detected; using Heavy Strike fallback.`
+
+Interpretation:
+- No start diagnostic: Attack does not start the item's native use lifecycle on this runtime.
+- Start diagnostic but no charge meter: inspect event item type/selected item type; the handler may be receiving a mismatched item.
+- Start and release diagnostics: native events are firing; timing or state logic needs a targeted fix.
+- Release diagnostic without start diagnostic: investigate event ordering / item stack lifecycle.
+
+This is a diagnostic candidate only, not a fix. Do not merge into main. v0.5.3 remains the known-good Use-button charging baseline.
+
+
+## v0.5.6 native attack-cancellation isolation test (22 October 2026)
+
+v0.5.5 device result: while testing normal Attack, the user saw only `Charge input was not detected; using Heavy Strike fallback.` Neither diagnostic `itemStartUse` nor `itemReleaseUse` messages appeared. This proves the item-use lifecycle is not starting in that test.
+
+Code review found that the script globally cancels `world.beforeEvents.playerItemAttackEntity` for every item. Because `minecraft:use_modifiers.start_using: "on_attack"` depends on an attack input, this cancellation is a plausible interference point, but not yet proven.
+
+The v0.5.6 test changes only two diagnostic behaviours:
+- Allow the native `playerItemAttackEntity` event through when the held item is `aincrad:heavy_attack_token`; other items remain cancelled as before.
+- Suppress the scripted Heavy Strike fallback for this token so the test cannot mistake fallback damage for a working native charge. A native attack may still deal ordinary Minecraft damage during this temporary test.
+
+Test on an actual mob/entity, not by swinging at air: select Heavy Attack, attack the entity once and hold if possible, then release. Watch for the `[DIAG 0.5.5] itemStartUse fired...` and `itemReleaseUse fired...` messages, and the `[DIAG 0.5.6] Native attack allowed; scripted fallback suppressed for this test.` message. If itemStartUse appears, cancellation was likely interfering; if it does not, this hypothesis is not supported. The item attack event only exists for an attack against an entity.
+
+This is a diagnostic candidate only, not a combat fix. Do not merge to main. v0.5.3 Use-button charging remains the known-good baseline.
