@@ -1,4 +1,4 @@
-# Chargeable Aincrad Sword prototype (v0.4.6)
+# Chargeable Aincrad Sword prototype (v0.4.7)
 
 ## Goal
 
@@ -16,7 +16,7 @@ Replace the separate Heavy Attack hotbar control with one custom sword. A tap of
 
 ## Implementation notes
 
-- The custom item uses `minecraft:use_modifiers.start_using = "on_attack"`, introduced in item format version 1.26.30, so charge begins from Attack rather than Interact/Use.
+- The custom item uses `minecraft:use_modifiers.start_using = "on_attack"`, introduced in item format version 1.26.30, so charge begins from Attack rather than Interact/Use. A `minecraft:food` use behaviour is included because use modifiers alone do not provide an item-use behaviour. It gives zero nutrition and converts back to the same sword if the very long 3,600-second use ever completes.
 - `world.afterEvents.itemStartUse` snapshots the best eligible target and starts action-bar feedback.
 - `world.afterEvents.itemReleaseUse` uses both the documented remaining-use duration and elapsed game ticks to calculate the charge.
 - 9 ticks is approximately 0.45 seconds. Full/partial heavy attacks use a short 3/4-tick release wind-up so the charge itself does not get counted twice as wind-up.
@@ -26,8 +26,8 @@ Replace the separate Heavy Attack hotbar control with one custom sword. A tap of
 ## Known risks
 
 - The item-use events are documented, and `start_using: on_attack` is documented for 1.26.30+, but tap-versus-hold behaviour still needs to be confirmed on the user's actual iPhone touch controls.
-- If the target runtime does not emit start/release events for Attack on this custom item, the sword will not trigger these attacks through the charge handler. Do not mark the mechanic complete based only on packaging or static checks.
-- A 10-second use duration provides enough headroom to charge; the combat threshold is 9 ticks, not the full item-use duration.
+- The use-behaviour component is a compatibility workaround, not a clean weapon-native charge API. The sword is configured with zero nutrition and converts back to itself on completion; the 3,600-second duration should make completion impossible during normal combat. Verify the item does not disappear or behave like food on the target runtime.
+- The item-use duration is 3,600 seconds as a safety margin; combat thresholds remain 7 and 9 ticks. Releasing the input should resolve the move long before the use duration completes.
 - Custom sword icon currently reuses the vanilla diamond-sword texture. It is a prototype asset, not final art.
 
 ## In-game acceptance checklist
