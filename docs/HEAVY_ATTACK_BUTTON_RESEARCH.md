@@ -51,3 +51,18 @@ Current prototype: a dedicated Heavy Attack hotbar item (`aincrad:heavy_attack_t
 - [Mojang Bedrock sample HUD](https://github.com/Mojang/bedrock-samples/blob/main/resource_pack/ui/hud_screen.json)
 - [CustomForm Script API](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server-ui/customform?view=minecraft-bedrock-stable)
 - [Add-On pack manifest capabilities](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/addonsreference/packmanifest?view=minecraft-bedrock-stable)
+
+
+## Re-check (21 October 2026)
+
+The custom HUD route was re-checked against current public documentation and a recent community UI framework:
+
+- Microsoft's current JSON UI reference documents controls and input-to-action button mappings, but does not document a generic path for a persistent HUD control to invoke a Behavior Pack Script API callback: https://learn.microsoft.com/en-us/minecraft/creator/reference/content/jsonuireference/examples/jsonuilist?view=minecraft-bedrock-stable
+- The Mojang sample HUD is a JSON UI layout, not evidence of a script callback from a custom touch button: https://github.com/Mojang/bedrock-samples/blob/main/resource_pack/ui/hud_screen.json
+- The MinUI project's current README explicitly states that persistent HUD overlays cannot receive mouse/touch/controller clicks through current public Bedrock APIs; interactive controls require a modal form or container screen. Its HUD elements are display-only: https://github.com/codex-alchemist-dev/MinUI
+
+### Status
+
+**A genuine, always-visible, tappable Heavy Attack HUD button is not implemented and cannot currently be marked complete using a documented public add-on API.** Do not add a decorative JSON UI button or remap an essential native action and call that finished.
+
+The current dedicated Heavy Attack item is the practical fallback. A custom HUD attempt would be an unsupported experiment, not a reliable implementation. Revisit only if Mojang exposes a supported interactive HUD input/callback route, or if the project deliberately accepts a form/container-based control that interrupts normal gameplay and is therefore not the requested HUD button.
