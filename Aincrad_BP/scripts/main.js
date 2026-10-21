@@ -15,6 +15,7 @@ const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
 const tickCounters = new Map();
 // Per-player opt-in diagnostics, controlled from the Skill Menu.
+const diagnosticsEnabled = new Set();
 
 // Prototype timings are deliberately centralised and easy to tune after device tests.
 // One game tick is approximately 1/20th of a second.
@@ -258,7 +259,7 @@ function showCombatMenu(player) {
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
-        : "Warning: vanilla melee may still deal extra damage; cancellation is unavailable.")
+        : "Native attack-cancel event is not exposed by this runtime; the tested combat damage-cancellation path remains enabled.")
     )
     .button("Quick Slash\n§7Fast • 7 damage")
     .button("Heavy Strike\n§7Committed • 12 damage")
@@ -764,8 +765,8 @@ world.afterEvents.playerSpawn.subscribe((event) => {
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
       if (!nativeAttackCancellationAvailable) {
-        safeMessage(player, "§e[AINCRAD] Native attack-cancel API unavailable: " + nativeAttackCancellationError);
-        safeMessage(player, "§e[AINCRAD] Vanilla damage may be cancelled by the hurt hook, but vanilla knockback may remain.");
+        safeMessage(player, "§7[AINCRAD] Optional native attack-cancel event not exposed: " + nativeAttackCancellationError);
+        safeMessage(player, "§7[AINCRAD] This API probe is not a combat failure by itself; the existing tested combat cancellation path remains active.");
       }
       if (!mobDefenseInputAvailable) {
         safeMessage(player, "§c[AINCRAD] Guard/dodge/parry hurt hook failed to register. Check the Content Log and Minecraft version.");
