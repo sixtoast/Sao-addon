@@ -203,3 +203,10 @@ The previous hotfix reused pack version 0.4.0, which can leave Minecraft loading
 - The generic player swing event can fire while the Heavy Attack hotbar item is used. The swing handler now checks the selected hotbar item and ignores that generic swing when Heavy Attack is selected, so it cannot start Quick Slash over the dedicated Heavy Strike request.
 - Behavior Pack and Resource Pack versions are bumped to 0.4.2 so Minecraft can distinguish this package from the previous import.
 - Build validation does not replace the in-game check: verify that using Heavy Attack reports Heavy Strike and deals its 12-damage move, while ordinary Attack still starts Quick Slash.
+
+
+## Heavy Attack input-order fix (0.4.3 candidate)
+
+- The direct swing handler now defers Quick Slash by one tick. This allows the dedicated Heavy Attack item's `itemUse` event to start Heavy Strike first if Bedrock dispatches the generic swing event earlier in the same touch/controller input frame.
+- The deferred callback also re-checks the selected hotbar item and preserves an already-started Heavy Strike.
+- This is a targeted input-order fix, not yet verified in-game. Test the Heavy Attack token and ordinary Attack separately on Bedrock 26.52 touch controls. Confirm Heavy Strike starts once, deals 12 damage, and ordinary Attack still starts Quick Slash.
