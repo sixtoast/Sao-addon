@@ -196,3 +196,10 @@ On first spawn, the add-on reports whether swing input, native vanilla-attack ca
 ## Pack replacement/version check (2026-10-21)
 
 The previous hotfix reused pack version 0.4.0, which can leave Minecraft loading the already-imported pack instead of the newly packaged files. Both Behavior Pack and Resource Pack header/module versions are now 0.4.1. Import the newly built .mcaddon and verify the pack details show 0.4.1. If Minecraft still reports the old item parser errors, remove the old Aincrad BP/RP from Storage > Behavior Packs / Resource Packs (and deactivate them from the test world), then import the 0.4.1 package again. Do not delete the world.
+
+
+## Heavy Attack input conflict fix (0.4.2)
+
+- The generic player swing event can fire while the Heavy Attack hotbar item is used. The swing handler now checks the selected hotbar item and ignores that generic swing when Heavy Attack is selected, so it cannot start Quick Slash over the dedicated Heavy Strike request.
+- Behavior Pack and Resource Pack versions are bumped to 0.4.2 so Minecraft can distinguish this package from the previous import.
+- Build validation does not replace the in-game check: verify that using Heavy Attack reports Heavy Strike and deals its 12-damage move, while ordinary Attack still starts Quick Slash.
