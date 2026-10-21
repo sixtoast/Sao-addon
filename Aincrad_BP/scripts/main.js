@@ -302,7 +302,8 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
 
     if (defensePhase === "parry") {
       parryWindows.delete(target.id);
-      defensiveSequences.delete(target.id);
+      // Do not end the held Sneak sequence on a successful parry.
+      // If the player keeps holding Sneak, the sequence advances to Guard at tick 7.
       const liveTargetAction = actions.get(target.id);
       if (liveTargetAction) {
         liveTargetAction.phase = "recovery";
