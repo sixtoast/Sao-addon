@@ -337,3 +337,19 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Boss interruptibility: interruptibility depends on attack commitment and attack type. Light attacks and selected wind-ups can be interrupted under defined conditions, while heavy attacks and signature moves resist ordinary interruption or require a specific counter. Resistant attacks must remain readable, and interrupt rules must prevent party stun-locking while rewarding timing and coordination. This is a design decision, not an implemented feature.
 
 - Boss interrupt reward: outcomes scale with the interrupted attack. Minor interruptions create brief recovery, while interrupting a dangerous committed attack can create a larger punish opportunity; signature moves may have encounter-specific outcomes. Rewards should reflect risk and commitment without guaranteeing a large damage window for every interrupt. This is a design decision, not an implemented feature.
+
+## 14. Player attack collision resolution
+
+**Agreed — contextual resolution (Option D)**
+
+- Resolve attack interactions using explicit move properties and timing, not a single universal collision rule.
+- The resolver distinguishes three outcomes: **clash**, **clean interruption**, and **trade**. These are separate deterministic results, not cosmetic variants of the same event.
+- A standard clash briefly interrupts both moves and creates readable recovery for both fighters; neither receives a free hit.
+- A clean interruption occurs when an eligible attack defeats the opponent's move according to declared interruption strength, resistance, phase, and vulnerability rules.
+- A trade occurs when both attacks have already earned valid hits in the shared resolution snapshot; a later event must not retroactively cancel a hit that has connected.
+- Only explicitly designated moves may win, bypass, or alter a standard clash, and only under declared conditions. Do not infer priority solely from damage or animation.
+- Use snapshot-based shared resolution for simultaneous exchanges by default. Use sequential resolution only when a later outcome legitimately depends on an earlier state change.
+- Event ordering must not change the result. Each hit, interruption, reward, and resource change resolves at most once.
+- This choice extends the existing commitment-and-poise model. It does not mean every move can clash, interrupt, or trade in every phase; each move must declare its eligibility and the resolver must enforce it.
+- Implementation is deferred until the player combat state machine and authoritative hit-resolution architecture are ready. This is a design decision, not a claim of implemented or in-game-verified behaviour.
+
