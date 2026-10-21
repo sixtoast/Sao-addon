@@ -4,11 +4,7 @@
     "name": "Aincrad Combat RP v0.5.1",
     "description": "Aincrad Combat v0.5.1 | Hold-to-charge combat prototype.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
-    "version": [
-      0,
-      5,
-      1
-    ],
+    "version": [0, 5, 2],
     "min_engine_version": [
       1,
       21,
@@ -19,11 +15,7 @@
     {
       "type": "resources",
       "uuid": "48bdf47b-b278-41b2-adb4-7ca0a55207d8",
-      "version": [
-        0,
-        5,
-        1
-      ]
+      "version": [0, 5, 2]
     }
   ]
 }
