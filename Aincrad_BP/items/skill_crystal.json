@@ -20,7 +20,8 @@
       "minecraft:food": {
         "nutrition": 0,
         "saturation_modifier": 0,
-        "can_always_eat": true
+        "can_always_eat": true,
+        "using_converts_to": "aincrad:skill_crystal"
       },
       "minecraft:use_modifiers": {
         "use_duration": 0.1,
