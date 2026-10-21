@@ -107,7 +107,7 @@ function showCombatMenu(player) {
 function beginAttack(player, move) {
   if (!player.isValid) return;
   const current = actions.get(player.id);
-  if (current && current.phase !== "recovery" && current.phase !== "idle") {
+  if (current && !(current.phase === "recovery" && system.currentTick >= current.recoveryUntil) && current.phase !== "idle") {
     safeMessage(player, "§e[AINCRAD] You are committed to your current action.");
     return;
   }
@@ -210,7 +210,7 @@ function applyMoveDamage(attacker, target, move) {
   }
 }
 
-function resolveAttackIntent(intent, snapshot) {
+function resolveAttackIntent(intent, snapshot, activeIntentIds) {
   const { actor, move, target } = intent;
   if (!actor.isValid || !target.isValid) return;
 
@@ -220,8 +220,11 @@ function resolveAttackIntent(intent, snapshot) {
     if (targetAction && targetAction.phase === "parry" &&
         system.currentTick <= targetAction.recoveryUntil) {
       parryWindows.delete(target.id);
-      targetAction.phase = "recovery";
-      targetAction.recoveryUntil = system.currentTick + REACTION_TICKS.stagger;
+      const liveTargetAction = actions.get(target.id);
+      if (liveTargetAction) {
+        liveTargetAction.phase = "recovery";
+        liveTargetAction.recoveryUntil = system.currentTick + REACTION_TICKS.stagger;
+      }
       safeMessage(target, "§d[AINCRAD] Perfect parry! §7Attacker opened.");
       setReaction(actor, "stagger", "a parry");
       return;
@@ -232,13 +235,16 @@ function resolveAttackIntent(intent, snapshot) {
     // and apply the stronger move's reaction after damage (trade semantics).
     const opposing = targetAction;
     if (opposing && opposing.move && opposing.phase === "active" &&
-        snapshot.has(target.id) && opposing.actor.isValid) {
+        activeIntentIds.has(target.id) && opposing.actor.isValid) {
       if (move.interruptionStrength === opposing.move.interruptionStrength) {
         actions.get(actor.id).phase = "recovery";
         actions.get(actor.id).recoveryUntil = system.currentTick + REACTION_TICKS.actionBreak;
-        opposing.phase = "recovery";
-        opposing.recoveryUntil = system.currentTick + REACTION_TICKS.actionBreak;
-        opposing.hitResolved = true;
+        const liveOpposing = actions.get(target.id);
+        if (liveOpposing) {
+          liveOpposing.phase = "recovery";
+          liveOpposing.recoveryUntil = system.currentTick + REACTION_TICKS.actionBreak;
+          liveOpposing.hitResolved = true;
+        }
         actions.get(actor.id).hitResolved = true;
         safeMessage(actor, "§6[AINCRAD] Clash!");
         safeMessage(target, "§6[AINCRAD] Clash!");
@@ -325,7 +331,8 @@ function processCombatTick() {
   const snapshot = new Map();
   for (const [id, action] of actions) snapshot.set(id, { ...action });
   const currentIntents = intents.splice(0, intents.length);
-  for (const intent of currentIntents) resolveAttackIntent(intent, snapshot);
+  const activeIntentIds = new Set(currentIntents.map((intent) => intent.actor.id));
+  for (const intent of currentIntents) resolveAttackIntent(intent, snapshot, activeIntentIds);
 }
 
 const intents = [];
