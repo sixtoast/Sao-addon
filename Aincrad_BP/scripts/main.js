@@ -169,6 +169,8 @@ try {
       event.cancel = true;
     });
     nativeAttackCancellationAvailable = true;
+  } else {
+    nativeAttackCancellationError = "world.beforeEvents.playerItemAttackEntity is not exposed by this runtime";
   }
 } catch (error) {
   // Preserve the reason for API/version mismatch in the runtime diagnostics.
