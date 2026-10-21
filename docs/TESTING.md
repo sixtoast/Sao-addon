@@ -174,3 +174,14 @@ The defence sequence now polls the player's actual `isSneaking` state every tick
 6. Test frontal mob hits while Guard is active. Guard should reduce damage and build strain; rear hits should remain unblocked.
 
 The vanilla-hit suppression depends on the runtime exposing the cancellable `world.beforeEvents.entityHurt` event for player-caused melee. Verify on the target Minecraft version and inspect the Content Log if vanilla damage or knockback remains.
+
+## Combat runtime diagnostics (new; runtime test pending)
+
+On first spawn, the add-on reports whether swing input, native vanilla-attack cancellation, and the before-hurt Guard hook registered. These are runtime capability checks, not proof that the game behaviour works.
+
+- If vanilla attack cancellation reports **UNAVAILABLE**, enable the world's **Beta APIs** experiment (if offered by the installed Bedrock version), reload the world, and check the report again. The native `playerItemAttackEntity` cancellation API is pre-release; the hurt-event fallback may cancel damage but may not suppress all native hit effects such as knockback.
+- When Sneak is detected, the player should receive one message for the sequence start and another when the Guard phase begins after seven ticks.
+- If the Guard hurt hook reports **UNAVAILABLE**, capture the Minecraft version and the Content Log error; do not assume Guard is working.
+- Once Guard phase reports active, test a mob's frontal melee hit and then a hit from behind. Front Guard should reduce damage until strain breaks it; a rear hit should remain unblocked.
+- Re-test Quick Slash against a mob. If the native cancellation check is unavailable, the vanilla attack can still land in addition to the custom attack; do not treat this as fixed.
+
