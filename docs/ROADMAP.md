@@ -59,3 +59,9 @@
 - [ ] Verify Bedrock API compatibility and event cause values on the target Minecraft version
 - [ ] Package a fresh .mcaddon and test on iPhone
 - [ ] Tune timing, strain, and recovery from playtest feedback
+
+
+## Combat core v0.8 — directional attack aiming
+- [x] Use full 3D aim direction for Quick Slash and Heavy Strike, supporting upward, downward, and diagonal attacks (source-reviewed; in-game validation pending)
+- [ ] Verify upward, downward, diagonal, and left/right target selection in Minecraft on iPhone
+- [ ] Confirm aiming still prioritises the target closest to the attack line and does not select targets behind the player
