@@ -3,6 +3,7 @@ import { ActionFormData } from "@minecraft/server-ui";
 
 const MENU_ITEM = "aincrad:skill_crystal";
 const HEAVY_ITEM = "aincrad:heavy_attack_token";
+const PARRY_ITEM = "aincrad:parry_token";
 const menuOpen = new Set();
 const actions = new Map();
 const parryWindows = new Map();
@@ -104,8 +105,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack hotbar item for Heavy Strike."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack hotbar item for Heavy Strike.") +
+        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry."
+        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
@@ -369,9 +370,14 @@ world.afterEvents.itemUse.subscribe((event) => {
   if (!event.itemStack) return;
 
   if (event.itemStack.typeId === HEAVY_ITEM) {
-    // Dedicated hotbar-slot fallback: using this item requests Heavy Strike.
-    // This is not a persistent HUD overlay button; that route remains unverified.
+    // Dedicated hotbar control: using this item requests Heavy Strike.
     beginAttack(player, MOVES.heavy);
+    return;
+  }
+
+  if (event.itemStack.typeId === PARRY_ITEM) {
+    // Dedicated hotbar control: using this item opens the short parry window.
+    beginParry(player);
     return;
   }
 
@@ -400,9 +406,10 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       };
       if (!hasItem(MENU_ITEM)) inventory.addItem(new ItemStack(MENU_ITEM, 1));
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike.");
+      if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike; Parry item = Parry.");
     } catch (_) {
-      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token and /give @s aincrad:skill_crystal.");
+      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token and /give @s aincrad:skill_crystal.");
     }
   }, 1);
 });
