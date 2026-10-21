@@ -6,6 +6,7 @@ const HEAVY_ITEM = "aincrad:heavy_attack_token";
 const PARRY_ITEM = "aincrad:parry_token";
 const GUARD_ITEM = "aincrad:guard_token";
 const menuOpen = new Set();
+const heavyHudOpen = new Set();
 const actions = new Map();
 const parryWindows = new Map();
 const guards = new Map();
@@ -245,6 +246,26 @@ function restoreMenuItem(player) {
   }, 1);
 }
 
+// Experimental Server Form Overlay HUD button.
+// This is a touch-only JSON UI workaround, not a supported Bedrock HUD input API.
+function showHeavyHudOverlay(player) {
+  if (!player || !player.isValid || heavyHudOpen.has(player.id) || menuOpen.has(player.id)) return;
+  heavyHudOpen.add(player.id);
+  const form = new ActionFormData().title("aincrad:heavy_hud_overlay").body("").button("§6⚔ HEAVY STRIKE");
+  form.show(player).then((response) => {
+    heavyHudOpen.delete(player.id);
+    if (!player.isValid) return;
+    if (!response.canceled && response.selection === 0) beginAttack(player, MOVES.heavy);
+    system.runTimeout(() => {
+      if (!player.isValid || menuOpen.has(player.id)) return;
+      showHeavyHudOverlay(player);
+    }, 1);
+  }).catch(() => {
+    heavyHudOpen.delete(player.id);
+    if (!player.isValid || menuOpen.has(player.id)) return;
+    system.runTimeout(() => showHeavyHudOverlay(player), 20);
+  });
+}
 function showCombatMenu(player) {
   if (menuOpen.has(player.id)) return;
   menuOpen.add(player.id);
@@ -270,7 +291,10 @@ function showCombatMenu(player) {
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
-    if (response.canceled || response.selection === undefined) return;
+    if (response.canceled || response.selection === undefined) {
+      system.runTimeout(() => showHeavyHudOverlay(player), 1);
+      return;
+    }
     if (response.selection === 0) beginAttack(player, MOVES.quick);
     else if (response.selection === 1) beginAttack(player, MOVES.heavy);
     else if (response.selection === 2) beginParry(player);
@@ -284,9 +308,11 @@ function showCombatMenu(player) {
         reportGuardStatus(player);
       }
     } else if (response.selection === 4) reportGuardStatus(player);
+    system.runTimeout(() => showHeavyHudOverlay(player), 1);
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
+    system.runTimeout(() => showHeavyHudOverlay(player), 1);
   });
 }
 
@@ -737,6 +763,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   defensiveSequences.delete(id);
   lastDefensePhase.delete(id);
   menuOpen.delete(id);
+  heavyHudOpen.delete(id);
   tickCounters.delete(id);
   diagnosticsEnabled.delete(id);
 });
@@ -760,7 +787,8 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; HUD button = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
+      system.runTimeout(() => showHeavyHudOverlay(player), 10);
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");

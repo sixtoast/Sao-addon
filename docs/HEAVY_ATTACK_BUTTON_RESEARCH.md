@@ -66,3 +66,17 @@ The custom HUD route was re-checked against current public documentation and a r
 **A genuine, always-visible, tappable Heavy Attack HUD button is not implemented and cannot currently be marked complete using a documented public add-on API.** Do not add a decorative JSON UI button or remap an essential native action and call that finished.
 
 The current dedicated Heavy Attack item is the practical fallback. A custom HUD attempt would be an unsupported experiment, not a reliable implementation. Revisit only if Mojang exposes a supported interactive HUD input/callback route, or if the project deliberately accepts a form/container-based control that interrupts normal gameplay and is therefore not the requested HUD button.
+
+
+## Server Form Overlay prototype (21 October 2026)
+
+The user approved trying the unsupported community workaround. The public-domain [YasserNull/server-form-overlay](https://github.com/YasserNull/server-form-overlay) project confirms that a `server_form` overlay can host touch-clickable form buttons while the game continues rendering behind it. The repo is released under the Unlicense, so its documented technique can be used without copying proprietary assets. This is still not an official gameplay-HUD input API, and the upstream report says mouse/keyboard/controller are unsupported.
+
+Prototype branch: `feature/server-form-overlay-heavy-attack-v0.4.9`.
+
+- Added an experimental `Aincrad_RP/ui/server_form.json` override based on the Mojang Bedrock Samples `server_form.json` structure, with `is_showing_menu: false`, `absorbs_input: false`, `render_game_behind: true`, `force_render_below: true`, and touch capture on the form button.
+- The ActionFormData is reduced to a single compact `HEAVY STRIKE` button near the lower-right corner. Script handling starts `MOVES.heavy` and reopens the form after each press to imitate a persistent HUD control.
+- Because the screen override is global, other server forms may also appear as overlays. The combat menu is designed to temporarily take over and restore the HUD after it closes, but this needs device testing.
+- Known risks: this uses undocumented UI properties, can break after Bedrock UI/Ore UI changes, is touch-only, and repeated form open/close could flicker or conflict with other UI. It is an experiment, not a supported release.
+
+Source notes: [Upstream README](https://github.com/YasserNull/server-form-overlay), [upstream research paper](https://github.com/YasserNull/server-form-overlay/blob/main/docs/overlay-technique-paper.md), and [Mojang Bedrock Samples `server_form.json`](https://github.com/Mojang/bedrock-samples/blob/main/resource_pack/ui/server_form.json).

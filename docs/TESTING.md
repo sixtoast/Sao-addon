@@ -229,3 +229,16 @@ For a repeatable guard test, use a Creative test world and two players: compare 
 ## Version 0.4.5 — diagnostics runtime hotfix
 
 Version 0.4.4 could throw `ReferenceError: diagnosticsEnabled is not defined` from the combat tick. This is fixed by declaring the per-player diagnostics set. The optional native `world.beforeEvents.playerItemAttackEntity` feature-detection warning is now worded as an API-probe limitation, not as proof that combat cancellation is broken. The existing cancellation path remains in place; test it in-game as usual.
+
+
+## v0.4.9 — experimental Server Form Overlay Heavy Strike button (iPhone only)
+
+1. Import the paired BP/RP v0.4.9 test build and activate both packs in a test world. Do not test in a world whose UI behaviour you need to preserve.
+2. Enter the world and wait about a second. A compact **HEAVY STRIKE** button should appear near the lower-right side of the screen.
+3. Tap the button while standing still, then while moving. It should start one Heavy Strike and reopen the button immediately after the tap.
+4. Confirm the normal Attack control still performs Quick Slash and that taps on the rest of the screen still control movement/look normally.
+5. Open the Skill Crystal menu and close it. Check whether the HUD button returns, and whether menu buttons still respond.
+6. Take damage and die/respawn; check whether the button disappears, duplicates, or flickers.
+7. Check the Content Log for JSON UI errors. If the button is missing, disappears, covers controls, or breaks other forms, capture the exact symptom and disable the RP before continuing.
+
+This build intentionally uses unsupported JSON UI screen properties. The `server_form.json` override affects all Script API forms while active. Do not merge into `main` until the user tests it.
