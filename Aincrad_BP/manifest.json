@@ -1,8 +1,8 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP v0.4.8",
-    "description": "Aincrad Combat v0.4.8 | Interact-triggered Heavy Strike fallback and combat diagnostics.",
+    "name": "Aincrad Combat BP v0.4.9",
+    "description": "Aincrad Combat v0.4.9 | Interact-triggered Heavy Strike fallback and combat diagnostics.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
