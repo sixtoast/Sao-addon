@@ -129,7 +129,7 @@ try {
           const dx = attacker.location.x - target.location.x;
           const dz = attacker.location.z - target.location.z;
           const length = Math.sqrt(dx * dx + dz * dz) || 1;
-          attacker.applyKnockback(dx / length, dz / length, 0.8, 0.15);
+          attacker.applyKnockback({ x: (dx / length) * 0.8, z: (dz / length) * 0.8 }, 0.15);
         } catch (_) {
           // Some entity types may not support knockback; damage is still cancelled.
         }
