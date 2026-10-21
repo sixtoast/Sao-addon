@@ -203,3 +203,29 @@ The previous hotfix reused pack version 0.4.0, which can leave Minecraft loading
 - The generic player swing event can fire while the Heavy Attack hotbar item is used. The swing handler now checks the selected hotbar item and ignores that generic swing when Heavy Attack is selected, so it cannot start Quick Slash over the dedicated Heavy Strike request.
 - Behavior Pack and Resource Pack versions are bumped to 0.4.2 so Minecraft can distinguish this package from the previous import.
 - Build validation does not replace the in-game check: verify that using Heavy Attack reports Heavy Strike and deals its 12-damage move, while ordinary Attack still starts Quick Slash.
+
+
+## Heavy Attack input-order fix (0.4.3 candidate)
+
+- The direct swing handler now defers Quick Slash by one tick. This allows the dedicated Heavy Attack item's `itemUse` event to start Heavy Strike first if Bedrock dispatches the generic swing event earlier in the same touch/controller input frame.
+- The deferred callback also re-checks the selected hotbar item and preserves an already-started Heavy Strike.
+- This is a targeted input-order fix, not yet verified in-game. Test the Heavy Attack token and ordinary Attack separately on Bedrock 26.52 touch controls. Confirm Heavy Strike starts once, deals 12 damage, and ordinary Attack still starts Quick Slash.
+
+
+## Version 0.4.4 — opt-in combat diagnostics (candidate)
+
+This test build adds two buttons to the Skill Menu: **Diagnostics: Toggle ON/OFF** and **Diagnostics: Guard Status**. Diagnostics are off by default to avoid chat spam. Enable them before testing, then:
+
+- **Damage reduction:** for player-versus-player custom attacks, diagnostics report raw move damage, requested reduced damage, observed health loss when the health component updates synchronously, whether `applyDamage` accepted the call, and guard strain. For ordinary mob melee, the cancellable hurt event reports incoming damage, adjusted damage, and prevented damage. These are runtime observations, not proof that every source of vanilla damage is cancelled.
+- **Guard break:** reports the 10-point strain threshold and 40-tick recovery. Guard Status reports current phase, strain and remaining break ticks.
+- **Directional targeting:** reports the selected living target, distance, aim-dot score, and number of eligible targets. Put multiple mobs at different angles to see which candidate wins.
+- **Clashes:** reports both moves, interruption strengths, and the action-break duration when equal-strength active attacks meet.
+
+For a repeatable guard test, use a Creative test world and two players: compare the defender's health before and after a hit without Guard, then repeat from the front during Guard. Reset health between trials. Also test an attack from behind and a heavy hit that should exceed the guard-strain threshold. The damage diagnostic can be unavailable if Bedrock updates health later than the script callback; in that case the requested damage and event adjustment are still shown.
+
+**Version labels:** from v0.4.4 onward, both pack names and descriptions include the add-on version so BP/RP can be distinguished in Minecraft's Add-Ons list.
+
+
+## Version 0.4.5 — diagnostics runtime hotfix
+
+Version 0.4.4 could throw `ReferenceError: diagnosticsEnabled is not defined` from the combat tick. This is fixed by declaring the per-player diagnostics set. The optional native `world.beforeEvents.playerItemAttackEntity` feature-detection warning is now worded as an API-probe limitation, not as proof that combat cancellation is broken. The existing cancellation path remains in place; test it in-game as usual.

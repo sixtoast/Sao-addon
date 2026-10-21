@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/heavy-attack-button-v0.5
+      - feature/heavy-attack-token-fix-v0.6
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
