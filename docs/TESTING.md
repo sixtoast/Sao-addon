@@ -1,6 +1,6 @@
 # Aincrad Combat v0.1: iPhone test instructions
 
-> Status: three-step quick-combo logic committed. The Skill Crystal now converts to itself on use as a documented attempt to preserve stock; the exact stack behaviour and combat loop remain unverified in Minecraft on the target iPhone.
+> Status: three-step quick-combo logic and a provisional committed heavy attack are in the prototype branch. The Skill Crystal converts to itself on use as a documented attempt to preserve stock; exact stack behaviour and the combat loop remain unverified in Minecraft on the target iPhone.
 
 ## Import
 1. Download or package the Behaviour Pack and Resource Pack folders as separate `.mcpack` files, or package both packs into a `.mcaddon`.
@@ -21,33 +21,47 @@ The current prototype has three provisional combo steps:
 - Step 1: 3-tick startup, 4 damage, 8-tick recovery; 3-block range and 38-degree forward half-angle.
 - Step 2: 3-tick startup, 4 damage, 8-tick recovery; 3-block range and 42-degree forward half-angle.
 - Step 3: 4-tick startup, 5 damage, 11-tick recovery; 3.2-block range and 48-degree forward half-angle.
-- One follow-up input can be buffered during startup, active or recovery; extra inputs do not create a queue.
+- One follow-up input can be buffered during a quick attack's startup, active or recovery phase; extra inputs do not create a queue.
 - A buffered follow-up starts at the end of the current recovery. Without a buffered follow-up, the chain resets.
 - At most one non-player target can be hit per step. These are provisional values, not final balance.
+
+## Test the heavy attack
+While holding the Skill Crystal, sneak and use it to request a heavy attack. This is a temporary input mapping for prototype testing, not the final iPhone control scheme.
+
+- Startup: 8 ticks.
+- Damage: 8.
+- Recovery: 18 ticks.
+- Range: 3.4 blocks; forward half-angle: 55 degrees.
+- The direction and origin are captured when the heavy attack starts; the target is checked when the active phase begins.
+- Heavy attacks cannot be buffered or started while another move is committed or recovering. Quick inputs during a heavy attack do not create a quick-combo queue.
+- Compare the longer commitment/recovery with the quick combo. Check whether the telegraph feels readable and whether the risk/reward is worthwhile.
 
 ## Checks
 - Confirm using the Skill Crystal does not reduce the stack count. The item uses `minecraft:food.using_converts_to` pointing back to `aincrad:skill_crystal`; this self-conversion mitigation is documented by the item schema but still requires an in-game test.
 - A target in front and within range receives no more than one hit per step.
 - A target behind or outside the forward angle is missed.
-- Several targets in front: at most one target is hit per step.
-- Buffer one input during startup/recovery and confirm that the next combo step begins after recovery.
+- Several targets in front: at most one target is hit per attack.
+- Buffer one input during quick startup/recovery and confirm that the next combo step begins after recovery.
 - Mash/use repeatedly and confirm that it does not queue more than one follow-up.
-- Confirm the third step cannot queue a fourth step.
-- Move or turn during startup and observe that the current step uses the direction captured when it began, while target position is checked at the active step.
+- Confirm the third quick step cannot queue a fourth step.
+- Confirm the heavy attack cannot be queued during a quick combo, and quick inputs do not queue during heavy recovery.
+- Move or turn during startup and observe that the current move uses the direction captured when it began, while target position is checked at the active step.
 - Test with other players nearby; this PvE prototype must not damage players.
 - Watch Minecraft's Content Log for Script API errors.
 
 ## Known limitations
 - The Skill Crystal still uses a food-style use action and the eat animation. Self-conversion is a provisional stock-preservation measure, not the final sword/touch input system.
+- Sneak + Skill Crystal is only a temporary heavy-attack input mapping; it is not yet a dedicated heavy button or a final hybrid iPhone control scheme.
 - A future item custom-component `onUse` route must be checked against the pack's declared Script API and experiment requirements before adoption. The current Microsoft Scripting V2 overview describes Custom Components V2 as requiring Beta APIs; do not silently add that dependency to a stable-target pack.
-- The current combo steps share the same target-selection and damage path; no custom sword swing animation is implemented.
-- No heavy attack, defence, Momentum, sword skills, aerial combat, interruption/poise, progression, boss logic or persistent character data is implemented.
+- The current quick and heavy attacks share target-selection and damage logic; no custom sword swing animation is implemented.
+- No defence/parry, Momentum, sword skills, aerial combat, interruption/poise, progression, boss logic or persistent character data is implemented.
 - Attack timings, target geometry, damage, input buffering and API/item-schema compatibility require in-game testing and tuning.
 - The item icon currently reuses the built-in diamond sword texture; the custom crystal texture is not yet present.
 
 ## Documentation references
 - [Official Script API introduction](https://learn.microsoft.com/en-us/minecraft/creator/documents/scripting/introduction?view=minecraft-bedrock-stable)
 - [Official WorldAfterEvents API](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable) — documents the `itemUse` event used by this temporary input path.
+- [Official Entity API](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable) — documents the `isSneaking` state used for this provisional input mapping.
 - [Official Item Components reference](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_item?view=minecraft-bedrock-stable) — documents `minecraft:food` and `using_converts_to`.
 - [Official Item Custom Component API](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemcustomcomponent?view=minecraft-bedrock-stable) — documents the `onUse` callback.
 - [Official Custom Components overview](https://learn.microsoft.com/en-us/minecraft/creator/documents/scripting/custom-components?view=minecraft-bedrock-stable) — explains registration and item JSON binding.
