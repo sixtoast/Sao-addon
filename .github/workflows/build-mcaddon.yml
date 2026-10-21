@@ -1,0 +1,42 @@
+name: Build Minecraft Add-on
+
+on:
+  push:
+    branches:
+      - feature/heavy-attack-button-v0.5
+    paths:
+      - 'Aincrad_BP/**'
+      - 'Aincrad_RP/**'
+      - '.github/workflows/build-mcaddon.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Package Behaviour Pack
+        run: |
+          cd Aincrad_BP
+          zip -qr ../Aincrad_BP.mcpack .
+
+      - name: Package Resource Pack
+        run: |
+          cd Aincrad_RP
+          zip -qr ../Aincrad_RP.mcpack .
+
+      - name: Package add-on
+        run: zip -q Aincrad-Combat.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+
+      - name: Upload installable add-on
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aincrad-Combat-mcaddon
+          path: Aincrad-Combat.mcaddon
+          if-no-files-found: error
+          retention-days: 14
