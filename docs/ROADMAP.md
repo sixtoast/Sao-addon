@@ -52,6 +52,7 @@
 - [x] Preserve the held Sneak sequence after a successful custom-combat parry
 - [x] Preserve held Guard across guard-break recovery and clear defensive state on player leave
 - [x] Fix simultaneous-attack clash lookup to use the shared combat snapshot
+- [x] Require explicit held-Guard state for player blocks and repair Guard-item fallback state
 - [ ] Verify Bedrock API compatibility and event cause values on the target Minecraft version
 - [ ] Package a fresh .mcaddon and test on iPhone
 - [ ] Tune timing, strain, and recovery from playtest feedback
