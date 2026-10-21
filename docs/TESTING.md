@@ -254,3 +254,16 @@ The Interact button is contextual and appears when looking at an entity. It is n
 6. Close/dismiss the overlay. Use the Skill Crystal and choose **Show Heavy Strike HUD Button** to reopen it.
 7. Open inventory and pause screens; check that they remain usable and that the overlay does not block their controls. Check whether the button reappears after respawn.
 8. Record any missing touch controls, frozen movement, flicker, chat errors, Content Log errors, or duplicate damage. This UI technique is unsupported and touch-only; keep the stable release unchanged.
+
+
+## v0.4.9 result and v0.5.0 Heavy Strike item-use fallback
+
+The v0.4.9 overlay prototype was tested on iPhone and failed: the HUD button did not appear, and the previous contextual Interact fallback interfered with using the Skill Activation Book. Do not merge v0.4.9.
+
+For v0.5.0, import the new package and enable both packs. Verify:
+1. The Skill Activation Book can be used normally and opens the Skill Crystal combat menu.
+2. The Heavy Attack item no longer displays a custom contextual Interact label or hijacks Interact.
+3. With Heavy Attack selected, use the item normally and confirm exactly one Heavy Strike begins and resolves for 12 damage when in range.
+4. Normal Attack still starts Quick Slash, and Sneak still cycles Spot Dodge → Parry → Guard.
+5. If Heavy Attack item-use does not fire on touch, use the Skill Crystal combat menu's Heavy Strike action as a temporary fallback and report the exact button behaviour. Do not restore the contextual Interact component without checking the book interaction conflict.
+6. Check the Content Log for item or script errors. Stable `main` remains unchanged; this is a test branch only.
