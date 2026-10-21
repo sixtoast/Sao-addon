@@ -157,3 +157,21 @@ Do not repeat the same `start_using: "on_attack"` experiment without new evidenc
 - https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
 
 Therefore the supported Script API does not currently provide a documented held-Attack state that we can poll for charge duration. The player swing event reports that a swing started, not that Attack remains held or has been released. The next investigation must look for a distinct native item/component route that binds a real charge lifecycle to Attack, or accept that the reliable native charge input is Use. Do not claim Attack charging is possible through Script API until a concrete API/component path is verified. Keep stable main unchanged.
+
+
+## v0.5.5 Attack charge event diagnostics
+
+This temporary build does not change combat behaviour. It adds chat diagnostics to report whether `itemStartUse` and `itemReleaseUse` actually fire for `aincrad:heavy_attack_token`, including the event item type and currently selected item type. Both packs are version 0.5.5.
+
+On iPhone, select Heavy Attack and try holding/releasing the normal Attack button once. Record these messages:
+- `[DIAG 0.5.5] itemStartUse fired...`
+- `[DIAG 0.5.5] itemReleaseUse fired...`
+- Existing `Charge input was not detected; using Heavy Strike fallback.`
+
+Interpretation:
+- No start diagnostic: Attack does not start the item's native use lifecycle on this runtime.
+- Start diagnostic but no charge meter: inspect event item type/selected item type; the handler may be receiving a mismatched item.
+- Start and release diagnostics: native events are firing; timing or state logic needs a targeted fix.
+- Release diagnostic without start diagnostic: investigate event ordering / item stack lifecycle.
+
+This is a diagnostic candidate only, not a fix. Do not merge into main. v0.5.3 remains the known-good Use-button charging baseline.
