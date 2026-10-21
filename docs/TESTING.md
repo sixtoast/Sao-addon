@@ -80,7 +80,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 
 - Ordinary mob melee damage is intercepted with the cancellable `world.beforeEvents.entityHurt` signal when available.
 - While Sneak's sequence is in its first 3 ticks, an incoming mob melee hit is cancelled as Spot Dodge.
-- During ticks 3–6, the hit is cancelled as Parry and the attacker receives the existing stagger reaction.
+- During ticks 3–6, the hit is cancelled as Parry and the mob is pushed back with a short knockback (if that entity supports knockback).
 - From tick 7 onward, frontal hits are reduced to 25% damage while Guard is held. Each blocked hit adds 3 guard strain; reaching 10 cancels the hit and starts the 40-tick guard-break timer.
 - Mob melee attacks from behind are not blocked by Guard. Projectile, magic, fire, fall and other non-melee damage are intentionally unchanged.
 - This uses the pre-hurt event to avoid applying vanilla damage and scripted damage simultaneously. Verify actual event cause strings and cancellation behaviour on the target Bedrock version.
