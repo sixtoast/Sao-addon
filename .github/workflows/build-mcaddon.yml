@@ -5,6 +5,7 @@ on:
     branches:
       - feature/heavy-attack-button-v0.5
       - feature/heavy-attack-token-fix-v0.6
+      - feature/chargeable-aincrad-sword-v0.4.6
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
