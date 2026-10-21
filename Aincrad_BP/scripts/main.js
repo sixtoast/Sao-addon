@@ -10,7 +10,6 @@ const actions = new Map();
 const parryWindows = new Map();
 const guards = new Map();
 const guardStrain = new Map();
-const GUARD_DURATION_TICKS = 30;
 const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
 const tickCounters = new Map();
@@ -49,42 +48,36 @@ const MOVES = {
 const REACTION_TICKS = { flinch: 4, actionBreak: 8, stagger: 14 };
 const PARRY_WINDOW_TICKS = 5;
 
-// Sneak is the player's Guard action. A tap opens a short, timed guard window;
-// this works with touch input, where Sneak may be reported for only one tick.
-function toggleGuard(player) {
-  if (!player || !player.isValid) return;
-  const now = system.currentTick;
-  const currentGuard = guards.get(player.id);
-
-  if (currentGuard?.brokenUntil && now < currentGuard.brokenUntil) {
-    safeMessage(player, "§c[AINCRAD] Your guard is broken.");
-    return;
-  }
-
-  if (currentGuard && !currentGuard.brokenUntil && now <= currentGuard.untilTick) {
-    guards.delete(player.id);
-    safeMessage(player, "§7[AINCRAD] Guard lowered.");
-    return;
-  }
-
-  guards.set(player.id, { untilTick: now + GUARD_DURATION_TICKS });
-  safeMessage(player, "§9[AINCRAD] Guard raised for 1.5 seconds. Face the incoming attack.");
-}
-
-// The stable Script API exposes Sneak as an input button. Treat its press as
-// Guard; keep the dedicated Guard item as a fallback for runtimes without this event.
+// Hold Sneak to guard. Releasing Sneak lowers guard immediately.
+// A broken guard remains disabled until its break timer expires, even if Sneak is held.
 let sneakGuardInputAvailable = false;
 try {
   const buttonSignal = world.afterEvents.playerButtonInput;
   if (buttonSignal && typeof buttonSignal.subscribe === "function") {
     buttonSignal.subscribe((event) => {
-      if (!event.player || event.button !== "Sneak" || event.newButtonState !== "Pressed") return;
-      toggleGuard(event.player);
+      const player = event.player;
+      if (!player || !player.isValid || event.button !== "Sneak") return;
+      const now = system.currentTick;
+      const guard = guards.get(player.id);
+
+      if (event.newButtonState === "Pressed") {
+        if (guard?.brokenUntil && now < guard.brokenUntil) {
+          safeMessage(player, "§c[AINCRAD] Your guard is broken.");
+          return;
+        }
+        guards.set(player.id, { held: true });
+      } else if (event.newButtonState === "Released") {
+        if (guard?.brokenUntil && now < guard.brokenUntil) {
+          guards.set(player.id, { brokenUntil: guard.brokenUntil });
+        } else {
+          guards.delete(player.id);
+        }
+      }
     });
     sneakGuardInputAvailable = true;
   }
 } catch (_) {
-  // Keep the Guard item fallback if button input is unavailable.
+  // Keep the dedicated Guard item fallback if button input is unavailable.
 }
 
 // The native attack cancellation event is still pre-release in current Microsoft
@@ -302,9 +295,9 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
     }
 
     // Guard only blocks attacks coming from the defender's forward-facing arc.
-    // Guard is a timed state activated by the dedicated Guard hotbar item.
+    // Guard is active only while Sneak is held.
     const guard = guards.get(target.id);
-    if (guard && system.currentTick <= guard.untilTick && !guard.brokenUntil) {
+    if (guard && guard.held && !guard.brokenUntil) {
       const view = target.getViewDirection();
       const toAttackerX = actor.location.x - target.location.x;
       const toAttackerZ = actor.location.z - target.location.z;
@@ -315,7 +308,7 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
         guardStrain.set(target.id, strain);
         if (strain >= GUARD_MAX_STRAIN) {
           guardStrain.delete(target.id);
-          guard.untilTick = system.currentTick;
+          delete guard.held;
           guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
           guards.set(target.id, guard);
           const liveTargetAction = actions.get(target.id);
@@ -438,7 +431,6 @@ function processCombatTick() {
 
   for (const [id, guardState] of guards) {
     if (guardState.brokenUntil && now >= guardState.brokenUntil) guards.delete(id);
-    else if (!guardState.brokenUntil && now > guardState.untilTick) guards.delete(id);
   }
 
   // Capture the post-transition state once, then resolve all attacks entering their
@@ -464,9 +456,17 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === GUARD_ITEM) {
-    // Fallback control for runtimes that do not expose Sneak button input.
-    if (!sneakGuardInputAvailable) toggleGuard(player);
-    else safeMessage(player, "§7[AINCRAD] Sneak is Guard. The Guard item is only a fallback.");
+    // Fallback toggle for runtimes that do not expose Sneak button input.
+    if (!sneakGuardInputAvailable) {
+      const currentGuard = guards.get(player.id);
+      if (currentGuard?.brokenUntil && system.currentTick < currentGuard.brokenUntil) {
+        safeMessage(player, "§c[AINCRAD] Your guard is broken.");
+      } else if (currentGuard?.held) {
+        guards.delete(player.id);
+      } else {
+        guards.set(player.id, { held: true });
+      }
+    } else safeMessage(player, "§7[AINCRAD] Hold Sneak to guard.");
     return;
   }
 
