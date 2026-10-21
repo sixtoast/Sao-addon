@@ -351,10 +351,6 @@ function processCombatTick() {
       continue;
     }
 
-    const guardState = guards.get(id);
-    if (guardState && guardState.brokenUntil && now >= guardState.brokenUntil) guards.delete(id);
-    else if (guardState && !guardState.brokenUntil && now > guardState.untilTick) guards.delete(id);
-
     if (action.phase === "parry") {
       if (now > action.recoveryUntil) {
         action.phase = "recovery";
@@ -400,6 +396,11 @@ function processCombatTick() {
 
     action.phase = "recovery";
     action.recoveryUntil = now + action.move.recovery;
+  }
+
+  for (const [id, guardState] of guards) {
+    if (guardState.brokenUntil && now >= guardState.brokenUntil) guards.delete(id);
+    else if (!guardState.brokenUntil && now > guardState.untilTick) guards.delete(id);
   }
 
   // Capture the post-transition state once, then resolve all attacks entering their
