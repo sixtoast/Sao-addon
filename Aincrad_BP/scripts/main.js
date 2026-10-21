@@ -807,7 +807,8 @@ world.afterEvents.itemUse.subscribe((event) => {
 
   if (event.itemStack.typeId === HEAVY_ITEM) {
     // Compatibility fallback only; it is no longer granted on spawn.
-    beginAttack(player, getMoveForPlayer(player, "heavy", true));
+    // The token itself is not a weapon, so this resolves as unarmed Heavy Strike (5 damage).
+    beginAttack(player, getMoveForPlayer(player, "heavy"));
     return;
   }
 
