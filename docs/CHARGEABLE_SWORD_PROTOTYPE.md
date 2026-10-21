@@ -10,7 +10,7 @@ Replace the separate Heavy Attack hotbar control with one custom sword. A tap of
 - Aincrad Sword held 7–8 ticks: partial Heavy Strike, 75% damage (9 weapon damage).
 - Aincrad Sword held at least 9 ticks: full Heavy Strike, 12 damage.
 - Empty hand or non-weapon item: Quick Slash 1, Heavy Strike 5.
-- Recognised vanilla swords, axes, trident and mace use weapon damage (7 Quick / 12 Heavy).
+- Recognised vanilla swords, axes, spears, trident and mace use weapon damage (7 Quick / 12 Heavy).
 - Existing guard, parry, guard-break, attack cancellation and diagnostic behaviour should remain unchanged.
 - The old heavy token remains as a compatibility fallback but is no longer granted on spawn.
 
