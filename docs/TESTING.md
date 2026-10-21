@@ -83,7 +83,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - During ticks 3–6, the hit is cancelled as Parry and the mob is pushed back with a short knockback (if that entity supports knockback).
 - From tick 7 onward, frontal hits are reduced to 25% damage while Guard is held. Each blocked hit adds 3 guard strain; reaching 10 cancels the hit and starts the 40-tick guard-break timer.
 - Mob melee attacks from behind are not blocked by Guard. Projectile, magic, fire, fall and other non-melee damage are intentionally unchanged.
-- This uses the pre-hurt event to avoid applying vanilla damage and scripted damage simultaneously. Verify actual event cause strings and cancellation behaviour on the target Bedrock version.
+- This uses the pre-hurt event to avoid applying vanilla damage and scripted damage simultaneously. The handler now compares against `EntityDamageCause.entityAttack` rather than an undocumented snake_case string. Verify the actual event cause and cancellation behaviour on the target Bedrock version.
 
 Official reference: [Microsoft Learn — EntityHurtBeforeEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entityhurtbeforeevent?view=minecraft-bedrock-stable) and [EntityDamageSource](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entitydamagesource?view=minecraft-bedrock-stable).
 
@@ -120,3 +120,11 @@ The mob path uses the documented cancellable `world.beforeEvents.entityHurt` sig
 - Player-vs-player Guard now requires the explicit `held` flag, matching the ordinary mob melee path. A Parry-item fallback sequence alone must not silently become a permanent Guard after its timing window.
 - The Guard-item fallback now sets `held: true`, so it remains functional on runtimes without the Sneak button event.
 - Source-reviewed only; verify the fallback path in a runtime where `playerButtonInput` is unavailable, and confirm that using the Parry item does not create indefinite Guard.
+
+
+## Damage-cause enum correction (source-reviewed)
+
+- The mob interception check now compares `damageSource.cause` to the imported `EntityDamageCause.entityAttack` enum value instead of the unsupported string `entity_sweep_attack`.
+- This avoids relying on a snake_case cause value that does not match the documented enum naming convention.
+- This is not proof that every mob attack type is covered. Confirm normal melee interception in-game; sweep-style attacks may report a different cause and are not assumed covered until observed.
+- Reference: [Microsoft Learn — EntityDamageSource](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entitydamagesource?view=minecraft-bedrock-stable), which defines `cause` as an `EntityDamageCause` enum.
