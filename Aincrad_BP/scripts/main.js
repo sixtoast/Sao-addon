@@ -111,7 +111,8 @@ try {
       if (!attacker || !attacker.isValid || isPlayer(attacker)) return;
 
       const cause = event.damageSource?.cause;
-      if (cause !== "entityAttack" && cause !== "entity_sweep_attack") return;
+      // EntityDamageSource.cause is an EntityDamageCause enum value, not a snake_case string.
+      if (cause !== EntityDamageCause.entityAttack) return;
 
       const phase = getDefensePhase(target.id);
       if (!phase) return;
