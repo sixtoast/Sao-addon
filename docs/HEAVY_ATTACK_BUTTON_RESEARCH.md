@@ -121,3 +121,18 @@ Do not merge until the user confirms on iPhone that tapping Attack gives one Qui
 The user tested v0.5.1 on Bedrock 26.52 for iPhone: the charge meter did not appear, and using/tapping the Heavy Attack token resulted in Quick Slash. Treat this as evidence that the expected charge start/release lifecycle is not firing reliably on the target touch runtime; documentation support for `start_using: "on_attack"` is not proof of actual runtime behaviour.
 
 The v0.5.2 candidate adds a guarded fallback in the deferred swing handler: if no charge state was created and the Heavy Attack token is still selected, it requests Heavy Strike rather than falling through to Quick Slash. It also bumps BP/RP versions to 0.5.2. This is a wrong-move fallback only; it does not claim to fix charge feedback. Test the fallback first, then decide whether to abandon this charge input route if `itemStartUse` still does not fire.
+
+
+## v0.5.3 native throwable charge prototype (21 October 2026)
+
+The v0.5.2 iPhone test confirmed that the Heavy Strike fallback works, but the food-based use mechanism with `minecraft:use_modifiers.start_using: "on_attack"` did not create a charge state or meter. Do not keep tuning that route as if it were firing.
+
+The next isolated candidate replaces the food-based use mechanism with the documented native throwable path:
+
+- `minecraft:throwable` enables native draw/release handling; Microsoft specifically documents its draw-duration scaling properties for charged throws such as tridents: https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_throwable?view=minecraft-bedrock-stable
+- `minecraft:projectile` names the spawned projectile.
+- `minecraft:use_animation: "spear"` requests the trident-style arm-raising pose.
+- Script API `itemStartUse` and `itemReleaseUse` remain responsible for the combat charge timer, meter, and invoking the existing melee Heavy Strike state machine: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
+- A placeholder arrow is configured with zero launch power and removed by an owner-scoped entity-spawn cleanup while the charge is active. This is an experimental way to use native charge input without intentionally shipping a ranged attack. Item restoration is guarded so an occupied hotbar slot is not overwritten.
+
+This is still a hypothesis, not a confirmed fix. Validate JSON, JavaScript syntax, and pack versioning before testing. On iPhone, hold the native Use action with Heavy Attack selected, watch for the charge message/meter, then release and confirm one melee Heavy Strike. Also check that no arrow remains visible, the Heavy Attack item is not lost, normal Attack still behaves as intended, and the Skill Activation Book still works. If `itemStartUse` still does not fire, inspect the Content Log and actual touch input route before changing combat timing or adding fallback controls.
