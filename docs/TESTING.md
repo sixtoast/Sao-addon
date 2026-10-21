@@ -11,7 +11,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 5. Tap the normal Attack button to try Quick Slash.
 6. Select and use the Heavy Attack sword item to try Heavy Strike.
 7. Select and use the Parry shield item just before an incoming custom player attack to try a parry.
-8. Tap Sneak to raise Guard for 30 ticks (about 1.5 seconds), face an incoming custom player attack, and observe block damage and guard strain. The Guard item is a fallback only if button input is unavailable.
+8. Hold Sneak while facing an incoming custom player attack, then release it and confirm Guard drops immediately. The Guard item is a fallback toggle only if button input is unavailable.
 9. Repeat with Heavy Strike to check guard break, then try attacking from behind to confirm directional blocking.
 10. If direct attack input is unavailable in your runtime, use the Skill Menu for Quick Slash and Parry.
 11. Check the Minecraft Content Log if the world errors or attacks do not trigger.
@@ -21,7 +21,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - The control item icons are configured as book for Skill Menu, diamond sword for Heavy Attack, and shield for Parry/Guard. Sneak is the primary Guard input. This is a usability improvement only; the assets have not been verified in-game yet.
 - `world.afterEvents.playerSwingStart` is feature-detected. Microsoft's current documentation marks the swing event as pre-release/experimental.
 - A swing whose `swingSource` is `Attack` requests Quick Slash regardless of whether the player is sneaking. The Heavy Attack item requests Heavy Strike.
-- Pressing the Sneak button requests Guard; each press toggles the timed guard window. On touch, Sneak may be reported for one tick, so this uses a 30-tick timed window rather than relying on a held state.
+- Holding the Sneak button requests Guard; releasing it lowers Guard immediately. Verify that the runtime sends both Pressed and Released button-state events on the target touchscreen.
 - The Skill Menu remains as a fallback for Quick Slash and Parry, because Bedrock's documented stable `InputButton` enum currently exposes Jump and Sneak, not a generic Attack button.
 - Native attack cancellation is separately feature-detected and depends on the pre-release `PlayerItemAttackEntityBeforeEvent`. If unavailable, vanilla melee may add extra damage.
 - A persistent, always-visible, tappable custom Heavy Attack HUD button remains blocked by the lack of a documented public HUD-to-script input route. The hotbar item is the honest current fallback, not a completed HUD button. See [Heavy Attack button research](HEAVY_ATTACK_BUTTON_RESEARCH.md).
