@@ -14,8 +14,6 @@ const customDamageTargets = new Set();
 const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
 const heavyActivationTicks = new Map();
-const heavyHudOverlayOpen = new Set();
-const heavyHudOverlaySuppressed = new Set();
 const tickCounters = new Map();
 // Per-player opt-in diagnostics, controlled from the Skill Menu.
 const diagnosticsEnabled = new Set();
@@ -257,8 +255,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "Direct attack: tap Attack for Quick Slash. Tap the Heavy Strike HUD button for Heavy Strike; the Heavy Attack item remains a fallback. Use the Parry item to parry."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Tap the Heavy Strike HUD button for Heavy Strike; the Heavy Attack item remains a fallback. Use the Parry item to parry.") +
+        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack item to activate Heavy Strike. Use the Parry item to parry."
+        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack item to activate Heavy Strike. Use the Parry item to parry.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
@@ -270,7 +268,6 @@ function showCombatMenu(player) {
 
   form.button("Diagnostics: Toggle ON/OFF");
   form.button("Diagnostics: Guard Status");
-  form.button("Show Heavy Strike HUD Button");
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
@@ -288,44 +285,10 @@ function showCombatMenu(player) {
         reportGuardStatus(player);
       }
     } else if (response.selection === 4) reportGuardStatus(player);
-    else if (response.selection === 5) {
-      heavyHudOverlaySuppressed.delete(player.id);
-      showHeavyAttackOverlay(player);
-    }
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
   });
-}
-
-// Experimental touch-only Heavy Strike HUD button using the community Server Form Overlay technique.
-// The form is intentionally one button; the Resource Pack repositions it over gameplay.
-function showHeavyAttackOverlay(player) {
-  if (!player || !player.isValid || heavyHudOverlayOpen.has(player.id) || heavyHudOverlaySuppressed.has(player.id)) return;
-  heavyHudOverlayOpen.add(player.id);
-  new ActionFormData()
-    .title(" ")
-    .body("")
-    .button("§lHEAVY STRIKE")
-    .show(player)
-    .then((response) => {
-      heavyHudOverlayOpen.delete(player.id);
-      if (!player.isValid) return;
-      if (response.canceled || response.selection === undefined) {
-        // Let the player dismiss the experimental overlay. The Skill Crystal menu can reopen it.
-        heavyHudOverlaySuppressed.add(player.id);
-        return;
-      }
-      if (response.selection === 0) {
-        beginAttack(player, MOVES.heavy);
-        system.runTimeout(() => showHeavyAttackOverlay(player), 2);
-      }
-    })
-    .catch((error) => {
-      heavyHudOverlayOpen.delete(player.id);
-      safeMessage(player, "§e[AINCRAD] Heavy Strike HUD overlay could not open. Use the Skill Crystal menu to retry; check the Content Log if it repeats.");
-      try { console.warn("[AINCRAD] Heavy Strike HUD overlay error: " + error); } catch (_) {}
-    });
 }
 
 function reportGuardStatus(player) {
@@ -793,17 +756,11 @@ world.afterEvents.playerLeave.subscribe((event) => {
   tickCounters.delete(id);
   diagnosticsEnabled.delete(id);
   heavyActivationTicks.delete(id);
-  heavyHudOverlayOpen.delete(id);
-  heavyHudOverlaySuppressed.delete(id);
 });
 
 world.afterEvents.playerSpawn.subscribe((event) => {
   const player = event.player;
-  if (!event.initialSpawn) {
-    heavyHudOverlaySuppressed.delete(player.id);
-    system.runTimeout(() => showHeavyAttackOverlay(player), 20);
-    return;
-  }
+  if (!event.initialSpawn) return;
   system.runTimeout(() => {
     try {
       if (!player.isValid) return;
@@ -820,8 +777,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Strike HUD button = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
-      system.runTimeout(() => showHeavyAttackOverlay(player), 20);
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; use the Heavy Attack item for Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
