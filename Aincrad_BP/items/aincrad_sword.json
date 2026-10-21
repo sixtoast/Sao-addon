@@ -21,9 +21,15 @@
       "minecraft:use_animation": "spear",
       "minecraft:use_modifiers": {
         "start_using": "on_attack",
-        "use_duration": 10,
+        "use_duration": 3600,
         "movement_modifier": 0.7,
         "emit_vibrations": false
+      },
+      "minecraft:food": {
+        "can_always_eat": true,
+        "nutrition": 0,
+        "saturation_modifier": 0,
+        "using_converts_to": "aincrad:aincrad_sword"
       }
     }
   }
