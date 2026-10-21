@@ -589,8 +589,9 @@ function processCombatTick() {
   const now = system.currentTick;
 
   // Update charge feedback without requiring UI forms or extra controls.
+  const onlinePlayers = world.getAllPlayers();
   for (const [id, charge] of chargeStates) {
-    const player = world.getAllPlayers().find((candidate) => candidate.id === id);
+    const player = onlinePlayers.find((candidate) => candidate.id === id);
     if (!player || !player.isValid) { chargeStates.delete(id); continue; }
     const elapsed = Math.max(0, now - charge.startedTick);
     if (elapsed >= CHARGE_READY_TICKS) {
