@@ -269,8 +269,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "With Heavy Attack selected: tap Attack for Quick Slash; hold Attack for Heavy Strike, then release. Use the Parry item to parry."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Heavy Strike: hold Attack with Heavy Attack selected, then release. Use the Parry item to parry.") +
+        ? "With Heavy Attack selected: use and hold the item to charge Heavy Strike, then release. Attack swings and Sneak defence remain separate. Use the Parry item to parry."
+        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Heavy Strike: hold Use with Heavy Attack selected, then release. Use the Parry item to parry.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
@@ -660,6 +660,8 @@ function processCombatTick() {
   const now = system.currentTick;
 
   for (const player of world.getAllPlayers()) {
+    const cleanupUntil = chargeProjectileCleanupUntil.get(player.id) ?? 0;
+    if (cleanupUntil && cleanupUntil < now) chargeProjectileCleanupUntil.delete(player.id);
     const charge = heavyChargeStates.get(player.id);
     if (!charge || !player.isValid) continue;
     const held = now - charge.startedTick;
