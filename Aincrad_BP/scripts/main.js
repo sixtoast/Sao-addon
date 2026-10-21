@@ -49,6 +49,44 @@ const MOVES = {
 const REACTION_TICKS = { flinch: 4, actionBreak: 8, stagger: 14 };
 const PARRY_WINDOW_TICKS = 5;
 
+// Sneak is the player's Guard action. A tap opens a short, timed guard window;
+// this works with touch input, where Sneak may be reported for only one tick.
+function toggleGuard(player) {
+  if (!player || !player.isValid) return;
+  const now = system.currentTick;
+  const currentGuard = guards.get(player.id);
+
+  if (currentGuard?.brokenUntil && now < currentGuard.brokenUntil) {
+    safeMessage(player, "§c[AINCRAD] Your guard is broken.");
+    return;
+  }
+
+  if (currentGuard && !currentGuard.brokenUntil && now <= currentGuard.untilTick) {
+    guards.delete(player.id);
+    safeMessage(player, "§7[AINCRAD] Guard lowered.");
+    return;
+  }
+
+  guards.set(player.id, { untilTick: now + GUARD_DURATION_TICKS });
+  safeMessage(player, "§9[AINCRAD] Guard raised for 1.5 seconds. Face the incoming attack.");
+}
+
+// The stable Script API exposes Sneak as an input button. Treat its press as
+// Guard; keep the dedicated Guard item as a fallback for runtimes without this event.
+let sneakGuardInputAvailable = false;
+try {
+  const buttonSignal = world.afterEvents.playerButtonInput;
+  if (buttonSignal && typeof buttonSignal.subscribe === "function") {
+    buttonSignal.subscribe((event) => {
+      if (!event.player || event.button !== "Sneak" || event.newButtonState !== "Pressed") return;
+      toggleGuard(event.player);
+    });
+    sneakGuardInputAvailable = true;
+  }
+} catch (_) {
+  // Keep the Guard item fallback if button input is unavailable.
+}
+
 // The native attack cancellation event is still pre-release in current Microsoft
 // documentation. Feature-detect it; never assume vanilla attacks are suppressed.
 let nativeAttackCancellationAvailable = false;
@@ -426,16 +464,9 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === GUARD_ITEM) {
-    const currentGuard = guards.get(player.id);
-    if (currentGuard && system.currentTick <= currentGuard.untilTick) {
-      guards.delete(player.id);
-      safeMessage(player, "§7[AINCRAD] Guard lowered.");
-    } else if (currentGuard && currentGuard.brokenUntil && system.currentTick < currentGuard.brokenUntil) {
-      safeMessage(player, "§c[AINCRAD] Your guard is broken.");
-    } else {
-      guards.set(player.id, { untilTick: system.currentTick + GUARD_DURATION_TICKS });
-      safeMessage(player, "§9[AINCRAD] Guard raised for 1.5 seconds. Face the incoming attack.");
-    }
+    // Fallback control for runtimes that do not expose Sneak button input.
+    if (!sneakGuardInputAvailable) toggleGuard(player);
+    else safeMessage(player, "§7[AINCRAD] Sneak is Guard. The Guard item is only a fallback.");
     return;
   }
 
@@ -472,7 +503,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack = Heavy Strike; Parry = Parry; Guard = Block.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack = Heavy Strike; Sneak = Guard; Parry = Parry.");
     } catch (_) {
       safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
     }
