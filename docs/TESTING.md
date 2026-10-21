@@ -150,3 +150,14 @@ The mob path uses the documented cancellable `world.beforeEvents.entityHurt` sig
 - Test with a mob at the same height, on a ledge above, in a shallow trench below, and diagonally off to either side. Move the camera to aim at each target's body before attacking. Also verify a target behind the player is not hit.
 - This changes target selection only. It does not yet create separate named high/low/left/right sword animations or different damage values for each angle.
 - API reference: [Microsoft Learn — Entity](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable), including getHeadLocation() and getViewDirection().
+
+## Guard-item fallback (new, source-reviewed; runtime test pending)
+
+On a runtime where `world.afterEvents.playerButtonInput` is unavailable:
+
+1. Use the Guard item once. Guard should activate immediately; it must not pass through the dodge and parry phases first.
+2. While Guard is active, test frontal and rear mob/player attacks. Only frontal attacks should be blocked by the guard rules.
+3. Use the Guard item again. The stance should release and incoming attacks should return to normal behaviour.
+4. Repeat while Guard is broken. The item should not bypass the 40-tick break period.
+
+This fallback is a toggle because item-use events do not provide a reliable held-button/release signal.
