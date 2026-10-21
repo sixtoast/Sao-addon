@@ -232,7 +232,7 @@ function resolveAttackIntent(intent, snapshot) {
     // and apply the stronger move's reaction after damage (trade semantics).
     const opposing = targetAction;
     if (opposing && opposing.move && opposing.phase === "active" &&
-        !opposing.hitResolved && opposing.actor.isValid) {
+        snapshot.has(target.id) && opposing.actor.isValid) {
       if (move.interruptionStrength === opposing.move.interruptionStrength) {
         actions.get(actor.id).phase = "recovery";
         actions.get(actor.id).recoveryUntil = system.currentTick + REACTION_TICKS.actionBreak;
@@ -266,8 +266,6 @@ function resolveAttackIntent(intent, snapshot) {
 
 function processCombatTick() {
   const now = system.currentTick;
-  const snapshot = new Map();
-
   for (const [id, action] of actions) {
     if (!action.actor.isValid) {
       actions.delete(id);
@@ -275,7 +273,6 @@ function processCombatTick() {
       continue;
     }
 
-    snapshot.set(id, { ...action });
     if (action.phase === "parry") {
       if (now > action.recoveryUntil) {
         action.phase = "recovery";
@@ -323,7 +320,10 @@ function processCombatTick() {
     action.recoveryUntil = now + action.move.recovery;
   }
 
-  // Resolve all attacks entering their hit window from the same snapshot.
+  // Capture the post-transition state once, then resolve all attacks entering their
+  // hit window from this shared snapshot. This avoids iteration-order outcomes.
+  const snapshot = new Map();
+  for (const [id, action] of actions) snapshot.set(id, { ...action });
   const currentIntents = intents.splice(0, intents.length);
   for (const intent of currentIntents) resolveAttackIntent(intent, snapshot);
 }
