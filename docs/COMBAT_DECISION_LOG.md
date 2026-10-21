@@ -398,7 +398,16 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Each move defines its valid target rules, including applicable range/shape, target cap or other limits, and whether separate contacts can count as distinct hits. Exact per-move values remain open for tuning.
 - Evaluate eligible targets using the authoritative combat resolver and a consistent exchange snapshot where interactions are simultaneous. Target selection and resolution must not depend on script/event iteration order.
 - A single hit event can damage a given target at most once. A multi-hit move may hit the same target again only through separately declared hit events/windows; repeated overlap or duplicate callbacks must not create extra damage.
-- Single-target moves remain limited to one eligible target under their declared selection rule. Cleave and area moves may affect multiple eligible targets within their declared limits. Multi-hit moves define their repeat-hit behaviour explicitly rather than inheriting it from cleave or area rules.
-- Multi-target resolution must remain consistent with interruption, clash, trade, confirmed-hit preservation, and once-only damage rules already agreed. A hit confirmed for one target must not silently change another target's result because processing order differs.
-- This is a conceptual design decision only. Target caps, selection tie-breaks, hit-window timings, and move-specific exceptions remain open for design and validation; no gameplay code or prototype branch is changed.
+
+## 19. Attack target selection
+
+**Agreed — contextual soft targeting (Option D)**
+
+- By default, attacks use contextual soft targeting; players do not need to lock on for every ordinary encounter.
+- Build the eligible target set from the move's declared range, attack shape/arc, target eligibility, and current combat snapshot. Select a single target using a deterministic combination of aim alignment, player facing, distance, and any explicit move-specific rules.
+- Aim alignment and facing should normally outweigh raw proximity, so an enemy nearer to the player does not automatically steal an attack intended towards another enemy. Distance remains a useful factor among similarly aligned targets.
+- When lock-on is active and its target is eligible for the move, give that target priority for single-target attacks. Lock-on must not make an otherwise invalid target hittable or override declared range, phase, or eligibility rules.
+- Cleave and area-based moves follow their declared multi-target rules rather than forcing every eligible target through single-target selection. Multi-hit moves retain their explicit hit-event/window rules.
+- If candidates remain equivalent, use a documented deterministic tie-break. Target selection and resolution must not depend on script/event order, and aim/facing data must use capabilities actually available on the target Bedrock platform.
+- Exact weights, angle/range thresholds, lock-on priority exceptions, and fallback behaviour remain open for usability and technical validation. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
 
