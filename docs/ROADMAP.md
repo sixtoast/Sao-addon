@@ -21,12 +21,13 @@
 - Add local test cases for buffer, target selection and recovery edge cases
 
 ## Next player-combat milestones
-1. Reliable iPhone input path and combat feedback
-2. Heavy attack commitment and recovery
-3. Block, parry and spot-dodge input validation
-4. Interruption, poise and punish rules
-5. Momentum and sword-skill transitions
-6. Ground/aerial variants and aerial recovery
+1. Reliable iPhone input path and combat feedback; replace the temporary food-style activator
+2. Add explicit defensive states and validate block/parry/spot-dodge inputs
+3. Define deterministic hit-trade, interruption and poise resolution
+4. Momentum and sword-skill transitions
+5. Ground/aerial variants and aerial recovery
+
+> Prototype status: the three-step quick combo and a provisional heavy attack are implemented in `main.js`. Their timings and input path remain unverified in-game.
 
 ## RPG foundation
 - Persistent character level and experience
