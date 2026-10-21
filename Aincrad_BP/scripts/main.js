@@ -55,9 +55,9 @@ const DEFENSE_DODGE_TICKS = 3;
 const DEFENSE_PARRY_TICKS = 4;
 const DEFENSE_GUARD_START_TICK = DEFENSE_DODGE_TICKS + DEFENSE_PARRY_TICKS;
 const defensiveSequences = new Map();
+const lastDefensePhase = new Map();
 // Sneak is read from the player's actual state each tick. This works with both
 // hold and toggle controls, unlike button events which may last only one tick.
-const sneakGuardInputAvailable = false;
 
 function getDefensePhase(playerId, now = system.currentTick) {
   const sequence = defensiveSequences.get(playerId);
@@ -490,8 +490,15 @@ function processCombatTick() {
         if (!(currentGuard?.brokenUntil && now < currentGuard.brokenUntil)) {
           guards.set(player.id, { ...(currentGuard || {}), held: true });
         }
+        const phase = getDefensePhase(player.id, now);
+        if (phase !== lastDefensePhase.get(player.id)) {
+          lastDefensePhase.set(player.id, phase);
+          if (phase === "dodge") safeMessage(player, "§b[AINCRAD] Defence sequence started: Spot Dodge → Parry → Guard.");
+          if (phase === "guard") safeMessage(player, "§9[AINCRAD] Guard phase active. Keep Sneak on to maintain it.");
+        }
       } else if (defensiveSequences.has(player.id)) {
         defensiveSequences.delete(player.id);
+        lastDefensePhase.delete(player.id);
         const currentGuard = guards.get(player.id);
         if (currentGuard?.brokenUntil && now < currentGuard.brokenUntil) {
           guards.set(player.id, { brokenUntil: currentGuard.brokenUntil });
@@ -641,6 +648,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   guards.delete(id);
   guardStrain.delete(id);
   defensiveSequences.delete(id);
+  lastDefensePhase.delete(id);
   menuOpen.delete(id);
   tickCounters.delete(id);
 });
@@ -664,7 +672,16 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack = Heavy Strike; hold Sneak = Spot Dodge, Parry, then Guard.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
+        "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
+        "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
+      if (!nativeAttackCancellationAvailable) {
+        safeMessage(player, "§e[AINCRAD] Vanilla melee cancellation needs the experimental Beta APIs feature on a compatible Bedrock version. Without it, vanilla hits may still damage/knock back mobs.");
+      }
+      if (!mobDefenseInputAvailable) {
+        safeMessage(player, "§c[AINCRAD] Guard/dodge/parry hurt hook failed to register. Check the Content Log and Minecraft version.");
+      }
     } catch (_) {
       safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
     }
