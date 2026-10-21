@@ -411,3 +411,14 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - If candidates remain equivalent, use a documented deterministic tie-break. Target selection and resolution must not depend on script/event order, and aim/facing data must use capabilities actually available on the target Bedrock platform.
 - Exact weights, angle/range thresholds, lock-on priority exceptions, and fallback behaviour remain open for usability and technical validation. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
 
+## 20. Outcome when an attack is blocked
+
+**Agreed — contextual block advantage (Option D)**
+
+- A successful block does not guarantee either attacker advantage or defender advantage. The resulting advantage depends on the committed moves, their defined recovery/action timings, block properties, and any explicit move-specific rules.
+- Each attack should declare the relevant block interaction properties, including whether it is safely recoverable on block, leaves a punishable recovery window, or has a special documented interaction. Do not infer the result from animation appearance alone.
+- The defender may punish only when the authoritative combat state and timing make the attacker vulnerable; blocking itself does not grant an automatic counter-hit or interrupt.
+- Blocking must remain meaningful without making every attack punishable. Conversely, attacks must not become universally safe merely because the defender blocked them. Exact recovery values and block-specific exceptions remain open for balance testing.
+- Resolve the exchange deterministically using the same authoritative state/timing principles as other combat interactions. Visual animation and event order must not decide advantage.
+- This decision concerns ordinary player combat; boss-specific interactions remain deferred. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
+
