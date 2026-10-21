@@ -1,4 +1,5 @@
 name: Build Minecraft Add-on
+# Feature branches validate pack JSON and JavaScript before packaging.
 
 on:
   push:
