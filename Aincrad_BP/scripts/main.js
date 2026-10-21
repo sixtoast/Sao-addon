@@ -291,14 +291,20 @@ function isPlayer(entity) {
 }
 
 function getTargetCandidates(player, move) {
-  const origin = player.location;
+  // Use the player's eye position and the full 3D view vector. The attack follows
+  // where the player aims, rather than flattening aim onto the horizontal plane.
+  const origin = player.getHeadLocation();
   const view = player.getViewDirection();
-  const viewLength = Math.sqrt(view.x * view.x + view.z * view.z) || 1;
-  const forward = { x: view.x / viewLength, z: view.z / viewLength };
+  const viewLength = Math.sqrt(view.x * view.x + view.y * view.y + view.z * view.z) || 1;
+  const forward = {
+    x: view.x / viewLength,
+    y: view.y / viewLength,
+    z: view.z / viewLength
+  };
 
   const candidates = [];
   const entities = player.dimension.getEntities({
-    location: origin,
+    location: player.location,
     maxDistance: move.range
   });
 
@@ -306,25 +312,33 @@ function getTargetCandidates(player, move) {
     if (!target.isValid || target.id === player.id) continue;
 
     // Exclude item drops, projectiles, and other non-living entities from sword targeting.
-    // Otherwise a closer non-damageable entity can consume the move's only target slot.
     try {
       if (!target.getComponent("minecraft:health")) continue;
     } catch (_) {
       continue;
     }
 
-    const dx = target.location.x - origin.x;
-    const dy = (target.location.y + 0.8) - (origin.y + 0.8);
-    const dz = target.location.z - origin.z;
-    const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+    // Aim at the approximate centre of the target's body. This supports upward,
+    // downward, and diagonal strikes while retaining the move's range limit.
+    const targetPoint = {
+      x: target.location.x,
+      y: target.location.y + 0.9,
+      z: target.location.z
+    };
+    const dx = targetPoint.x - origin.x;
+    const dy = targetPoint.y - origin.y;
+    const dz = targetPoint.z - origin.z;
     const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    if (distance > move.range || horizontalDistance < 0.001) continue;
+    if (distance > move.range || distance < 0.001) continue;
 
-    const dot = (dx / horizontalDistance) * forward.x + (dz / horizontalDistance) * forward.z;
+    const dot = (dx / distance) * forward.x +
+      (dy / distance) * forward.y +
+      (dz / distance) * forward.z;
     if (dot < move.minDot) continue;
     candidates.push({ target, dot, distance });
   }
 
+  // Prefer the entity closest to the actual aim line, then the nearest target.
   candidates.sort((a, b) => {
     if (Math.abs(a.dot - b.dot) > 0.0001) return b.dot - a.dot;
     if (Math.abs(a.distance - b.distance) > 0.0001) return a.distance - b.distance;
