@@ -276,9 +276,10 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
         const strain = (guardStrain.get(target.id) || 0) + (move.id === "heavy" ? 6 : 3);
         guardStrain.set(target.id, strain);
         if (strain >= GUARD_MAX_STRAIN) {
-          guards.delete(target.id);
           guardStrain.delete(target.id);
+          guard.untilTick = system.currentTick;
           guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
+          guards.set(target.id, guard);
           const liveTargetAction = actions.get(target.id);
           if (liveTargetAction) {
             liveTargetAction.phase = "interrupted";
@@ -349,6 +350,10 @@ function processCombatTick() {
       parryWindows.delete(id);
       continue;
     }
+
+    const guardState = guards.get(id);
+    if (guardState && guardState.brokenUntil && now >= guardState.brokenUntil) guards.delete(id);
+    else if (guardState && !guardState.brokenUntil && now > guardState.untilTick) guards.delete(id);
 
     if (action.phase === "parry") {
       if (now > action.recoveryUntil) {
