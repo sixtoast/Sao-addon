@@ -8,12 +8,13 @@ An iPhone-first, from-scratch Sword Art Online-inspired Bedrock RPG project. Dev
 
 Preview 0.2 adds an ActionFormData skill menu with Quick Slash, Heavy Strike, and Arc Burst, plus cooldowns and forward-cone targeting for the first two skills. The updated menu has not yet been tested in Minecraft. See docs/TESTING.md before testing.
 
-
 ## Combat controls (prototype)
 
 - Tap the normal Attack button for Quick Slash where the experimental swing input is supported.
-- Use the **Heavy Attack** hotbar item for Heavy Strike.
-- Use the **Parry** hotbar item to open the short parry window.
-- Keep the **Aincrad Skill Menu** item as a fallback for Quick Slash and Parry.
+- Use the **Heavy Attack** hotbar item (sword icon) for Heavy Strike.
+- Use the **Parry** hotbar item (shield icon) to open the short parry window.
+- Keep the **Aincrad Skill Menu** book item as a fallback for Quick Slash and Parry.
+
+The Heavy Attack item is a dedicated hotbar control, **not** a custom always-visible HUD button. Current public Bedrock add-on APIs do not provide a verified route for a persistent custom HUD button to invoke combat script input. See [the investigation](https://github.com/sixtoast/Sao-addon/blob/feature/heavy-attack-button-v0.5/docs/HEAVY_ATTACK_BUTTON_RESEARCH.md).
 
 These controls are implemented on the feature branch but still require in-game verification on the target Bedrock version and touchscreen device.
