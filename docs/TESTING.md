@@ -26,9 +26,9 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - Native attack cancellation is separately feature-detected and depends on the pre-release `PlayerItemAttackEntityBeforeEvent`. If unavailable, vanilla melee may add extra damage.
 - A persistent, always-visible, tappable custom Heavy Attack HUD button remains blocked by the lack of a documented public HUD-to-script input route. The hotbar item is the honest current fallback, not a completed HUD button. See [Heavy Attack button research](HEAVY_ATTACK_BUTTON_RESEARCH.md).
 
-## First-pass guard rules
+## Shared Sneak defence rules
 
-- Guard lasts 30 ticks (about 1.5 seconds) per activation.
+- One Sneak press starts a 31-tick defensive sequence: spot dodge on ticks 0–2, parry on ticks 3–6, then Guard on ticks 7–30. Timing is provisional and intended for playtesting.
 - Guard only reduces custom player attacks from the defender's forward-facing arc; blocked attacks deal 25% damage, rounded up, with a minimum of 1.
 - Guard strain: Quick Slash adds 3, Heavy Strike adds 6; strain of 10 breaks guard for 40 ticks.
 - Defence is selected by the attack's arrival time in the sequence; a hit during dodge is evaded, a hit during parry is countered, and a hit during Guard is blocked if it comes from the front. Mob attacks and vanilla damage are not intercepted by this custom logic yet.
