@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP v0.4.5",
-    "description": "Aincrad Combat v0.4.5 | SAO-inspired combat prototype, custom attacks and opt-in test diagnostics.",
+    "name": "Aincrad Combat BP v0.4.9",
+    "description": "Aincrad Combat v0.4.9 | Experimental touch HUD button for Heavy Strike.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
       4,
-      5
+      9
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         0,
         4,
-        4
+        9
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         0,
         4,
-        4
+        9
       ],
       "entry": "scripts/main.js"
     }
@@ -43,7 +43,7 @@
       "version": [
         0,
         4,
-        4
+        9
       ]
     },
     {
