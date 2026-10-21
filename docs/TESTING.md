@@ -161,3 +161,16 @@ On a runtime where `world.afterEvents.playerButtonInput` is unavailable:
 4. Repeat while Guard is broken. The item should not bypass the 40-tick break period.
 
 This fallback is a toggle because item-use events do not provide a reliable held-button/release signal.
+
+## Sneak-state defence and vanilla melee suppression (new; runtime test pending)
+
+The defence sequence now polls the player's actual `isSneaking` state every tick instead of relying on Sneak Pressed/Released events. This is intended to support both hold and toggle Sneak controls, including touch controls that emit very short input events.
+
+1. With Sneak set to toggle, toggle Sneak on and remain sneaking for at least 7 ticks. Confirm Guard becomes active after the dodge and parry windows.
+2. Toggle Sneak off. Confirm Guard is released and a later mob hit is no longer blocked.
+3. Repeat with Sneak set to hold. Confirm the defence ends when sneaking ends.
+4. Face a mob and tap Attack. Confirm vanilla melee does not deal an immediate hit or knock the mob away; Quick Slash should resolve on its custom active frame instead.
+5. Confirm Quick Slash still damages mobs and that its custom damage is not accidentally cancelled by the vanilla-hit suppression hook.
+6. Test frontal mob hits while Guard is active. Guard should reduce damage and build strain; rear hits should remain unblocked.
+
+The vanilla-hit suppression depends on the runtime exposing the cancellable `world.beforeEvents.entityHurt` event for player-caused melee. Verify on the target Minecraft version and inspect the Content Log if vanilla damage or knockback remains.
