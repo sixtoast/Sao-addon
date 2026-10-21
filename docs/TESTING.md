@@ -267,3 +267,32 @@ For v0.5.0, import the new package and enable both packs. Verify:
 4. Normal Attack still starts Quick Slash, and Sneak still cycles Spot Dodge → Parry → Guard.
 5. If Heavy Attack item-use does not fire on touch, use the Skill Crystal combat menu's Heavy Strike action as a temporary fallback and report the exact button behaviour. Do not restore the contextual Interact component without checking the book interaction conflict.
 6. Check the Content Log for item or script errors. Stable `main` remains unchanged; this is a test branch only.
+
+
+## v0.5.1 hold-Attack charge prototype
+
+Import the v0.5.1 package and enable both packs. The selected combat item is currently the existing Heavy Attack control item (this repo has no custom `sao:elucidator` sword item yet).
+
+1. Select **Heavy Attack** in the hotbar.
+2. Tap Attack briefly. Expect one Quick Slash and no charge meter lingering.
+3. Hold Attack for at least 9 ticks, watching the action-bar charge meter. Release. Expect one Heavy Strike, a ready cue at full charge, and 12 damage when a target is in range.
+4. Hold for 7-8 ticks then release. Expect an early Heavy Strike for 9 damage.
+5. Hold for less than 7 ticks then release. Expect a Quick Slash, not Heavy Strike.
+6. Test with a target in front at close range and another target moving during charge. Confirm target snapshot behaviour feels sensible.
+7. Confirm no extra duplicate attack occurs on release; confirm Skill Activation Book still opens the menu; confirm Sneak still cycles Spot Dodge → Parry → Guard and Guard/guard-break diagnostics still work.
+8. Check the Content Log for item-format, `start_using`, or Script API errors. The zero-nutrition food/use-animation compatibility mechanism must not consume the item on ordinary releases or block the input.
+9. This is an unmerged test branch. Stable `main` and the v0.5.0 branch remain unchanged.
+
+
+## v0.5.2 regression check — device report pending
+
+The v0.5.1 device test failed: no charge meter appeared and the Heavy Attack token produced Quick Slash. v0.5.2 adds a fallback that requests Heavy Strike when the token is selected but no charge state exists. Import the v0.5.2 build and check:
+
+1. BP and RP both show version 0.5.2 in Minecraft.
+2. Select Heavy Attack and tap Attack once. It should request Heavy Strike rather than Quick Slash if charging does not begin; watch for the message “Charge input was not detected; using Heavy Strike fallback.”
+3. Hold Attack and release. Check whether “Heavy Strike charging...” and the action-bar meter appear. If they do not, the charge lifecycle still is not working and must not be reported as fixed.
+4. Confirm ordinary Attack with a different hotbar item remains Quick Slash.
+5. Confirm the Skill Activation Book still opens, and Sneak defence remains intact.
+6. Check Content Log for item parser and Script API errors.
+
+This package is a test candidate. Keep stable `main` unchanged and do not merge until the user reports results.
