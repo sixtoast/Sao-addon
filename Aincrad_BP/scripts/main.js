@@ -286,15 +286,15 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry.") +
+        ? "Aincrad Sword: tap Attack for Quick Slash; hold Attack for 9 ticks, then release for Heavy Strike. The Heavy Attack token remains a compatibility fallback."
+        : "Direct swing input is unavailable in this runtime. Test the Aincrad Sword's chargeable item-use input; use this menu as a fallback for Quick Slash and Heavy Strike.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
         : "Native attack-cancel event is not exposed by this runtime; the tested combat damage-cancellation path remains enabled.")
     )
-    .button("Quick Slash\n§7Fast • 7 damage")
-    .button("Heavy Strike\n§7Committed • 12 damage")
+    .button("Quick Slash\n§7Weapon 7 • unarmed 1 damage")
+    .button("Heavy Strike\n§7Weapon 12 • unarmed 5 damage")
     .button("Parry\n§7Short timing window");
 
   form.button("Diagnostics: Toggle ON/OFF");
