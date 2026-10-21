@@ -143,7 +143,6 @@ try {
       guardStrain.set(target.id, strain);
       if (strain >= GUARD_MAX_STRAIN) {
         guardStrain.delete(target.id);
-        guard.held = false;
         guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
         guards.set(target.id, guard);
         event.cancel = true;
