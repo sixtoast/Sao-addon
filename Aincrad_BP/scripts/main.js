@@ -211,6 +211,22 @@ try {
           return;
         }
         if ((suppressQuickUntil.get(player.id) ?? 0) > system.currentTick) return;
+
+        // Device test found that on_attack did not start the charge lifecycle:
+        // the generic swing listener therefore incorrectly routed Heavy Attack
+        // to Quick Slash. If the selected token did not start charging, fall
+        // back to a direct Heavy Strike instead of silently doing the wrong move.
+        let selectedItemType = "";
+        try {
+          const inventory = player.getComponent("minecraft:inventory")?.container;
+          selectedItemType = inventory?.getItem(player.selectedSlotIndex)?.typeId ?? "";
+        } catch (_) {}
+        if (selectedItemType === HEAVY_ITEM) {
+          safeMessage(player, "§e[AINCRAD] Charge input was not detected; using Heavy Strike fallback.");
+          beginAttack(player, MOVES.heavy);
+          return;
+        }
+
         const current = actions.get(player.id);
         if (current && current.move?.id === "heavy" &&
             current.phase !== "recovery" && current.phase !== "idle") return;
