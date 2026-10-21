@@ -18,16 +18,22 @@
       },
       "minecraft:max_stack_size": 1,
       "minecraft:use_modifiers": {
-        "start_using": "on_attack",
+        "start_using": "always",
         "use_duration": 3600,
         "movement_modifier": 1,
         "emit_vibrations": false
       },
       "minecraft:use_animation": "spear",
-      "minecraft:food": {
-        "nutrition": 0,
-        "saturation_modifier": 0.1,
-        "can_always_eat": true
+      "minecraft:throwable": {
+        "do_swing_animation": false,
+        "launch_power_scale": 0,
+        "max_draw_duration": 10,
+        "max_launch_power": 0,
+        "min_draw_duration": 0,
+        "scale_power_by_draw_duration": true
+      },
+      "minecraft:projectile": {
+        "projectile_entity": "minecraft:snowball"
       }
     }
   }
