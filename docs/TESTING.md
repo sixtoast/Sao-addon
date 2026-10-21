@@ -192,3 +192,7 @@ On first spawn, the add-on reports whether swing input, native vanilla-attack ca
 - The tick loop now clears stale held-Guard state whenever live Sneak is false and emits a one-time-per-release diagnostic message when it clears defence.
 - Native attack-cancellation setup now reports the specific thrown error or explicitly says when `world.beforeEvents.playerItemAttackEntity` is not exposed. Beta APIs being enabled does not itself prove this particular pre-release event is available in the installed runtime.
 - These changes are source-reviewed and the automated package build must pass, but still require an in-game retest on Bedrock 26.52. Confirm the three control items load without Content Log parse errors, Sneak defence ends on release/toggle-off, the Guard phase reduces incoming frontal mob melee, and native attack cancellation prevents vanilla knockback.
+
+## Pack replacement/version check (2026-10-21)
+
+The previous hotfix reused pack version 0.4.0, which can leave Minecraft loading the already-imported pack instead of the newly packaged files. Both Behavior Pack and Resource Pack header/module versions are now 0.4.1. Import the newly built .mcaddon and verify the pack details show 0.4.1. If Minecraft still reports the old item parser errors, remove the old Aincrad BP/RP from Storage > Behavior Packs / Resource Packs (and deactivate them from the test world), then import the 0.4.1 package again. Do not delete the world.
