@@ -38,7 +38,7 @@
 
 
 ## Combat core v0.6 — guard and block (provisional implementation)
-- Dedicated Guard hotbar item
+- Sneak input activates/toggles a timed guard window; Guard hotbar item remains fallback
 - Timed directional guard against custom player combat intents
 - Blocked damage reduction and guard strain
 - Heavy attacks build more strain and can break guard
