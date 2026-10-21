@@ -585,9 +585,12 @@ world.afterEvents.itemUse.subscribe((event) => {
           safeMessage(player, "§c[AINCRAD] Your guard is broken.");
           return;
         }
-        defensiveSequences.set(player.id, { startedTick: system.currentTick });
+        defensiveSequences.set(player.id, {
+          // The fallback item is a direct Guard control, not a delayed Sneak sequence.
+          startedTick: system.currentTick - DEFENSE_GUARD_START_TICK
+        });
         guards.set(player.id, { held: true });
-        safeMessage(player, "§9[AINCRAD] Defensive stance active. Use Guard again to release.");
+        safeMessage(player, "§9[AINCRAD] Guard active. Use Guard again to release.");
       }
     } else safeMessage(player, "§7[AINCRAD] Sneak cycles Spot Dodge, Parry, then Guard.");
     return;
