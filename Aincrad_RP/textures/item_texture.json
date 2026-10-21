@@ -4,6 +4,9 @@
   "texture_data": {
     "aincrad_skill_crystal": {
       "textures": "textures/items/diamond_sword"
+    },
+    "aincrad_heavy_attack_token": {
+      "textures": "textures/items/diamond_sword"
     }
   }
 }
