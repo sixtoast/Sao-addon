@@ -313,3 +313,25 @@ This candidate changes only the Heavy Attack input mechanism. It replaces the fo
 9. If charging does not start, record the exact on-screen message and inspect the Content Log before changing timing values.
 
 The use of a native throwable is a hypothesis to test, not a verified fix. Keep this branch separate from `main` until the iPhone test passes.
+
+
+## v0.5.7 Attack swing cadence diagnostic (22 October 2026)
+
+Purpose: test whether `playerSwingStart` produces a useful cadence signal on Bedrock mobile, before attempting to infer a hold/release gesture.
+
+This is a diagnostic-only build:
+- Every observed `swingSource === "Attack"` event logs `[SWING DIAG 0.5.7] Attack swing; tick=...; gap=...; selected=...`.
+- `gap` is the number of script ticks since the previous Attack swing event for that player.
+- The normal swing-to-Quick-Slash/Heavy-Strike handler is intentionally bypassed in this candidate, so Attack swings do not trigger the custom combat moves.
+- Native Use-button throwable charging remains in the item definition, but do not use Use during this test; the purpose is to observe Attack.
+
+Device test:
+1. Import the v0.5.7 diagnostic build into a test world, enable the same required experimental/script settings as the working v0.5.3 pack, and select any item.
+2. Tap Attack three times with a clear pause between taps. Note each line's `gap`.
+3. Hold Attack for about three seconds while aiming at a safe target or swinging in air, if the touch UI permits. Note whether additional lines appear and their gaps.
+4. Release Attack and wait two seconds. Note whether any new lines appear after release.
+5. Report a few consecutive lines from the tap sequence and hold sequence.
+
+Interpretation: repeated events during a sustained hold with a consistent gap may support a heuristic charge detector; only one event per press or inconsistent gaps means this is not reliable enough for charge-and-release. This does not provide true button-release detection and must not be treated as a production implementation.
+
+Known-good baseline remains v0.5.3 Use-button charging. Do not merge the diagnostic build into main.
