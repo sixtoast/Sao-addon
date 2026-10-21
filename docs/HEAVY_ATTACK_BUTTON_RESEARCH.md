@@ -145,3 +145,15 @@ The user confirmed on iPhone that v0.5.3 charges successfully while using the na
 Microsoft documents `on_attack` as beginning item use when attack input is received while the item is selected, and says the component format must be at least 1.26.30: https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_use_modifiers?view=minecraft-bedrock-stable
 
 This test specifically checks whether native throwable draw/release remains active when initiated from Attack. It is not guaranteed: the earlier food-based `on_attack` setup did not fire charge events. On iPhone, with Heavy Attack selected, hold Attack and check for the charge message/meter; release and confirm a single melee Heavy Strike, no lingering projectile, and retained token. If the fallback message appears, record it and stop treating the Attack route as successful. The known-good v0.5.3 Use-button charge remains the reference.
+
+
+## v0.5.4 Attack-button native charge test result (21 October 2026)
+
+The user tested v0.5.4 on iPhone and reported that Attack-button charging still does not work. The v0.5.3 native throwable charge remains the confirmed working route only when activated through Use.
+
+Do not repeat the same `start_using: "on_attack"` experiment without new evidence. Microsoft documents `InputInfo.getButtonState` and `WorldAfterEvents.playerButtonInput`, but the documented `InputButton` enum currently contains only `Jump` and `Sneak`, not Attack. References:
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputinfo?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputbutton?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
+
+Therefore the supported Script API does not currently provide a documented held-Attack state that we can poll for charge duration. The player swing event reports that a swing started, not that Attack remains held or has been released. The next investigation must look for a distinct native item/component route that binds a real charge lifecycle to Attack, or accept that the reliable native charge input is Use. Do not claim Attack charging is possible through Script API until a concrete API/component path is verified. Keep stable main unchanged.
