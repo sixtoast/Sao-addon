@@ -376,7 +376,7 @@ function releaseHeavyCharge(event) {
   if (!charge) return;
   heavyChargeStates.delete(player.id);
   // A native throwable creates a projectile on release. Keep a short owner-scoped
-  // cleanup window so the placeholder arrow is removed whether spawn fires just
+  // cleanup window so the placeholder snowball is removed whether spawn fires just
   // before or just after itemReleaseUse. This preserves the intended melee move.
   chargeProjectileCleanupUntil.set(player.id, system.currentTick + 4);
   try { if (player.isValid) player.onScreenDisplay.setActionBar(""); } catch (_) {}
@@ -415,7 +415,7 @@ world.afterEvents.itemStopUse.subscribe(releaseHeavyCharge);
 // remove it immediately and let the existing melee combat state machine resolve.
 world.afterEvents.entitySpawn.subscribe((event) => {
   const entity = event.entity;
-  if (!entity || entity.typeId !== "minecraft:arrow") return;
+  if (!entity || entity.typeId !== "minecraft:snowball") return;
   let owner;
   try { owner = entity.getComponent("minecraft:projectile")?.owner; } catch (_) {}
   if (!owner || owner.typeId !== "minecraft:player") return;
