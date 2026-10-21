@@ -1,4 +1,4 @@
-# Combat core v0.4 — direct-input test checklist
+# Combat core v0.5 — direct-input and hotbar-control test checklist
 
 The v0.4 input slice adds a feature-detected swing listener. It is not yet verified in Minecraft after this change. The previous v0.3 menu-driven combat build was confirmed by the user to import and run.
 
@@ -17,7 +17,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 ## What changed
 
 - `world.afterEvents.playerSwingStart` is feature-detected. Microsoft's current documentation marks the swing event as pre-release/experimental.
-- A swing whose `swingSource` is `Attack` starts Quick Slash; if the player is sneaking, it starts Heavy Strike.
+- A swing whose `swingSource` is `Attack` requests Quick Slash regardless of whether the player is sneaking. The Heavy Attack item requests Heavy Strike.
 - The Skill Crystal menu remains as a fallback for Quick Slash and Parry, because Bedrock's documented stable `InputButton` enum currently exposes Jump and Sneak, not a generic Attack button.
 - Native attack cancellation is still separately feature-detected and depends on the pre-release `PlayerItemAttackEntityBeforeEvent`. If unavailable, vanilla melee may add extra damage.
 
@@ -32,7 +32,8 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 ## Functional checks
 
 - [ ] Normal Attack input starts Quick Slash without opening the menu.
-- [ ] Sneak + Attack starts Heavy Strike.
+- [ ] Using the Heavy Attack item starts Heavy Strike.
+- [ ] Using the Parry item starts the five-tick parry window.
 - [ ] Touchscreen input actually produces the swing event in the installed Minecraft version.
 - [ ] Vanilla melee is cancelled when the cancellation API is available; no double damage.
 - [ ] The Skill Crystal still opens the fallback menu and returns to inventory.
@@ -44,7 +45,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 ## Known limitations
 
 - The direct swing event is documented as pre-release/experimental; runtime support and touch-button behaviour must be tested on the user's device.
-- Sneak + Attack is a provisional heavy-attack modifier, not the final dedicated-button design. We should replace it with a cleaner dedicated mobile control if the Bedrock UI/input options allow it.
+- Heavy Strike uses a dedicated hotbar item rather than Sneak + Attack. A persistent custom HUD button remains unverified and is not part of this slice.
 - Parry now has a dedicated hotbar item; actual parry timing and multiplayer interactions remain unverified.
 - Mob attacks are not yet routed through the custom combat state machine.
 - Guard strain/guard break, dodge, Momentum, combo buffering, custom animations, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
