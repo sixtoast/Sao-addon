@@ -304,7 +304,14 @@ function getTargetCandidates(player, move) {
 
   for (const target of entities) {
     if (!target.isValid || target.id === player.id) continue;
-    if (isPlayer(target) && target.id === player.id) continue;
+
+    // Exclude item drops, projectiles, and other non-living entities from sword targeting.
+    // Otherwise a closer non-damageable entity can consume the move's only target slot.
+    try {
+      if (!target.getComponent("minecraft:health")) continue;
+    } catch (_) {
+      continue;
+    }
 
     const dx = target.location.x - origin.x;
     const dy = (target.location.y + 0.8) - (origin.y + 0.8);
