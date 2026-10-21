@@ -48,36 +48,50 @@ const MOVES = {
 const REACTION_TICKS = { flinch: 4, actionBreak: 8, stagger: 14 };
 const PARRY_WINDOW_TICKS = 5;
 
-// Hold Sneak to guard. Releasing Sneak lowers guard immediately.
-// A broken guard remains disabled until its break timer expires, even if Sneak is held.
+// One Sneak press starts a defensive sequence:
+// ticks 0-2 = spot dodge, ticks 3-6 = parry, ticks 7-30 = guard.
+// This timing-based sequence also works around Bedrock touch input, which may emit
+// a Sneak press/release pair even when the touch control is held.
+const DEFENSE_DODGE_TICKS = 3;
+const DEFENSE_PARRY_TICKS = 4;
+const DEFENSE_GUARD_TICKS = 24;
+const DEFENSE_TOTAL_TICKS = DEFENSE_DODGE_TICKS + DEFENSE_PARRY_TICKS + DEFENSE_GUARD_TICKS;
+const defensiveSequences = new Map();
 let sneakGuardInputAvailable = false;
 try {
   const buttonSignal = world.afterEvents.playerButtonInput;
   if (buttonSignal && typeof buttonSignal.subscribe === "function") {
     buttonSignal.subscribe((event) => {
       const player = event.player;
-      if (!player || !player.isValid || event.button !== "Sneak") return;
+      if (!player || !player.isValid || event.button !== "Sneak" || event.newButtonState !== "Pressed") return;
       const now = system.currentTick;
       const guard = guards.get(player.id);
-
-      if (event.newButtonState === "Pressed") {
-        if (guard?.brokenUntil && now < guard.brokenUntil) {
-          safeMessage(player, "§c[AINCRAD] Your guard is broken.");
-          return;
-        }
-        guards.set(player.id, { held: true });
-      } else if (event.newButtonState === "Released") {
-        if (guard?.brokenUntil && now < guard.brokenUntil) {
-          guards.set(player.id, { brokenUntil: guard.brokenUntil });
-        } else {
-          guards.delete(player.id);
-        }
+      if (guard?.brokenUntil && now < guard.brokenUntil) {
+        safeMessage(player, "§c[AINCRAD] Your guard is broken.");
+        return;
       }
+      defensiveSequences.set(player.id, { startedTick: now });
+      safeMessage(player, "§9[AINCRAD] Defensive stance.");
     });
     sneakGuardInputAvailable = true;
   }
 } catch (_) {
-  // Keep the dedicated Guard item fallback if button input is unavailable.
+  // Keep the Guard item fallback if button input is unavailable.
+}
+
+function getDefensePhase(playerId, now = system.currentTick) {
+  const sequence = defensiveSequences.get(playerId);
+  if (!sequence) return null;
+  const elapsed = now - sequence.startedTick;
+  if (elapsed < 0 || elapsed >= DEFENSE_TOTAL_TICKS) {
+    defensiveSequences.delete(playerId);
+    guards.delete(playerId);
+    parryWindows.delete(playerId);
+    return null;
+  }
+  if (elapsed < DEFENSE_DODGE_TICKS) return "dodge";
+  if (elapsed < DEFENSE_DODGE_TICKS + DEFENSE_PARRY_TICKS) return "parry";
+  return "guard";
 }
 
 // The native attack cancellation event is still pre-release in current Microsoft
@@ -278,12 +292,19 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
   // A clash or interruption may have resolved this actor earlier in the same snapshot.
   if (liveActorAction && liveActorAction.phase === "recovery" && liveActorAction.hitResolved) return;
 
-  // Parry has priority over ordinary guard and completely negates a timed hit.
+  // A single Sneak press cycles through spot dodge, parry, then guard.
+  // The guard pose can remain the visual stance; hit timing selects the actual defense.
   if (isPlayer(target)) {
-    const targetAction = snapshot.get(target.id);
-    if (targetAction && targetAction.phase === "parry" &&
-        system.currentTick <= targetAction.recoveryUntil) {
+    const defensePhase = getDefensePhase(target.id);
+    if (defensePhase === "dodge") {
+      safeMessage(target, "§b[AINCRAD] Spot dodge!");
+      safeMessage(actor, "§7[AINCRAD] Attack evaded.");
+      return;
+    }
+
+    if (defensePhase === "parry") {
       parryWindows.delete(target.id);
+      defensiveSequences.delete(target.id);
       const liveTargetAction = actions.get(target.id);
       if (liveTargetAction) {
         liveTargetAction.phase = "recovery";
@@ -294,10 +315,9 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
       return;
     }
 
-    // Guard only blocks attacks coming from the defender's forward-facing arc.
-    // Guard is active only while Sneak is held.
+    // Guard is the final phase of the same Sneak-triggered defensive sequence.
     const guard = guards.get(target.id);
-    if (guard && guard.held && !guard.brokenUntil) {
+    if (defensePhase === "guard" && !(guard?.brokenUntil && system.currentTick < guard.brokenUntil)) {
       const view = target.getViewDirection();
       const toAttackerX = actor.location.x - target.location.x;
       const toAttackerZ = actor.location.z - target.location.z;
@@ -308,9 +328,9 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
         guardStrain.set(target.id, strain);
         if (strain >= GUARD_MAX_STRAIN) {
           guardStrain.delete(target.id);
-          delete guard.held;
           guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
           guards.set(target.id, guard);
+          defensiveSequences.delete(target.id);
           const liveTargetAction = actions.get(target.id);
           if (liveTargetAction) {
             liveTargetAction.phase = "interrupted";
@@ -456,23 +476,17 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === GUARD_ITEM) {
-    // Fallback toggle for runtimes that do not expose Sneak button input.
     if (!sneakGuardInputAvailable) {
-      const currentGuard = guards.get(player.id);
-      if (currentGuard?.brokenUntil && system.currentTick < currentGuard.brokenUntil) {
-        safeMessage(player, "§c[AINCRAD] Your guard is broken.");
-      } else if (currentGuard?.held) {
-        guards.delete(player.id);
-      } else {
-        guards.set(player.id, { held: true });
-      }
-    } else safeMessage(player, "§7[AINCRAD] Hold Sneak to guard.");
+      defensiveSequences.set(player.id, { startedTick: system.currentTick });
+      safeMessage(player, "§9[AINCRAD] Defensive stance.");
+    } else safeMessage(player, "§7[AINCRAD] Sneak cycles Spot Dodge, Parry, then Guard.");
     return;
   }
 
   if (event.itemStack.typeId === PARRY_ITEM) {
-    // Dedicated hotbar control: using this item opens the short parry window.
-    beginParry(player);
+    // Compatibility fallback; Sneak is the primary shared defensive input.
+    defensiveSequences.set(player.id, { startedTick: system.currentTick - DEFENSE_DODGE_TICKS });
+    safeMessage(player, "§d[AINCRAD] Parry window started.");
     return;
   }
 
