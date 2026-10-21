@@ -69,6 +69,16 @@ function getDefensePhase(playerId, now = system.currentTick) {
   return "guard";
 }
 
+// Re-check live Sneak state at the moment defence resolves. Stale map entries
+// must never keep a defensive phase active after the player stops sneaking.
+function getActiveDefensePhase(player, now = system.currentTick) {
+  if (!player || !player.isValid) return null;
+  let sneaking = false;
+  try { sneaking = player.isSneaking === true; } catch (_) {}
+  if (!sneaking) return null;
+  return getDefensePhase(player.id, now);
+}
+
 // Route ordinary mob melee damage through the same Sneak defensive phases.
 // This uses the cancellable before-hurt event, so blocked/evaded hits do not also
 // apply vanilla damage. Player-vs-player custom moves remain handled by resolveAttackIntent.
@@ -97,7 +107,7 @@ try {
       // EntityDamageSource.cause is an EntityDamageCause enum value, not a snake_case string.
       if (cause !== EntityDamageCause.entityAttack) return;
 
-      const phase = getDefensePhase(target.id);
+      const phase = getActiveDefensePhase(target);
       if (!phase) return;
 
       // Dodge and parry are timing windows. Both negate this incoming mob hit.
@@ -151,6 +161,7 @@ try {
 // The native attack cancellation event is still pre-release in current Microsoft
 // documentation. Feature-detect it; never assume vanilla attacks are suppressed.
 let nativeAttackCancellationAvailable = false;
+let nativeAttackCancellationError = "not attempted";
 try {
   const signal = world.beforeEvents.playerItemAttackEntity;
   if (signal && typeof signal.subscribe === "function") {
@@ -159,8 +170,9 @@ try {
     });
     nativeAttackCancellationAvailable = true;
   }
-} catch (_) {
-  // This runtime does not expose the pre-release event.
+} catch (error) {
+  // Preserve the reason for API/version mismatch in the runtime diagnostics.
+  nativeAttackCancellationError = String(error);
 }
 
 // Player swing input is experimental in the current Creator documentation.
@@ -371,7 +383,7 @@ function resolveAttackIntent(intent, snapshot, intentByActor) {
   // A single Sneak press cycles through spot dodge, parry, then guard.
   // The guard pose can remain the visual stance; hit timing selects the actual defense.
   if (isPlayer(target)) {
-    const defensePhase = getDefensePhase(target.id);
+    const defensePhase = getActiveDefensePhase(target);
     if (defensePhase === "dodge") {
       safeMessage(target, "§b[AINCRAD] Spot dodge!");
       safeMessage(actor, "§7[AINCRAD] Attack evaded.");
@@ -496,7 +508,10 @@ function processCombatTick() {
           if (phase === "dodge") safeMessage(player, "§b[AINCRAD] Defence sequence started: Spot Dodge → Parry → Guard.");
           if (phase === "guard") safeMessage(player, "§9[AINCRAD] Guard phase active. Keep Sneak on to maintain it.");
         }
-      } else if (defensiveSequences.has(player.id)) {
+      } else {
+        // Release defence whenever the actual Sneak state is false, even if the
+        // sequence and Guard maps have become unsynchronised.
+        const hadDefense = defensiveSequences.has(player.id) || guards.get(player.id)?.held;
         defensiveSequences.delete(player.id);
         lastDefensePhase.delete(player.id);
         const currentGuard = guards.get(player.id);
@@ -505,6 +520,7 @@ function processCombatTick() {
         } else {
           guards.delete(player.id);
         }
+        if (hadDefense) safeMessage(player, "§7[AINCRAD] Defence ended: Sneak is no longer active.");
       }
     } catch (_) {
       // Ignore players whose state becomes unavailable during this tick.
@@ -677,7 +693,8 @@ world.afterEvents.playerSpawn.subscribe((event) => {
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
       if (!nativeAttackCancellationAvailable) {
-        safeMessage(player, "§e[AINCRAD] Vanilla melee cancellation needs the experimental Beta APIs feature on a compatible Bedrock version. Without it, vanilla hits may still damage/knock back mobs.");
+        safeMessage(player, "§e[AINCRAD] Native attack-cancel API unavailable: " + nativeAttackCancellationError);
+        safeMessage(player, "§e[AINCRAD] Vanilla damage may be cancelled by the hurt hook, but vanilla knockback may remain.");
       }
       if (!mobDefenseInputAvailable) {
         safeMessage(player, "§c[AINCRAD] Guard/dodge/parry hurt hook failed to register. Check the Content Log and Minecraft version.");
