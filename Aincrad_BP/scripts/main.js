@@ -119,13 +119,10 @@ try {
       // Dodge and parry are timing windows. Both negate this incoming mob hit.
       if (phase === "dodge") {
         event.cancel = true;
-        safeMessage(target, "§b[AINCRAD] Spot dodge!");
         return;
       }
       if (phase === "parry") {
         event.cancel = true;
-        setReaction(attacker, "stagger", "a parry");
-        safeMessage(target, "§d[AINCRAD] Perfect parry!");
         return;
       }
 
@@ -146,10 +143,8 @@ try {
         guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
         guards.set(target.id, guard);
         event.cancel = true;
-        safeMessage(target, "§c[AINCRAD] Guard broken! §7You are staggered.");
       } else {
         event.damage = Math.max(1, Math.ceil(event.damage * 0.25));
-        safeMessage(target, "§9[AINCRAD] Blocked! §7Guard strain " + strain + "/" + GUARD_MAX_STRAIN + ".");
       }
     });
     mobDefenseInputAvailable = true;
