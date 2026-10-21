@@ -353,3 +353,16 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - This choice extends the existing commitment-and-poise model. It does not mean every move can clash, interrupt, or trade in every phase; each move must declare its eligibility and the resolver must enforce it.
 - Implementation is deferred until the player combat state machine and authoritative hit-resolution architecture are ready. This is a design decision, not a claim of implemented or in-game-verified behaviour.
 
+## 15. Attack collision priority
+
+**Agreed — fully contextual priority (Option D)**
+
+- Clash versus clean interruption is determined by a deterministic combination of valid timing, declared move properties, attack phase, facing, spacing, and explicit move-specific exceptions. No single factor automatically decides every interaction.
+- First establish whether each attack is still valid for resolution: its move phase must permit the interaction, and the target must satisfy that move's range, facing/arc, and other declared eligibility conditions.
+- Then apply the moves' declared interaction properties, including clash eligibility, interruption strength and resistance, phase-specific vulnerability, and any explicit priority exception. Damage or animation appearance alone never creates priority.
+- Resolve simultaneous eligible hits from a shared snapshot, then classify the exchange as a clash, clean interruption, or trade under the agreed collision-resolution rules. Do not let script/event ordering decide who wins.
+- Exceptions must be explicit, limited, and testable; avoid an opaque weighted score that makes outcomes difficult to predict. When declared rules do not distinguish an interaction, use a documented deterministic tie rule rather than arbitrary event order.
+- Apply each resulting hit, interruption, and associated reward/resource change at most once. A later resolution step cannot retroactively invalidate a hit already confirmed by the shared snapshot.
+- The design defines the decision policy, not final numeric thresholds. Per-move values, phase windows, and edge-case rules remain open for tuning and validation.
+- Implementation is deferred; this entry changes the design record only and is not a claim of gameplay implementation or in-game verification.
+
