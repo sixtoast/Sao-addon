@@ -1,6 +1,6 @@
 # Aincrad Combat v0.1: iPhone test instructions
 
-> Status: first directional quick-attack loop committed; runtime behaviour remains unverified until tested inside Minecraft on the target iPhone and stable Bedrock version.
+> Status: three-step quick-combo logic committed; runtime behaviour remains unverified until tested inside Minecraft on the target iPhone and stable Bedrock version.
 
 ## Import
 1. Download or package the Behaviour Pack and Resource Pack folders as separate `.mcpack` files, or package both packs into a `.mcaddon`.
@@ -8,40 +8,45 @@
 3. Create a new Creative test world and enable both Aincrad Combat packs.
 4. Enable cheats for this test world.
 
-## Test the quick-attack loop
+## Test the quick-combo loop
 Run:
 
 ```mcfunction
-/give @s aincrad:skill_crystal 5
+/give @s aincrad:skill_crystal 10
 ```
 
 Use the Skill Crystal while facing a zombie or another damageable non-player entity.
 
-The first combat slice should:
-- enter a short startup phase (3 ticks);
-- select at most one target within 3 blocks and a 38-degree forward half-angle;
-- deal 4 damage on the active step if a valid target is found;
-- enter recovery (8 ticks) before accepting another attack;
-- report a hit, miss, recovery lockout or readiness in chat.
-
-These are provisional test values, not final balance. The current input is still the temporary Skill Crystal activation, not the final sword/touch interface.
+The current prototype has three provisional combo steps:
+- Step 1: 3-tick startup, 4 damage, 8-tick recovery; 3-block range and 38-degree forward half-angle.
+- Step 2: 3-tick startup, 4 damage, 8-tick recovery; 3-block range and 42-degree forward half-angle.
+- Step 3: 4-tick startup, 5 damage, 11-tick recovery; 3.2-block range and 48-degree forward half-angle.
+- One follow-up input can be buffered during startup, active or recovery; extra inputs do not create a queue.
+- A buffered follow-up starts at the end of the current recovery. Without a buffered follow-up, the chain resets.
+- At most one non-player target can be hit per step. These are provisional values, not final balance.
 
 ## Checks
-- Target in front and within range: one hit, not repeated damage.
-- Target behind or outside the forward angle: miss.
-- Several targets in front: at most one target is hit.
-- Rapid repeated item use during startup/recovery: no overlapping attack should start.
-- Move out of range or turn after activation: the attack uses the facing direction captured at activation; target position is checked at the active step.
-- Test with players nearby: other players must not be damaged by this PvE prototype.
+- A target in front and within range receives no more than one hit per step.
+- A target behind or outside the forward angle is missed.
+- Several targets in front: at most one target is hit per step.
+- Buffer one input during startup/recovery and confirm that the next combo step begins after recovery.
+- Mash/use repeatedly and confirm that it does not queue more than one follow-up.
+- Confirm the third step cannot queue a fourth step.
+- Move or turn during startup and observe that the current step uses the direction captured when it began, while target position is checked at the active step.
+- Test with other players nearby; this PvE prototype must not damage players.
 - Watch Minecraft's Content Log for Script API errors.
 
 ## Known limitations
-- This is a directional single-target quick-attack prototype, not the finished combat system.
-- The Skill Crystal uses a food-style use component as a temporary mobile activation method and may be consumed.
-- There is no final custom sword input, animation, combo branching, defence, Momentum, progression, boss logic or persistent character data yet.
-- Attack timings, target geometry, damage and input reliability require in-game testing and tuning.
-- API and item schema compatibility must be confirmed in the installed Minecraft stable version.
+- The current activator is still a food-style Skill Crystal. It may be consumed; this is a known input-path defect to solve before the combat loop can be considered reliable.
+- The current combo steps share the same target-selection and damage path; no custom sword swing animation is implemented.
+- No heavy attack, defence, Momentum, sword skills, aerial combat, interruption/poise, progression, boss logic or persistent character data is implemented.
+- Attack timings, target geometry, damage, input buffering and API/item-schema compatibility require in-game testing and tuning.
 - The item icon currently reuses the built-in diamond sword texture; the custom crystal texture is not yet present.
 
-## Debugging
-If the item cannot be given or the pack fails to load, check the import message and Minecraft Content Log. A successful import is not proof that runtime scripting or combat timing works correctly.
+## Documentation references
+- [Official Script API introduction](https://learn.microsoft.com/en-us/minecraft/creator/documents/scripting/introduction?view=minecraft-bedrock-stable)
+- [Official WorldAfterEvents API](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable) — documents the `itemUse` event used by this temporary input path.
+- [Official Item Components reference](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponentlist?view=minecraft-bedrock-stable) — consult before replacing the temporary activator.
+- [Official Item Custom Component API](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemcustomcomponent?view=minecraft-bedrock-stable) — available callbacks are documented, but the exact JSON/runtime compatibility must be checked against the pack's stable API target before adoption.
+
+A successful import is not proof that runtime scripting or combat timing works correctly.
