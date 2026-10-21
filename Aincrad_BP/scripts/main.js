@@ -13,6 +13,7 @@ const guardStrain = new Map();
 const customDamageTargets = new Set();
 const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
+const heavyActivationTicks = new Map();
 const tickCounters = new Map();
 // Per-player opt-in diagnostics, controlled from the Skill Menu.
 const diagnosticsEnabled = new Set();
@@ -670,14 +671,34 @@ function processCombatTick() {
 
 const intents = [];
 
+// The custom HUD button route is not available through a documented public API.
+// The Heavy Attack item exposes a context-sensitive Interact button on touch UI.
+// Both entity-interact and item-use events are accepted because mobile controls can
+// surface the same input through either route; a short debounce prevents double attacks.
+function requestHeavyAttack(player) {
+  if (!player || !player.isValid) return;
+  const lastTick = heavyActivationTicks.get(player.id);
+  if (lastTick !== undefined && system.currentTick - lastTick < 3) return;
+  heavyActivationTicks.set(player.id, system.currentTick);
+  beginAttack(player, MOVES.heavy);
+}
+
+world.afterEvents.playerInteractWithEntity.subscribe((event) => {
+  const player = event.player;
+  if (!player || !player.isValid) return;
+  const heldItem = event.itemStack ?? event.beforeItemStack;
+  if (heldItem?.typeId !== HEAVY_ITEM) return;
+  requestHeavyAttack(player);
+});
+
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
   if (!event.itemStack) return;
 
   if (event.itemStack.typeId === HEAVY_ITEM) {
-    // Dedicated hotbar control: using this item requests Heavy Strike.
-    beginAttack(player, MOVES.heavy);
+    // Fallback path for runtimes that route the item's Interact input as itemUse.
+    requestHeavyAttack(player);
     return;
   }
 
@@ -739,6 +760,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   menuOpen.delete(id);
   tickCounters.delete(id);
   diagnosticsEnabled.delete(id);
+  heavyActivationTicks.delete(id);
 });
 
 world.afterEvents.playerSpawn.subscribe((event) => {
@@ -760,7 +782,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Interact with Heavy Attack selected = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
