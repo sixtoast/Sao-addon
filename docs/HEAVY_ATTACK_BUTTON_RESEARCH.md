@@ -97,3 +97,20 @@ Risks to test on Bedrock 26.52 iPhone: whether the current Ore UI build still pe
 The user tested the v0.4.9 Server Form Overlay build on iPhone and reported that the Heavy Strike button did not appear. They also could not interact with the Skill Activation Book while the earlier contextual Interact fallback was present. The overlay is therefore considered failed on the target runtime; successful packaging and JSON parsing did not establish runtime compatibility. Do not merge v0.4.9.
 
 The v0.5.0 test branch removes the experimental `Aincrad_RP/ui/server_form.json` override and all overlay-form scheduling. It also removes `minecraft:interact_button` from the Heavy Attack item and removes the `playerInteractWithEntity` activation listener, so Heavy Strike no longer takes over the contextual Interact action. The only item-based activation path is `world.afterEvents.itemUse` when the Heavy Attack item is used. This should restore ordinary Interact use for the Skill Activation Book, but the user must verify both book interaction and Heavy Strike activation in-game. If item-use does not activate on the target touch runtime, do not re-add the contextual Interact override; use the Skill Crystal combat menu's Heavy Strike action as the non-conflicting fallback while researching a separate input route.
+
+
+## v0.5.1 hold-Attack charge prototype (21 October 2026)
+
+The v0.5.0 item-use fallback is replaced in this test branch with a hold-to-charge input path adapted from the supplied Claude handler and integrated into the existing combat state machine. The repository currently has no custom sword item matching the sample ID `sao:elucidator`; this prototype therefore uses the existing `aincrad:heavy_attack_token` as the selected combat item. With it selected, a short Attack press should request Quick Slash, while holding Attack starts charge and release requests Heavy Strike.
+
+The Heavy Attack item uses `minecraft:use_modifiers.start_using: "on_attack"`, with item format version `1.26.30`. Microsoft documents `on_attack` as a start-using option requiring format version 1.26.30 or later; the user's target runtime is Bedrock 26.52. The Script API `itemStartUse`, `itemReleaseUse`, and `itemStopUse` signals are documented as chargeable-item lifecycle events. References:
+- https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_use_modifiers?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerswingstartafterevent?view=minecraft-bedrock-experimental
+- https://wiki.bedrock.dev/items/item-components
+
+The zero-nutrition food component is a compatibility mechanism to make the custom item usable; its 3600-second use duration is intentionally far longer than a normal charge. It must be tested for unwanted consumption/animation behaviour on the target runtime. The item also uses the spear use animation as a visible charge pose. This is an experiment, not a claim of proven runtime support.
+
+Charge design: 9 ticks for full 12-damage Heavy Strike; release at 7-8 ticks gives 9 damage; shorter taps remain Quick Slash. Charge feedback uses an action-bar meter and a ready cue. The target is snapshotted at charge start and preferred at strike time if it remains within a forgiving range/cone. Heavy Strike's charge replaces the normal wind-up. A 6-tick recovery buffer is supported. The existing dodge/parry/guard, guard-break, and diagnostics code is preserved.
+
+Do not merge until the user confirms on iPhone that tapping Attack gives one Quick Slash, holding Attack then releasing gives one Heavy Strike, charge feedback appears, and the Skill Activation Book still works. If the charge lifecycle does not fire, capture the Content Log and return to a different input plan rather than claiming success.
