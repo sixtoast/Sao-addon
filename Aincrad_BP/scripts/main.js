@@ -213,6 +213,9 @@ function applyMoveDamage(attacker, target, move) {
 function resolveAttackIntent(intent, snapshot, activeIntentIds) {
   const { actor, move, target } = intent;
   if (!actor.isValid || !target.isValid) return;
+  const liveActorAction = actions.get(actor.id);
+  // A clash or interruption may have resolved this actor earlier in the same snapshot.
+  if (liveActorAction && liveActorAction.phase === "recovery" && liveActorAction.hitResolved) return;
 
   // A parry is a distinct defence, not an ordinary hit interruption.
   if (isPlayer(target)) {
