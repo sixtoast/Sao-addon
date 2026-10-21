@@ -390,3 +390,15 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Each hit and its damage resolve at most once. The combat state machine and shared resolver remain authoritative; visual effects and animations communicate the result but do not decide it.
 - Exact hit windows, phase boundaries, and any move-specific exceptions remain open for tuning and validation. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
 
+## 18. Multi-target attack resolution
+
+**Agreed — contextual, move-defined targeting (Option D)**
+
+- Every attack or sword skill explicitly declares its target-resolution type: **single-target**, **cleave**, **multi-hit**, or **area-based**. Do not infer multi-target behaviour merely because an attack animation or collision shape overlaps several combatants.
+- Each move defines its valid target rules, including applicable range/shape, target cap or other limits, and whether separate contacts can count as distinct hits. Exact per-move values remain open for tuning.
+- Evaluate eligible targets using the authoritative combat resolver and a consistent exchange snapshot where interactions are simultaneous. Target selection and resolution must not depend on script/event iteration order.
+- A single hit event can damage a given target at most once. A multi-hit move may hit the same target again only through separately declared hit events/windows; repeated overlap or duplicate callbacks must not create extra damage.
+- Single-target moves remain limited to one eligible target under their declared selection rule. Cleave and area moves may affect multiple eligible targets within their declared limits. Multi-hit moves define their repeat-hit behaviour explicitly rather than inheriting it from cleave or area rules.
+- Multi-target resolution must remain consistent with interruption, clash, trade, confirmed-hit preservation, and once-only damage rules already agreed. A hit confirmed for one target must not silently change another target's result because processing order differs.
+- This is a conceptual design decision only. Target caps, selection tie-breaks, hit-window timings, and move-specific exceptions remain open for design and validation; no gameplay code or prototype branch is changed.
+
