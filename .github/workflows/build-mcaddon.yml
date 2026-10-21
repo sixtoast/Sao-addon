@@ -6,6 +6,7 @@ on:
       - feature/heavy-attack-button-v0.5
       - feature/heavy-attack-token-fix-v0.6
       - feature/server-form-overlay-heavy-button-v0.4.9
+      - feature/heavy-item-use-fallback-v0.5.0
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
