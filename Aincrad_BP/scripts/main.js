@@ -328,7 +328,8 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
           guardStrain.delete(target.id);
           guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
           guards.set(target.id, guard);
-          defensiveSequences.delete(target.id);
+          // Keep the Sneak sequence alive: if Sneak is still held when break expires,
+          // getDefensePhase continues to return Guard without requiring a new press.
           const liveTargetAction = actions.get(target.id);
           if (liveTargetAction) {
             liveTargetAction.phase = "interrupted";
