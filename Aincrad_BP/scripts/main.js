@@ -14,6 +14,7 @@ const customDamageTargets = new Set();
 const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
 const tickCounters = new Map();
+// Per-player opt-in diagnostics, controlled from the Skill Menu.
 
 // Prototype timings are deliberately centralised and easy to tune after device tests.
 // One game tick is approximately 1/20th of a second.
@@ -148,8 +149,11 @@ try {
         guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
         guards.set(target.id, guard);
         event.cancel = true;
+        if (diagnosticsEnabled.has(target.id)) safeMessage(target, "§c[AINCRAD DIAG] MOB GUARD BREAK: hit cancelled; Guard disabled for " + GUARD_BREAK_TICKS + " ticks.");
       } else {
-        event.damage = Math.max(1, Math.ceil(event.damage * 0.25));
+        const incomingDamage = event.damage;
+        event.damage = Math.max(1, Math.ceil(incomingDamage * 0.25));
+        if (diagnosticsEnabled.has(target.id)) safeMessage(target, "§6[AINCRAD DIAG] Mob hit: incoming=" + incomingDamage + ", after Guard=" + event.damage + ", prevented=" + (incomingDamage - event.damage) + ", strain=" + strain + "/" + GUARD_MAX_STRAIN + ".");
       }
     });
     mobDefenseInputAvailable = true;
@@ -260,16 +264,38 @@ function showCombatMenu(player) {
     .button("Heavy Strike\n§7Committed • 12 damage")
     .button("Parry\n§7Short timing window");
 
+  form.button("Diagnostics: Toggle ON/OFF");
+  form.button("Diagnostics: Guard Status");
+
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
     if (response.canceled || response.selection === undefined) return;
     if (response.selection === 0) beginAttack(player, MOVES.quick);
     else if (response.selection === 1) beginAttack(player, MOVES.heavy);
-    else beginParry(player);
+    else if (response.selection === 2) beginParry(player);
+    else if (response.selection === 3) {
+      if (diagnosticsEnabled.has(player.id)) {
+        diagnosticsEnabled.delete(player.id);
+        safeMessage(player, "§7[AINCRAD DIAG] Diagnostics OFF.");
+      } else {
+        diagnosticsEnabled.add(player.id);
+        safeMessage(player, "§a[AINCRAD DIAG] Diagnostics ON. Damage, guard strain/breaks, target selection and clashes will be reported.");
+        reportGuardStatus(player);
+      }
+    } else if (response.selection === 4) reportGuardStatus(player);
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
   });
+}
+
+function reportGuardStatus(player) {
+  if (!player || !player.isValid) return;
+  const guard = guards.get(player.id);
+  const strain = guardStrain.get(player.id) || 0;
+  const remaining = guard?.brokenUntil ? Math.max(0, guard.brokenUntil - system.currentTick) : 0;
+  const phase = getActiveDefensePhase(player) || "inactive";
+  safeMessage(player, "§6[AINCRAD DIAG] Guard status: phase=" + phase + ", strain=" + strain + "/" + GUARD_MAX_STRAIN + ", broken=" + (remaining > 0 ? "YES (" + remaining + " ticks left)" : "no") + ".");
 }
 
 function beginAttack(player, move) {
@@ -456,14 +482,25 @@ function resolveAttackIntent(intent, snapshot, intentByActor) {
           }
           safeMessage(target, "§c[AINCRAD] Guard broken! §7You are staggered.");
           safeMessage(actor, "§6[AINCRAD] Guard break!");
+          if (diagnosticsEnabled.has(target.id)) safeMessage(target, "§c[AINCRAD DIAG] PLAYER GUARD BREAK: strain=" + strain + "/" + GUARD_MAX_STRAIN + ", recovery=" + GUARD_BREAK_TICKS + " ticks.");
+          if (diagnosticsEnabled.has(actor.id)) safeMessage(actor, "§6[AINCRAD DIAG] Attack broke target Guard at strain " + strain + ".");
         } else {
           const reducedDamage = Math.max(1, Math.ceil(move.damage * 0.25));
+          let healthBefore = null;
+          try { healthBefore = target.getComponent("minecraft:health")?.currentValue ?? null; } catch (_) {}
+          let damageApplied = false;
           try {
-            target.applyDamage(reducedDamage, {
+            damageApplied = target.applyDamage(reducedDamage, {
               cause: EntityDamageCause.entityAttack,
               damagingEntity: actor
-            });
+            }) !== false;
           } catch (_) {}
+          let healthAfter = null;
+          try { healthAfter = target.getComponent("minecraft:health")?.currentValue ?? null; } catch (_) {}
+          if (diagnosticsEnabled.has(target.id)) {
+            const actualLoss = healthBefore !== null && healthAfter !== null ? Math.max(0, healthBefore - healthAfter) : "unavailable";
+            safeMessage(target, "§6[AINCRAD DIAG] Guard damage: raw=" + move.damage + ", requested=" + reducedDamage + ", health loss=" + actualLoss + ", applyDamage=" + damageApplied + ", strain=" + strain + "/" + GUARD_MAX_STRAIN + ".");
+          }
           safeMessage(target, "§9[AINCRAD] Blocked! §7Guard strain " + strain + "/" + GUARD_MAX_STRAIN + ".");
           safeMessage(actor, "§7[AINCRAD] Attack blocked.");
         }
@@ -490,6 +527,8 @@ function resolveAttackIntent(intent, snapshot, intentByActor) {
         actions.get(actor.id).hitResolved = true;
         safeMessage(actor, "§6[AINCRAD] Clash!");
         safeMessage(target, "§6[AINCRAD] Clash!");
+        if (diagnosticsEnabled.has(actor.id)) safeMessage(actor, "§6[AINCRAD DIAG] CLASH: your=" + move.name + " (strength " + move.interruptionStrength + "), opponent=" + opposing.move.name + " (strength " + opposing.move.interruptionStrength + "); both attacks stopped, action-break=" + REACTION_TICKS.actionBreak + " ticks.");
+        if (diagnosticsEnabled.has(target.id)) safeMessage(target, "§6[AINCRAD DIAG] CLASH: your=" + opposing.move.name + " (strength " + opposing.move.interruptionStrength + "), opponent=" + move.name + " (strength " + move.interruptionStrength + "); both attacks stopped, action-break=" + REACTION_TICKS.actionBreak + " ticks.");
         return;
       }
     }
@@ -591,6 +630,10 @@ function processCombatTick() {
         action.hitResolved = true;
         const candidates = getTargetCandidates(action.actor, action.move);
         if (candidates.length > 0) {
+          if (diagnosticsEnabled.has(action.actor.id)) {
+            const chosen = candidates[0];
+            safeMessage(action.actor, "§6[AINCRAD DIAG] Target selected: " + (chosen.target.nameTag || chosen.target.typeId) + ", distance=" + chosen.distance.toFixed(2) + ", aim-dot=" + chosen.dot.toFixed(3) + ", eligible targets=" + candidates.length + ".");
+          }
           intents.push({
             actor: action.actor,
             move: action.move,
@@ -694,6 +737,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   lastDefensePhase.delete(id);
   menuOpen.delete(id);
   tickCounters.delete(id);
+  diagnosticsEnabled.delete(id);
 });
 
 world.afterEvents.playerSpawn.subscribe((event) => {
