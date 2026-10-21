@@ -570,6 +570,19 @@ world.afterEvents.itemUse.subscribe((event) => {
 
 // Give each player one copy of the control items on first spawn, without
 // duplicating either item if it is already in their inventory.
+// Release transient combat state when a player leaves, preventing stale guard,
+// dodge/parry windows, strain, or action recovery from leaking into a later session.
+world.afterEvents.playerLeave.subscribe((event) => {
+  const id = event.playerId;
+  actions.delete(id);
+  parryWindows.delete(id);
+  guards.delete(id);
+  guardStrain.delete(id);
+  defensiveSequences.delete(id);
+  menuOpen.delete(id);
+  tickCounters.delete(id);
+});
+
 world.afterEvents.playerSpawn.subscribe((event) => {
   if (!event.initialSpawn) return;
   const player = event.player;
