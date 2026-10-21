@@ -13,7 +13,7 @@ Preview 0.2 adds an ActionFormData skill menu with Quick Slash, Heavy Strike, an
 - Tap the normal Attack button for Quick Slash where the experimental swing input is supported.
 - Use the **Heavy Attack** hotbar item (sword icon) for Heavy Strike.
 - Use the **Parry** hotbar item (shield icon) to open the short parry window.
-- Hold **Sneak** to keep Guard raised; releasing Sneak lowers it immediately. The Guard hotbar item is a fallback toggle if button input is unavailable.
+- Tap **Sneak** to start the shared defence sequence: spot dodge first, then parry, then Guard. The attack's arrival time after the Sneak input determines which defence resolves.
 - Use the **Guard** hotbar item (shield icon) to block frontal custom player attacks briefly; repeated blocks can break your guard.
 - Keep the **Aincrad Skill Menu** book item as a fallback for Quick Slash and Parry.
 
