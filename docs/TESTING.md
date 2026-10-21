@@ -134,3 +134,10 @@ The mob path uses the documented cancellable `world.beforeEvents.entityHurt` sig
 
 - Quick Slash and Heavy Strike now ignore entities without the `minecraft:health` component when selecting their single frontal target. This prevents dropped items, projectiles, and other non-living entities from consuming an attack that should reach a living target behind them.
 - Verify that players and ordinary hostile/passive mobs remain targetable, and that dropped items and projectiles are ignored. Entities with unusual/custom health components may still need compatibility testing.
+
+
+## Reciprocal clash validation (source-reviewed)
+
+- Equal-strength attacks now clash only when both players have an active hit intent and are targeting each other in that same tick. An active attack aimed at a third entity must not cancel an incoming attack against its actor.
+- Multiplayer test cases: (1) both players target each other with Quick Slash at the same active tick; (2) A targets B while B targets a nearby mob; (3) unequal-strength reciprocal attacks resolve as trades according to the prototype rule.
+- These cases remain unverified in Minecraft.
