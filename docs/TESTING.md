@@ -45,6 +45,7 @@ While holding the Skill Crystal, sneak and use it to request a heavy attack. Thi
 - Mash/use repeatedly and confirm that it does not queue more than one follow-up.
 - Confirm the third quick step cannot queue a fourth step.
 - Confirm the heavy attack cannot be queued during a quick combo, and quick inputs do not queue during heavy recovery.
+- Start an attack, disconnect before it finishes, then rejoin and confirm no stale combat state blocks a new attack.
 - Move or turn during startup and observe that the current move uses the direction captured when it began, while target position is checked at the active step.
 - Test with other players nearby; this PvE prototype must not damage players.
 - Watch Minecraft's Content Log for Script API errors.
