@@ -366,3 +366,15 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - The design defines the decision policy, not final numeric thresholds. Per-move values, phase windows, and edge-case rules remain open for tuning and validation.
 - Implementation is deferred; this entry changes the design record only and is not a claim of gameplay implementation or in-game verification.
 
+## 16. Consequences of an interrupted attack
+
+**Agreed — contextual interruption reaction (Option D)**
+
+- An interruption cancels the affected attack when the declared interaction rules confirm that the attack has been stopped. The defender's resulting reaction depends on interruption strength, the interrupted move's properties and current phase, its interruption resistance, and the context of the exchange.
+- Use the existing reaction tiers—**flinch**, **action break**, and **stagger**—as distinct outcomes. They are not assigned solely by attack category; move-specific properties and phase rules determine which outcomes are eligible.
+- A quick attack interrupted early may cause only a brief flinch. A strongly committed move defeated by a sufficiently strong counter may suffer a more severe reaction, provided its declared resistance and vulnerability rules allow it.
+- Interruption resistance is not invulnerability. A resistant move may withstand weaker interruptions but can still be stopped by eligible stronger counters, parries, or explicit move-specific interactions.
+- Reaction duration, control restrictions, pushback, and recovery consequences must be specified and tuned so the result is readable and proportionate. Do not invent final numeric thresholds before testing.
+- The reaction is a gameplay state owned by the authoritative combat state machine; animation and effects communicate the outcome but do not determine it. Resolve the interruption and any associated damage, rewards, and resource changes at most once.
+- This decision defines the conceptual rule only. Detailed per-move profiles, exact thresholds, and implementation/testing remain open; no gameplay code is changed by this entry.
+
