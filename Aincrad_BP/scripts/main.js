@@ -71,6 +71,7 @@ try {
         return;
       }
       defensiveSequences.set(player.id, { startedTick: now });
+      if (!guard?.brokenUntil || now >= guard.brokenUntil) guards.set(player.id, {});
       safeMessage(player, "§9[AINCRAD] Defensive stance.");
     });
     sneakGuardInputAvailable = true;
@@ -85,7 +86,8 @@ function getDefensePhase(playerId, now = system.currentTick) {
   const elapsed = now - sequence.startedTick;
   if (elapsed < 0 || elapsed >= DEFENSE_TOTAL_TICKS) {
     defensiveSequences.delete(playerId);
-    guards.delete(playerId);
+    const existingGuard = guards.get(playerId);
+    if (!existingGuard?.brokenUntil || now >= existingGuard.brokenUntil) guards.delete(playerId);
     parryWindows.delete(playerId);
     return null;
   }
@@ -478,6 +480,7 @@ world.afterEvents.itemUse.subscribe((event) => {
   if (event.itemStack.typeId === GUARD_ITEM) {
     if (!sneakGuardInputAvailable) {
       defensiveSequences.set(player.id, { startedTick: system.currentTick });
+      guards.set(player.id, {});
       safeMessage(player, "§9[AINCRAD] Defensive stance.");
     } else safeMessage(player, "§7[AINCRAD] Sneak cycles Spot Dodge, Parry, then Guard.");
     return;
