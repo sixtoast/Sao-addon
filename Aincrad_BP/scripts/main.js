@@ -66,8 +66,7 @@ try {
     swingSignal.subscribe((event) => {
       const player = event.player;
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
-      // Touchscreen-friendly mapping: tap Attack for Quick Slash; attack while
-      // sneaking for Heavy Strike. The sneak modifier needs real-device testing.
+      // Normal Attack always requests Quick Slash. Sneaking does not alter move selection.
       beginAttack(player, MOVES.quick);
     });
     swingInputAvailable = true;
@@ -105,8 +104,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "Direct attacks: tap Attack for Quick Slash; sneak + Attack for Heavy Strike."
-        : "Direct attack input is unavailable in this runtime; use the menu fallback.") +
+        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack hotbar item for Heavy Strike."
+        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack hotbar item for Heavy Strike.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
