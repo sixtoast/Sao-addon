@@ -29,9 +29,9 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 ## Shared Sneak defence rules
 
 - While Sneak is held, spot dodge applies on ticks 0–2, parry on ticks 3–6, then Guard applies from tick 7 indefinitely until release. Timing is provisional and intended for playtesting.
-- Guard only reduces custom player attacks from the defender's forward-facing arc; blocked attacks deal 25% damage, rounded up, with a minimum of 1.
-- Guard strain: Quick Slash adds 3, Heavy Strike adds 6; strain of 10 breaks guard for 40 ticks.
-- Defence is selected by the attack's arrival time in the sequence; a hit during dodge is evaded, a hit during parry is countered, and a hit during Guard is blocked if it comes from the front. Mob attacks and vanilla damage are not intercepted by this custom logic yet.
+- Guard reduces custom player attacks from the defender's forward-facing arc; blocked attacks deal 25% damage, rounded up, with a minimum of 1.
+- Guard strain against custom player attacks: Quick Slash adds 3, Heavy Strike adds 6; strain of 10 breaks guard for 40 ticks. Ordinary mob melee currently adds 3 per blocked hit.
+- Defence is selected by the attack's arrival time in the sequence; a hit during dodge is evaded, a hit during parry is countered, and a hit during Guard is blocked if it comes from the front. The ordinary mob melee path is provisional and still needs runtime validation.
 
 ## First-pass move values
 
@@ -106,3 +106,10 @@ The mob path uses the documented cancellable `world.beforeEvents.entityHurt` sig
 - Leave the world while holding Sneak, during an attack wind-up, and during guard break.
 - Rejoin and confirm no stale defensive phase, guard strain, or attack recovery remains.
 - The script clears transient action, parry, guard, guard-strain, defensive-sequence, menu, and tick-counter state on `playerLeave`.
+
+
+## Combat integration review (new)
+
+- Fixed the simultaneous-attack clash path to read the opposing action from the shared tick snapshot instead of referencing an out-of-scope/temporally-dead variable. This prevented player-target attack resolution from reaching a runtime `ReferenceError` on that path.
+- Consolidated the duplicate `playerLeave` cleanup subscription into the single handler that also clears tick counters.
+- Both changes are source-reviewed but still require in-game validation; test two players attacking into each other in the same active tick and check the Content Log.
