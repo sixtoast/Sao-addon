@@ -447,3 +447,16 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - The guard outcome must use authoritative combat state and a consistent snapshot so that event order and animation callbacks cannot change the result. Exact coverage angles, guard costs, guard-break conditions, and move-specific exceptions remain open for tuning and technical validation.
 - Implementation must be checked against the target Minecraft Bedrock Script API and supported entity/input capabilities before committing to a specific technical mechanism. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
 
+
+## 23. Guard resource and guard breaks
+
+**Agreed — contextual guard strain (Option D)**
+
+- Blocking and incoming attacks may apply guard strain according to explicit, move-defined rules. Strain should reflect relevant attack properties and the current guard interaction, rather than applying one universal cost to every hit.
+- A guard break occurs only when declared, deterministic conditions are met. Strong attacks may create more strain or have specific guard-breaking properties, but no attack breaks guard merely because its animation looks powerful.
+- The resource model is not yet final: strain may use stamina, a separate guard-posture meter, or a defined combination. This choice is intentionally deferred until the broader resource and recovery rules are designed.
+- Guard strain, guard break, ordinary hit interruption, and block advantage are distinct concepts. A guard break must have an explicitly defined state transition and consequences; it must not silently imply arbitrary damage, stun duration, or invulnerability.
+- Resource updates and guard-break checks must be resolved authoritatively and deterministically from the combat interaction, preventing duplicate event callbacks or processing order from applying strain twice or changing the result.
+- Exact strain amounts, thresholds, recovery/decay, resource coupling, guard-break reactions, and move-specific exceptions remain open for tuning. Implementation must be checked against the supported Minecraft Bedrock Script API before choosing technical mechanisms.
+- This is a conceptual design decision only. No gameplay code is changed, and the gameplay prototype branch is untouched.
+
