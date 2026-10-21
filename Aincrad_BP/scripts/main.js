@@ -3,10 +3,12 @@ import { ActionFormData } from "@minecraft/server-ui";
 
 const MENU_ITEM = "aincrad:skill_crystal";
 const HEAVY_ITEM = "aincrad:heavy_attack_token";
+const SWORD_ITEM = "aincrad:aincrad_sword";
 const PARRY_ITEM = "aincrad:parry_token";
 const GUARD_ITEM = "aincrad:guard_token";
 const menuOpen = new Set();
 const actions = new Map();
+const chargeStates = new Map();
 const parryWindows = new Map();
 const guards = new Map();
 const guardStrain = new Map();
@@ -49,6 +51,18 @@ const MOVES = {
 };
 
 const REACTION_TICKS = { flinch: 4, actionBreak: 8, stagger: 14 };
+const CHARGE_READY_TICKS = 9;
+const CHARGE_EARLY_HEAVY_TICKS = 7;
+const CHARGE_EARLY_DAMAGE_MULTIPLIER = 0.75;
+const TARGET_SNAPSHOT_TOLERANCE = 0.75;
+const WEAPON_ITEM_IDS = new Set([
+  SWORD_ITEM,
+  "minecraft:wooden_sword", "minecraft:stone_sword", "minecraft:iron_sword",
+  "minecraft:golden_sword", "minecraft:diamond_sword", "minecraft:netherite_sword",
+  "minecraft:wooden_axe", "minecraft:stone_axe", "minecraft:iron_axe",
+  "minecraft:golden_axe", "minecraft:diamond_axe", "minecraft:netherite_axe",
+  "minecraft:trident", "minecraft:mace"
+]);
 const PARRY_WINDOW_TICKS = 5;
 
 // Hold Sneak for a continuous defensive stance.
@@ -192,15 +206,9 @@ try {
       const player = event.player;
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
 
-      // Using the Heavy Attack control item can also emit a generic Attack swing.
-      // Do not let that secondary swing request Quick Slash over the dedicated Heavy Strike.
-      try {
-        const inventory = player.getComponent("minecraft:inventory")?.container;
-        const selectedItem = inventory?.getItem(player.selectedSlotIndex);
-        if (selectedItem?.typeId === HEAVY_ITEM) return;
-      } catch (_) {
-        // If inventory state is unavailable, preserve normal Quick Slash input.
-      }
+      // The chargeable sword handles tap and hold through item-use events.
+      const selectedItem = getSelectedItem(player);
+      if (selectedItem?.typeId === SWORD_ITEM || selectedItem?.typeId === HEAVY_ITEM) return;
 
       // Defer Quick Slash by one tick so itemUse can claim a Heavy Attack
       // activation first. On touch/controller input, the generic swing event can
@@ -213,16 +221,40 @@ try {
             current.phase !== "recovery" && current.phase !== "idle") return;
         // Re-check the selected slot after the input events have settled.
         try {
-          const inventory = player.getComponent("minecraft:inventory")?.container;
-          if (inventory?.getItem(player.selectedSlotIndex)?.typeId === HEAVY_ITEM) return;
+          const selectedItem = getSelectedItem(player);
+          if (selectedItem?.typeId === SWORD_ITEM || selectedItem?.typeId === HEAVY_ITEM) return;
         } catch (_) {}
-        beginAttack(player, MOVES.quick);
+        beginAttack(player, getMoveForPlayer(player, "quick"));
       }, 1);
     });
     swingInputAvailable = true;
   }
 } catch (_) {
   // This runtime does not expose player swing input; use the menu fallback.
+}
+
+function getSelectedItem(player) {
+  try {
+    const inventory = player.getComponent("minecraft:inventory")?.container;
+    return inventory?.getItem(player.selectedSlotIndex) ?? undefined;
+  } catch (_) {
+    return undefined;
+  }
+}
+
+function isWeaponItem(item) {
+  return !!item && WEAPON_ITEM_IDS.has(item.typeId);
+}
+
+function getMoveForPlayer(player, moveId, weaponOverride = null) {
+  const base = MOVES[moveId];
+  const weaponHeld = weaponOverride === null ? isWeaponItem(getSelectedItem(player)) : weaponOverride;
+  const damage = moveId === "quick" ? (weaponHeld ? 7 : 1) : (weaponHeld ? 12 : 5);
+  return { ...base, damage };
+}
+
+function setActionBar(player, message) {
+  try { player.onScreenDisplay.setActionBar(message); } catch (_) {}
 }
 
 function safeMessage(player, message) {
@@ -299,7 +331,7 @@ function reportGuardStatus(player) {
   safeMessage(player, "§6[AINCRAD DIAG] Guard status: phase=" + phase + ", strain=" + strain + "/" + GUARD_MAX_STRAIN + ", broken=" + (remaining > 0 ? "YES (" + remaining + " ticks left)" : "no") + ".");
 }
 
-function beginAttack(player, move) {
+function beginAttack(player, move, targetSnapshot = null) {
   if (!player.isValid) return;
   const current = actions.get(player.id);
   if (current && !(current.phase === "recovery" && system.currentTick >= current.recoveryUntil) && current.phase !== "idle") {
@@ -315,7 +347,8 @@ function beginAttack(player, move) {
     elapsed: 0,
     hitResolved: false,
     recoveryUntil: 0,
-    interrupted: false
+    interrupted: false,
+    targetSnapshot
   });
   safeMessage(player, "§b[AINCRAD] §f" + move.name + " §7— prepare");
 }
