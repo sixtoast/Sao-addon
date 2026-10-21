@@ -175,3 +175,18 @@ Interpretation:
 - Release diagnostic without start diagnostic: investigate event ordering / item stack lifecycle.
 
 This is a diagnostic candidate only, not a fix. Do not merge into main. v0.5.3 remains the known-good Use-button charging baseline.
+
+
+## v0.5.6 native attack-cancellation isolation test (22 October 2026)
+
+v0.5.5 device result: while testing normal Attack, the user saw only `Charge input was not detected; using Heavy Strike fallback.` Neither diagnostic `itemStartUse` nor `itemReleaseUse` messages appeared. This proves the item-use lifecycle is not starting in that test.
+
+Code review found that the script globally cancels `world.beforeEvents.playerItemAttackEntity` for every item. Because `minecraft:use_modifiers.start_using: "on_attack"` depends on an attack input, this cancellation is a plausible interference point, but not yet proven.
+
+The v0.5.6 test changes only two diagnostic behaviours:
+- Allow the native `playerItemAttackEntity` event through when the held item is `aincrad:heavy_attack_token`; other items remain cancelled as before.
+- Suppress the scripted Heavy Strike fallback for this token so the test cannot mistake fallback damage for a working native charge. A native attack may still deal ordinary Minecraft damage during this temporary test.
+
+Test on an actual mob/entity, not by swinging at air: select Heavy Attack, attack the entity once and hold if possible, then release. Watch for the `[DIAG 0.5.5] itemStartUse fired...` and `itemReleaseUse fired...` messages, and the `[DIAG 0.5.6] Native attack allowed; scripted fallback suppressed for this test.` message. If itemStartUse appears, cancellation was likely interfering; if it does not, this hypothesis is not supported. The item attack event only exists for an attack against an entity.
+
+This is a diagnostic candidate only, not a combat fix. Do not merge to main. v0.5.3 Use-button charging remains the known-good baseline.
