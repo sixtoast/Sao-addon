@@ -1,0 +1,65 @@
+{
+  "namespace": "server_form",
+  "third_party_server_screen@common.base_screen": {
+    "$screen_content": "server_form.main_screen_content",
+    "button_mappings": [
+      {
+        "from_button_id": "button.menu_cancel",
+        "to_button_id": "button.menu_exit",
+        "mapping_type": "global"
+      }
+    ],
+    "is_showing_menu": false,
+    "is_modal": false,
+    "render_game_behind": true,
+    "render_only_when_topmost": false,
+    "absorbs_input": false,
+    "always_accepts_input": true,
+    "should_steal_mouse": false,
+    "low_frequency_rendering": true,
+    "force_render_below": true,
+    "screen_draws_last": true,
+    "close_on_player_hurt": false,
+    "$screen_animations": [],
+    "$background_animations": []
+  },
+  "long_form@common_dialogs.main_panel_no_buttons": {
+    "$title_panel": "common_dialogs.standard_title_label",
+    "$title_size": [0, 0],
+    "$title_max_size": [0, 0],
+    "size": [144, 48],
+    "anchor_from": "bottom_right",
+    "anchor_to": "bottom_right",
+    "offset": [-18, -118],
+    "$text_name": "#title_text",
+    "$title_text_binding_type": "none",
+    "$child_control": "server_form.long_form_panel",
+    "layer": 2
+  },
+  "dynamic_button": {
+    "type": "stack_panel",
+    "size": ["100%", 32],
+    "orientation": "horizontal",
+    "controls": [
+      {
+        "form_button@common_buttons.light_text_button": {
+          "$pressed_button_name": "button.form_button_click",
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "size": ["fill", 32],
+          "$button_text": "#form_button_text",
+          "$button_text_binding_type": "collection",
+          "$button_text_grid_collection_name": "form_buttons",
+          "$button_text_max_size": ["100%", 20],
+          "prevent_touch_input": true,
+          "bindings": [
+            {
+              "binding_type": "collection_details",
+              "binding_collection_name": "form_buttons"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
