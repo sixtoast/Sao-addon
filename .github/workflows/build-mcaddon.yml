@@ -23,6 +23,18 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Validate JavaScript and pack JSON
+        run: |
+          node --check Aincrad_BP/scripts/main.js
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for root in (Path('Aincrad_BP'), Path('Aincrad_RP')):
+              for path in root.rglob('*.json'):
+                  json.loads(path.read_text(encoding='utf-8'))
+          print('All pack JSON files parse successfully.')
+          PY
+
       - name: Package Behaviour Pack
         run: |
           cd Aincrad_BP
