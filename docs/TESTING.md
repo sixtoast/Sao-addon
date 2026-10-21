@@ -113,3 +113,10 @@ The mob path uses the documented cancellable `world.beforeEvents.entityHurt` sig
 - Fixed the simultaneous-attack clash path to read the opposing action from the shared tick snapshot instead of referencing an out-of-scope/temporally-dead variable. This prevented player-target attack resolution from reaching a runtime `ReferenceError` on that path.
 - Consolidated the duplicate `playerLeave` cleanup subscription into the single handler that also clears tick counters.
 - Both changes are source-reviewed but still require in-game validation; test two players attacking into each other in the same active tick and check the Content Log.
+
+
+## Guard-state correctness review (new)
+
+- Player-vs-player Guard now requires the explicit `held` flag, matching the ordinary mob melee path. A Parry-item fallback sequence alone must not silently become a permanent Guard after its timing window.
+- The Guard-item fallback now sets `held: true`, so it remains functional on runtimes without the Sneak button event.
+- Source-reviewed only; verify the fallback path in a runtime where `playerButtonInput` is unavailable, and confirm that using the Parry item does not create indefinite Guard.
