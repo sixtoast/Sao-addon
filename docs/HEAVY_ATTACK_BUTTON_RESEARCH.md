@@ -114,3 +114,10 @@ The zero-nutrition food component is a compatibility mechanism to make the custo
 Charge design: 9 ticks for full 12-damage Heavy Strike; release at 7-8 ticks gives 9 damage; shorter taps remain Quick Slash. Charge feedback uses an action-bar meter and a ready cue. The target is snapshotted at charge start and preferred at strike time if it remains within a forgiving range/cone. Heavy Strike's charge replaces the normal wind-up. A 6-tick recovery buffer is supported. The existing dodge/parry/guard, guard-break, and diagnostics code is preserved.
 
 Do not merge until the user confirms on iPhone that tapping Attack gives one Quick Slash, holding Attack then releasing gives one Heavy Strike, charge feedback appears, and the Skill Activation Book still works. If the charge lifecycle does not fire, capture the Content Log and return to a different input plan rather than claiming success.
+
+
+## v0.5.2 device-test response (21 October 2026)
+
+The user tested v0.5.1 on Bedrock 26.52 for iPhone: the charge meter did not appear, and using/tapping the Heavy Attack token resulted in Quick Slash. Treat this as evidence that the expected charge start/release lifecycle is not firing reliably on the target touch runtime; documentation support for `start_using: "on_attack"` is not proof of actual runtime behaviour.
+
+The v0.5.2 candidate adds a guarded fallback in the deferred swing handler: if no charge state was created and the Heavy Attack token is still selected, it requests Heavy Strike rather than falling through to Quick Slash. It also bumps BP/RP versions to 0.5.2. This is a wrong-move fallback only; it does not claim to fix charge feedback. Test the fallback first, then decide whether to abandon this charge input route if `itemStartUse` still does not fire.
