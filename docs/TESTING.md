@@ -141,3 +141,12 @@ The mob path uses the documented cancellable `world.beforeEvents.entityHurt` sig
 - Equal-strength attacks now clash only when both players have an active hit intent and are targeting each other in that same tick. An active attack aimed at a third entity must not cancel an incoming attack against its actor.
 - Multiplayer test cases: (1) both players target each other with Quick Slash at the same active tick; (2) A targets B while B targets a nearby mob; (3) unequal-strength reciprocal attacks resolve as trades according to the prototype rule.
 - These cases remain unverified in Minecraft.
+
+
+## Directional attack aiming (new, source-reviewed; runtime test pending)
+
+- Quick Slash and Heavy Strike now use the player's head position and full 3D view direction to select a target. Attacks can aim left/right, upwards, downwards, or diagonally instead of flattening the aim onto the horizontal plane.
+- The target is approximated at its body centre; candidates outside the move's range or aim cone are rejected. If several targets qualify, the one closest to the aim line is preferred, then the nearest target.
+- Test with a mob at the same height, on a ledge above, in a shallow trench below, and diagonally off to either side. Move the camera to aim at each target's body before attacking. Also verify a target behind the player is not hit.
+- This changes target selection only. It does not yet create separate named high/low/left/right sword animations or different damage values for each angle.
+- API reference: [Microsoft Learn — Entity](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable), including getHeadLocation() and getViewDirection().
