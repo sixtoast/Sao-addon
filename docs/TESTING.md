@@ -99,3 +99,10 @@ Official reference: [Microsoft Learn — EntityHurtBeforeEvent](https://learn.mi
 7. Check Content Log for Script API errors and verify a cancelled/blocked hit does not deal duplicate damage.
 
 The mob path uses the documented cancellable `world.beforeEvents.entityHurt` signal and `damageSource` metadata. This remains provisional until tested against the exact Bedrock runtime.
+
+
+## Combat state cleanup (new, untested)
+
+- Leave the world while holding Sneak, during an attack wind-up, and during guard break.
+- Rejoin and confirm no stale defensive phase, guard strain, or attack recovery remains.
+- The script clears transient action, parry, guard, guard-strain, defensive-sequence, menu, and tick-counter state on `playerLeave`.
