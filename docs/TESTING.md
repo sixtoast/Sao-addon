@@ -53,7 +53,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - [ ] Touchscreen input actually produces the swing event in the installed Minecraft version.
 - [ ] Vanilla melee is cancelled when the cancellation API is available; no double damage.
 - [ ] The Skill Menu still opens and returns to inventory.
-- [ ] Quick Slash and Heavy Strike preserve their expected wind-up, active and recovery timings.
+- [ ] Quick Slash and Heavy Strike preserve their expected wind-up, active and recovery timings.\n- [ ] Aim above and below the horizon to hit elevated and lower targets; aim diagonally and left/right to verify the full 3D view vector is respected.\n- [ ] Put two living targets in range and confirm the target closest to the aim line is selected.\n- [ ] Confirm targets behind the player and non-living entities are ignored.
 - [ ] A miss does not deal damage; a hit deals custom damage only once.
 - [ ] Parry, clash and interruption remain unverified until multiplayer testing is available.
 - [ ] Invalid/disconnected entities do not leave stale actions or crash the script.
@@ -63,8 +63,8 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - The direct swing event is documented as pre-release/experimental; runtime support and touch-button behaviour must be tested on the user's device.
 - Heavy Strike uses a dedicated hotbar item. Sneak is reserved for Guard, not Heavy Strike. A persistent custom Heavy Attack HUD button is not implemented because no supported public input/callback route has been verified.
 - Sneak is the primary shared defensive input; Parry and Guard items are compatibility fallbacks only. Guard has no time limit while Sneak remains held. Timing and multiplayer interactions remain unverified.
-- Mob attacks are not yet routed through the custom combat state machine.
-- Dodge, Momentum, combo buffering, custom animations, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
+- Ordinary mob melee has a provisional before-hurt defence handler, but its event cause, cancellation and damage-reduction behaviour still need runtime validation. Projectile and non-melee damage remain vanilla.
+- Distinct directional sword animations, angle-specific damage/behaviour, Momentum, combo buffering, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
 
 ## Official technical references
 
