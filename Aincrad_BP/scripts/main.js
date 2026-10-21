@@ -14,6 +14,7 @@ const customDamageTargets = new Set();
 const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
 const heavyChargeStates = new Map();
+const chargeProjectileCleanupUntil = new Map();
 const suppressQuickUntil = new Map();
 const queuedAttacks = new Map();
 const tickCounters = new Map();
@@ -363,7 +364,7 @@ function beginHeavyCharge(event) {
   if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
   if (event.itemStack?.typeId !== HEAVY_ITEM || heavyChargeStates.has(player.id)) return;
   const targetCandidates = getTargetCandidates(player, { ...MOVES.heavy, range: MOVES.heavy.range * 1.15, minDot: Math.max(0, MOVES.heavy.minDot - 0.1) });
-  heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, readyCued: false, quickRequested: false });
+  heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, slotIndex: player.selectedSlotIndex, readyCued: false, quickRequested: false });
   try { player.playSound("random.click"); } catch (_) {}
   safeMessage(player, "§b[AINCRAD] Heavy Strike charging...");
 }
@@ -374,7 +375,22 @@ function releaseHeavyCharge(event) {
   const charge = heavyChargeStates.get(player.id);
   if (!charge) return;
   heavyChargeStates.delete(player.id);
+  // A native throwable creates a projectile on release. Keep a short owner-scoped
+  // cleanup window so the placeholder arrow is removed whether spawn fires just
+  // before or just after itemReleaseUse. This preserves the intended melee move.
+  chargeProjectileCleanupUntil.set(player.id, system.currentTick + 4);
   try { if (player.isValid) player.onScreenDisplay.setActionBar(""); } catch (_) {}
+  // Throwable items may consume one stack item on release. Restore the control
+  // token only if its original hotbar slot is empty; never overwrite another item.
+  system.runTimeout(() => {
+    try {
+      if (!player.isValid) return;
+      const inventory = player.getComponent("minecraft:inventory")?.container;
+      if (inventory && !inventory.getItem(charge.slotIndex)) {
+        inventory.setItem(charge.slotIndex, new ItemStack(HEAVY_ITEM, 1));
+      }
+    } catch (_) {}
+  }, 1);
   const heldTicks = system.currentTick - charge.startedTick;
   if (heldTicks >= HEAVY_FULL_TICKS) {
     suppressQuickUntil.set(player.id, system.currentTick + 3);
@@ -393,6 +409,20 @@ function releaseHeavyCharge(event) {
 world.afterEvents.itemStartUse.subscribe(beginHeavyCharge);
 world.afterEvents.itemReleaseUse.subscribe(releaseHeavyCharge);
 world.afterEvents.itemStopUse.subscribe(releaseHeavyCharge);
+
+// The throwable component needs a projectile definition to activate native
+// trident-style draw/release behaviour. The placeholder arrow is not the attack:
+// remove it immediately and let the existing melee combat state machine resolve.
+world.afterEvents.entitySpawn.subscribe((event) => {
+  const entity = event.entity;
+  if (!entity || entity.typeId !== "minecraft:arrow") return;
+  let owner;
+  try { owner = entity.getComponent("minecraft:projectile")?.owner; } catch (_) {}
+  if (!owner || owner.typeId !== "minecraft:player") return;
+  const cleanupUntil = chargeProjectileCleanupUntil.get(owner.id) ?? 0;
+  if (!heavyChargeStates.has(owner.id) && cleanupUntil < system.currentTick) return;
+  try { entity.remove(); } catch (_) {}
+});
 
 function beginParry(player) {
   if (!player.isValid) return;
@@ -828,6 +858,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   const id = event.playerId;
   actions.delete(id);
   heavyChargeStates.delete(id);
+  chargeProjectileCleanupUntil.delete(id);
   suppressQuickUntil.delete(id);
   queuedAttacks.delete(id);
   parryWindows.delete(id);
