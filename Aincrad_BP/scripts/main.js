@@ -149,11 +149,11 @@ try {
         guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
         guards.set(target.id, guard);
         event.cancel = true;
-        if (diagnosticsEnabled.has(target.id)) safeMessage(target, "§c[AINCRAD DIAG] MOB GUARD BREAK: hit cancelled; Guard disabled for " + GUARD_BREAK_TICKS + " ticks.");
+        if (diagnosticsEnabled.has(target.id)) system.runTimeout(() => safeMessage(target, "§c[AINCRAD DIAG] MOB GUARD BREAK: hit cancelled; Guard disabled for " + GUARD_BREAK_TICKS + " ticks."), 1);
       } else {
         const incomingDamage = event.damage;
         event.damage = Math.max(1, Math.ceil(incomingDamage * 0.25));
-        if (diagnosticsEnabled.has(target.id)) safeMessage(target, "§6[AINCRAD DIAG] Mob hit: incoming=" + incomingDamage + ", after Guard=" + event.damage + ", prevented=" + (incomingDamage - event.damage) + ", strain=" + strain + "/" + GUARD_MAX_STRAIN + ".");
+        if (diagnosticsEnabled.has(target.id)) system.runTimeout(() => safeMessage(target, "§6[AINCRAD DIAG] Mob hit: incoming=" + incomingDamage + ", after Guard=" + event.damage + ", prevented=" + (incomingDamage - event.damage) + ", strain=" + strain + "/" + GUARD_MAX_STRAIN + "."), 1);
       }
     });
     mobDefenseInputAvailable = true;
