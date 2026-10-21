@@ -24,7 +24,7 @@ jobs:
 
       - name: Validate source and manifests
         run: |
-          node --check Aincrad_BP/scripts/main.js
+          node --input-type=module --check < Aincrad_BP/scripts/main.js
           python3 -m json.tool Aincrad_BP/manifest.json >/dev/null
           python3 -m json.tool Aincrad_BP/items/aincrad_sword.json >/dev/null
           python3 -m json.tool Aincrad_RP/manifest.json >/dev/null
