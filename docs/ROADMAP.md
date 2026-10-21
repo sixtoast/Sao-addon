@@ -38,10 +38,10 @@
 
 
 ## Combat core v0.6 — guard and block (provisional implementation)
-- Sneak input activates/toggles a timed guard window; Guard hotbar item remains fallback
+- One Sneak press starts a timed defensive sequence: spot dodge, then parry, then guard; hotbar items remain compatibility fallbacks
 - Timed directional guard against custom player combat intents
 - Blocked damage reduction and guard strain
 - Heavy attacks build more strain and can break guard
-- Parry resolves before ordinary guard
+- Defensive result is selected by attack timing within the shared Sneak sequence
 - Mob attacks and vanilla damage are not intercepted by this prototype guard
 - In-game validation pending
