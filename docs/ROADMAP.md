@@ -38,10 +38,19 @@
 
 
 ## Combat core v0.6 — guard and block (provisional implementation)
-- One Sneak press starts a timed defensive sequence: spot dodge, then parry, then guard; hotbar items remain compatibility fallbacks
+- Hold Sneak for a shared defensive sequence: spot dodge (ticks 0–2), parry (ticks 3–6), then guard indefinitely until release; hotbar items remain compatibility fallbacks
 - Timed directional guard against custom player combat intents
 - Blocked damage reduction and guard strain
 - Heavy attacks build more strain and can break guard
 - Defensive result is selected by attack timing within the shared Sneak sequence
-- Mob attacks and vanilla damage are not intercepted by this prototype guard
+- Ordinary mob melee damage has a provisional before-hurt interception path; projectiles and non-melee damage remain unchanged
 - In-game validation pending
+
+
+## Combat core v0.7 — integration review
+- [x] Route ordinary mob melee hits through Sneak dodge/parry/guard windows (implementation committed; runtime validation pending)
+- [x] Preserve the held Sneak sequence after a successful custom-combat parry
+- [x] Preserve held Guard across guard-break recovery and clear defensive state on player leave
+- [ ] Verify Bedrock API compatibility and event cause values on the target Minecraft version
+- [ ] Package a fresh .mcaddon and test on iPhone
+- [ ] Tune timing, strain, and recovery from playtest feedback
