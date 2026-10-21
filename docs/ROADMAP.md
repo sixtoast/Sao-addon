@@ -51,6 +51,7 @@
 - [x] Route ordinary mob melee hits through Sneak dodge/parry/guard windows (implementation committed; runtime validation pending)
 - [x] Preserve the held Sneak sequence after a successful custom-combat parry
 - [x] Preserve held Guard across guard-break recovery and clear defensive state on player leave
+- [x] Fix simultaneous-attack clash lookup to use the shared combat snapshot
 - [ ] Verify Bedrock API compatibility and event cause values on the target Minecraft version
 - [ ] Package a fresh .mcaddon and test on iPhone
 - [ ] Tune timing, strain, and recovery from playtest feedback
