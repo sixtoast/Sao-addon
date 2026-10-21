@@ -7,21 +7,30 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 1. Import the new `.mcaddon` build into Minecraft Bedrock.
 2. Use a Creative test world with cheats enabled and enable both Aincrad Combat BP and RP.
 3. If Minecraft says a pack with the same UUID is already installed, allow it to replace/update the previous version or remove the older pack before importing.
-4. Keep the Skill Menu book for the fallback menu; the add-on should provide Skill Menu, Heavy Attack, and Parry items on first spawn.
+4. Keep the Skill Menu book for the fallback menu; the add-on should provide Skill Menu, Heavy Attack, Parry, and Guard items on first spawn.
 5. Tap the normal Attack button to try Quick Slash.
 6. Select and use the Heavy Attack sword item to try Heavy Strike.
 7. Select and use the Parry shield item just before an incoming custom player attack to try a parry.
-8. If direct attack input is unavailable in your runtime, use the Skill Menu for Quick Slash and Parry.
-9. Check the Minecraft Content Log if the world errors or attacks do not trigger.
+8. Use the Guard shield item, face an incoming custom player attack, and observe block damage and guard strain.
+9. Repeat with Heavy Strike to check guard break, then try attacking from behind to confirm directional blocking.
+10. If direct attack input is unavailable in your runtime, use the Skill Menu for Quick Slash and Parry.
+11. Check the Minecraft Content Log if the world errors or attacks do not trigger.
 
 ## What changed
 
-- The control item icons are now distinct: book for Skill Menu, diamond sword for Heavy Attack, and shield for Parry. This is a usability improvement only; the assets have not been verified in-game yet.
+- The control item icons are configured as book for Skill Menu, diamond sword for Heavy Attack, and shield for Parry/Guard. This is a usability improvement only; the assets have not been verified in-game yet.
 - `world.afterEvents.playerSwingStart` is feature-detected. Microsoft's current documentation marks the swing event as pre-release/experimental.
 - A swing whose `swingSource` is `Attack` requests Quick Slash regardless of whether the player is sneaking. The Heavy Attack item requests Heavy Strike.
 - The Skill Menu remains as a fallback for Quick Slash and Parry, because Bedrock's documented stable `InputButton` enum currently exposes Jump and Sneak, not a generic Attack button.
 - Native attack cancellation is separately feature-detected and depends on the pre-release `PlayerItemAttackEntityBeforeEvent`. If unavailable, vanilla melee may add extra damage.
 - A persistent, always-visible, tappable custom Heavy Attack HUD button remains blocked by the lack of a documented public HUD-to-script input route. The hotbar item is the honest current fallback, not a completed HUD button. See [Heavy Attack button research](HEAVY_ATTACK_BUTTON_RESEARCH.md).
+
+## First-pass guard rules
+
+- Guard lasts 30 ticks (about 1.5 seconds) per activation.
+- Guard only reduces custom player attacks from the defender's forward-facing arc; blocked attacks deal 25% damage, rounded up, with a minimum of 1.
+- Guard strain: Quick Slash adds 3, Heavy Strike adds 6; strain of 10 breaks guard for 40 ticks.
+- Parry takes priority over guard. Mob attacks and vanilla damage are not intercepted by this custom guard logic yet.
 
 ## First-pass move values
 
@@ -37,6 +46,9 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - [ ] Using the Heavy Attack item starts Heavy Strike.
 - [ ] The Heavy Attack, Parry, and Skill Menu icons are visibly distinct.
 - [ ] Using the Parry item starts the five-tick parry window.
+- [ ] Guard blocks attacks from the front and reduces damage to 25%.
+- [ ] Guard strain accumulates (3 for Quick Slash, 6 for Heavy Strike) and guard breaks at 10.
+- [ ] Guard break prevents immediate re-guarding for 40 ticks.
 - [ ] Touchscreen input actually produces the swing event in the installed Minecraft version.
 - [ ] Vanilla melee is cancelled when the cancellation API is available; no double damage.
 - [ ] The Skill Menu still opens and returns to inventory.
@@ -51,7 +63,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - Heavy Strike uses a dedicated hotbar item rather than Sneak + Attack. A persistent custom HUD button is not implemented because no supported public input/callback route has been verified.
 - Parry uses a dedicated hotbar item; actual timing and multiplayer interactions remain unverified.
 - Mob attacks are not yet routed through the custom combat state machine.
-- Guard strain/guard break, dodge, Momentum, combo buffering, custom animations, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
+- Dodge, Momentum, combo buffering, custom animations, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
 
 ## Official technical references
 
