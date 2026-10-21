@@ -410,6 +410,29 @@ world.afterEvents.itemStartUse.subscribe(beginHeavyCharge);
 world.afterEvents.itemReleaseUse.subscribe(releaseHeavyCharge);
 world.afterEvents.itemStopUse.subscribe(releaseHeavyCharge);
 
+// Temporary v0.5.5 diagnostics: determine whether native item-use events fire
+// at all when the Heavy Attack item is activated from the Attack button.
+world.afterEvents.itemStartUse.subscribe((event) => {
+  const player = event.source;
+  if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
+  let selected = "unknown";
+  try {
+    selected = player.getComponent("minecraft:inventory")?.container?.getItem(player.selectedSlotIndex)?.typeId ?? "empty";
+  } catch (_) {}
+  if (selected !== HEAVY_ITEM && event.itemStack?.typeId !== HEAVY_ITEM) return;
+  safeMessage(player, `§d[DIAG 0.5.5] itemStartUse fired; eventItem=${event.itemStack?.typeId ?? "none"}; selected=${selected}`);
+});
+world.afterEvents.itemReleaseUse.subscribe((event) => {
+  const player = event.source;
+  if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
+  let selected = "unknown";
+  try {
+    selected = player.getComponent("minecraft:inventory")?.container?.getItem(player.selectedSlotIndex)?.typeId ?? "empty";
+  } catch (_) {}
+  if (selected !== HEAVY_ITEM && event.itemStack?.typeId !== HEAVY_ITEM) return;
+  safeMessage(player, `§d[DIAG 0.5.5] itemReleaseUse fired; eventItem=${event.itemStack?.typeId ?? "none"}; selected=${selected}`);
+});
+
 // The throwable component needs a projectile definition to activate native
 // trident-style draw/release behaviour. The placeholder arrow is not the attack:
 // remove it immediately and let the existing melee combat state machine resolve.
