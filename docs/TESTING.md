@@ -11,7 +11,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 5. Tap the normal Attack button to try Quick Slash.
 6. Select and use the Heavy Attack sword item to try Heavy Strike.
 7. Select and use the Parry shield item just before an incoming custom player attack to try a parry.
-8. Hold Sneak while facing an incoming custom player attack, then release it and confirm Guard drops immediately. The Guard item is a fallback toggle only if button input is unavailable.
+8. Tap Sneak immediately before an incoming custom player attack. Check the timing sequence: spot dodge for ticks 0–2, parry for ticks 3–6, then Guard for ticks 7–30. The same Sneak input starts all three defensive phases.
 9. Repeat with Heavy Strike to check guard break, then try attacking from behind to confirm directional blocking.
 10. If direct attack input is unavailable in your runtime, use the Skill Menu for Quick Slash and Parry.
 11. Check the Minecraft Content Log if the world errors or attacks do not trigger.
@@ -21,7 +21,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - The control item icons are configured as book for Skill Menu, diamond sword for Heavy Attack, and shield for Parry/Guard. Sneak is the primary Guard input. This is a usability improvement only; the assets have not been verified in-game yet.
 - `world.afterEvents.playerSwingStart` is feature-detected. Microsoft's current documentation marks the swing event as pre-release/experimental.
 - A swing whose `swingSource` is `Attack` requests Quick Slash regardless of whether the player is sneaking. The Heavy Attack item requests Heavy Strike.
-- Holding the Sneak button requests Guard; releasing it lowers Guard immediately. Verify that the runtime sends both Pressed and Released button-state events on the target touchscreen.
+- One Sneak press starts the shared defensive sequence: spot dodge (0–2 ticks), parry (3–6 ticks), then Guard (7–30 ticks). Microsoft documents that touch Sneak may emit a press/release pair even when held, so the implementation uses attack timing rather than relying on a sustained touch hold.
 - The Skill Menu remains as a fallback for Quick Slash and Parry, because Bedrock's documented stable `InputButton` enum currently exposes Jump and Sneak, not a generic Attack button.
 - Native attack cancellation is separately feature-detected and depends on the pre-release `PlayerItemAttackEntityBeforeEvent`. If unavailable, vanilla melee may add extra damage.
 - A persistent, always-visible, tappable custom Heavy Attack HUD button remains blocked by the lack of a documented public HUD-to-script input route. The hotbar item is the honest current fallback, not a completed HUD button. See [Heavy Attack button research](HEAVY_ATTACK_BUTTON_RESEARCH.md).
@@ -31,7 +31,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - Guard lasts 30 ticks (about 1.5 seconds) per activation.
 - Guard only reduces custom player attacks from the defender's forward-facing arc; blocked attacks deal 25% damage, rounded up, with a minimum of 1.
 - Guard strain: Quick Slash adds 3, Heavy Strike adds 6; strain of 10 breaks guard for 40 ticks.
-- Parry takes priority over guard. Mob attacks and vanilla damage are not intercepted by this custom guard logic yet.
+- Defence is selected by the attack's arrival time in the sequence; a hit during dodge is evaded, a hit during parry is countered, and a hit during Guard is blocked if it comes from the front. Mob attacks and vanilla damage are not intercepted by this custom logic yet.
 
 ## First-pass move values
 
@@ -62,7 +62,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 
 - The direct swing event is documented as pre-release/experimental; runtime support and touch-button behaviour must be tested on the user's device.
 - Heavy Strike uses a dedicated hotbar item. Sneak is reserved for Guard, not Heavy Strike. A persistent custom Heavy Attack HUD button is not implemented because no supported public input/callback route has been verified.
-- Parry uses a dedicated hotbar item; actual timing and multiplayer interactions remain unverified.
+- Sneak is the primary shared defensive input; Parry and Guard items are compatibility fallbacks only. Timing and multiplayer interactions remain unverified.
 - Mob attacks are not yet routed through the custom combat state machine.
 - Dodge, Momentum, combo buffering, custom animations, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
 
