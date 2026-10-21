@@ -46,7 +46,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 - [ ] Normal Attack input starts Quick Slash without opening the menu.
 - [ ] Using the Heavy Attack item starts Heavy Strike.
 - [ ] The Heavy Attack, Parry, and Skill Menu icons are visibly distinct.
-- [ ] Using the Parry item starts the five-tick parry window.
+- [ ] Using the Parry item starts the five-tick parry window.\n- [ ] If Sneak button-state events are unavailable, use the Guard item twice and confirm the first use activates the fallback stance and the second releases it.
 - [ ] Guard blocks attacks from the front and reduces damage to 25%.
 - [ ] Guard strain accumulates (3 for Quick Slash, 6 for Heavy Strike) and guard breaks at 10.
 - [ ] Guard break prevents immediate re-guarding for 40 ticks.
@@ -62,7 +62,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 
 - The direct swing event is documented as pre-release/experimental; runtime support and touch-button behaviour must be tested on the user's device.
 - Heavy Strike uses a dedicated hotbar item. Sneak is reserved for Guard, not Heavy Strike. A persistent custom Heavy Attack HUD button is not implemented because no supported public input/callback route has been verified.
-- Sneak is the primary shared defensive input; Parry and Guard items are compatibility fallbacks only. Guard has no time limit while Sneak remains held. Timing and multiplayer interactions remain unverified.
+- Sneak is the primary shared defensive input; Parry and Guard items are compatibility fallbacks. If the runtime has no button-state input event, using the Guard item toggles the stance on/off so the player is not trapped guarding. Guard has no time limit while Sneak remains held. Timing and multiplayer interactions remain unverified.
 - Ordinary mob melee has a provisional before-hurt defence handler, but its event cause, cancellation and damage-reduction behaviour still need runtime validation. Projectile and non-melee damage remain vanilla.
 - Distinct directional sword animations, angle-specific damage/behaviour, Momentum, combo buffering, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
 
