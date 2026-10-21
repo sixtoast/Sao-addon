@@ -296,3 +296,20 @@ The v0.5.1 device test failed: no charge meter appeared and the Heavy Attack tok
 6. Check Content Log for item parser and Script API errors.
 
 This package is a test candidate. Keep stable `main` unchanged and do not merge until the user reports results.
+
+
+## v0.5.3 native throwable charge test
+
+This candidate changes only the Heavy Attack input mechanism. It replaces the food-based `start_using: "on_attack"` experiment with `minecraft:throwable` plus `minecraft:projectile`, following Microsoft's documented charged-throw pattern for tridents. The placeholder arrow should be removed immediately by script; the intended result is still a melee Heavy Strike, not a projectile attack.
+
+1. Confirm both packs display version 0.5.3 after import.
+2. Select Heavy Attack and use/hold it as you would charge a trident on touch controls.
+3. Confirm the chat message says Heavy Strike is charging and the action-bar meter appears.
+4. Hold past the full-charge cue, then release. Confirm exactly one melee Heavy Strike occurs.
+5. Release early after about 7–8 ticks and check for the reduced-damage Heavy Strike.
+6. Tap/release very quickly and check whether the normal Quick Slash path behaves as expected.
+7. Confirm no arrow remains visible or flies away, and Heavy Attack remains in the original hotbar slot.
+8. Check that the Skill Activation Book, Parry, Guard, and Sneak dodge/parry/guard sequence still work.
+9. If charging does not start, record the exact on-screen message and inspect the Content Log before changing timing values.
+
+The use of a native throwable is a hypothesis to test, not a verified fix. Keep this branch separate from `main` until the iPhone test passes.
