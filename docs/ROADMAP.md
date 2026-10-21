@@ -54,6 +54,7 @@
 - [x] Fix simultaneous-attack clash lookup to use the shared combat snapshot
 - [x] Require explicit held-Guard state for player blocks and repair Guard-item fallback state
 - [x] Compare mob melee damage using the documented `EntityDamageCause.entityAttack` enum value
+- [x] Exclude non-living entities from Quick Slash and Heavy Strike target selection
 - [ ] Verify Bedrock API compatibility and event cause values on the target Minecraft version
 - [ ] Package a fresh .mcaddon and test on iPhone
 - [ ] Tune timing, strain, and recovery from playtest feedback
