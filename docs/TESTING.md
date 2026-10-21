@@ -128,3 +128,9 @@ The mob path uses the documented cancellable `world.beforeEvents.entityHurt` sig
 - This avoids relying on a snake_case cause value that does not match the documented enum naming convention.
 - This is not proof that every mob attack type is covered. Confirm normal melee interception in-game; sweep-style attacks may report a different cause and are not assumed covered until observed.
 - Reference: [Microsoft Learn — EntityDamageSource](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entitydamagesource?view=minecraft-bedrock-stable), which defines `cause` as an `EntityDamageCause` enum.
+
+
+## Sword target filtering (source-reviewed)
+
+- Quick Slash and Heavy Strike now ignore entities without the `minecraft:health` component when selecting their single frontal target. This prevents dropped items, projectiles, and other non-living entities from consuming an attack that should reach a living target behind them.
+- Verify that players and ordinary hostile/passive mobs remain targetable, and that dropped items and projectiles are ignored. Entities with unusual/custom health components may still need compatibility testing.
