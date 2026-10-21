@@ -61,6 +61,8 @@ const WEAPON_ITEM_IDS = new Set([
   "minecraft:golden_sword", "minecraft:diamond_sword", "minecraft:netherite_sword",
   "minecraft:wooden_axe", "minecraft:stone_axe", "minecraft:iron_axe",
   "minecraft:golden_axe", "minecraft:diamond_axe", "minecraft:netherite_axe",
+  "minecraft:wooden_spear", "minecraft:stone_spear", "minecraft:iron_spear",
+  "minecraft:golden_spear", "minecraft:diamond_spear", "minecraft:netherite_spear",
   "minecraft:trident", "minecraft:mace"
 ]);
 const PARRY_WINDOW_TICKS = 5;
