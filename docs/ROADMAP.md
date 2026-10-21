@@ -35,3 +35,13 @@
 - Expand the vertical slice into a floor-based Aincrad RPG
 - Add weapon classes, sword skills, NPCs, crafting, parties and raid encounters
 - Optimise and test on iPhone before expanding content
+
+
+## Combat core v0.6 — guard and block (provisional implementation)
+- Dedicated Guard hotbar item
+- Timed directional guard against custom player combat intents
+- Blocked damage reduction and guard strain
+- Heavy attacks build more strain and can break guard
+- Parry resolves before ordinary guard
+- Mob attacks and vanilla damage are not intercepted by this prototype guard
+- In-game validation pending
