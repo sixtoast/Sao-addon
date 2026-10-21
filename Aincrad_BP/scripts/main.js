@@ -186,6 +186,17 @@ try {
     swingSignal.subscribe((event) => {
       const player = event.player;
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
+
+      // Using the Heavy Attack control item can also emit a generic Attack swing.
+      // Do not let that secondary swing request Quick Slash over the dedicated Heavy Strike.
+      try {
+        const inventory = player.getComponent("minecraft:inventory")?.container;
+        const selectedItem = inventory?.getItem(player.selectedSlotIndex);
+        if (selectedItem?.typeId === HEAVY_ITEM) return;
+      } catch (_) {
+        // If inventory state is unavailable, preserve normal Quick Slash input.
+      }
+
       // Normal Attack always requests Quick Slash. Sneaking does not alter move selection.
       beginAttack(player, MOVES.quick);
     });
