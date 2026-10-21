@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP",
-    "description": "SAO-inspired custom combat and skill menu prototype",
+    "name": "Aincrad Combat BP v0.4.4",
+    "description": "Aincrad Combat v0.4.4 | SAO-inspired combat prototype, custom attacks and opt-in test diagnostics.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
       4,
-      3
+      4
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         0,
         4,
-        3
+        4
       ]
     },
     {
