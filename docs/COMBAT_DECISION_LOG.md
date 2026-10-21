@@ -435,3 +435,15 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Input handling and state transitions must be deterministic and must not depend on animation callbacks or script/event ordering. Exact cancel windows, move exceptions, and how cancellation interacts with buffering remain open for tuning and platform validation.
 - This is a conceptual design decision only. No gameplay code is changed, and the gameplay prototype branch is untouched.
 
+
+## 22. Block coverage and effectiveness
+
+**Agreed — contextual guard resolution (Option D)**
+
+- A block succeeds only when the attack and defender satisfy explicit guard-interaction rules. Resolution considers the defender's guard state and orientation, the attack's direction and declared properties, and any move-specific exceptions or guard costs.
+- Guard coverage must be defined and deterministic. Attacks outside the applicable coverage, including flank or rear attacks where the rules say so, are not silently converted into successful frontal blocks.
+- Attack properties may affect the outcome only through declared rules, such as guard-breaking capability, pressure, or resource cost. Do not use an opaque score or random result to decide whether a guard holds.
+- A successful block uses the previously agreed contextual block-advantage rules. A failed or bypassed block must resolve through the normal hit/interruption rules; merely holding the block input must not grant universal protection.
+- The guard outcome must use authoritative combat state and a consistent snapshot so that event order and animation callbacks cannot change the result. Exact coverage angles, guard costs, guard-break conditions, and move-specific exceptions remain open for tuning and technical validation.
+- Implementation must be checked against the target Minecraft Bedrock Script API and supported entity/input capabilities before committing to a specific technical mechanism. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
+
