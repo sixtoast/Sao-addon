@@ -358,7 +358,7 @@ function applyMoveDamage(attacker, target, move) {
   }
 }
 
-function resolveAttackIntent(intent, snapshot, activeIntentIds) {
+function resolveAttackIntent(intent, snapshot, intentByActor) {
   const { actor, move, target } = intent;
   if (!actor.isValid || !target.isValid) return;
   const liveActorAction = actions.get(actor.id);
@@ -434,8 +434,9 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
     // Equal interruption strengths clash; unequal exchanges preserve both confirmed hits
     // and apply the stronger move's reaction after damage (trade semantics).
     const opposing = snapshot.get(target.id);
+    const opposingIntent = intentByActor.get(target.id);
     if (opposing && opposing.move && opposing.phase === "active" &&
-        activeIntentIds.has(target.id) && opposing.actor.isValid) {
+        opposingIntent?.target?.id === actor.id && opposing.actor.isValid) {
       if (move.interruptionStrength === opposing.move.interruptionStrength) {
         actions.get(actor.id).phase = "recovery";
         actions.get(actor.id).recoveryUntil = system.currentTick + REACTION_TICKS.actionBreak;
@@ -539,8 +540,8 @@ function processCombatTick() {
   const snapshot = new Map();
   for (const [id, action] of actions) snapshot.set(id, { ...action });
   const currentIntents = intents.splice(0, intents.length);
-  const activeIntentIds = new Set(currentIntents.map((intent) => intent.actor.id));
-  for (const intent of currentIntents) resolveAttackIntent(intent, snapshot, activeIntentIds);
+  const intentByActor = new Map(currentIntents.map((intent) => [intent.actor.id, intent]));
+  for (const intent of currentIntents) resolveAttackIntent(intent, snapshot, intentByActor);
 }
 
 const intents = [];
