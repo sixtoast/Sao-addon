@@ -1,3 +1,16 @@
+# v0.4.7 charge activation regression
+
+The v0.4.6 sword did not start charging or reach the attack handler on the user's iPhone. v0.4.7 adds a zero-nutrition food use behaviour with a 3,600-second duration and self-conversion as a compatibility workaround. This workaround is **not considered verified** until tested in-game.
+
+1. Import v0.4.7 and check Content Log for item component warnings.
+2. Equip Aincrad Sword and tap Attack once. Confirm charge feedback appears and Quick Slash resolves on release.
+3. Hold Attack for 7–8 ticks, then release; confirm partial Heavy Strike.
+4. Hold Attack for 9+ ticks, then release; confirm the ready cue and full Heavy Strike.
+5. Confirm the sword remains in inventory and does not behave like a consumable. If it is eaten, disappears, or still fails to activate, stop testing this build and return to v0.4.5.
+6. Recheck Guard, Guard Break and diagnostics.
+
+---
+
 # Combat core v0.5 — direct-input and hotbar-control test checklist
 
 The v0.4 input slice adds a feature-detected swing listener. It is not yet verified in Minecraft after this change. The previous v0.3 menu-driven combat build was confirmed by the user to import and run.
