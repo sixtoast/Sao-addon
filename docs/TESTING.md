@@ -7,17 +7,18 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 1. Import the new `.mcaddon` build into Minecraft Bedrock.
 2. Use a Creative test world with cheats enabled and enable both Aincrad Combat BP and RP.
 3. If Minecraft says a pack with the same UUID is already installed, allow it to replace/update the previous version or remove the older pack before importing.
-4. Run `/give @s aincrad:skill_crystal 5` and keep the item for the fallback menu.
+4. Keep the Skill Crystal for the fallback menu; the add-on should provide Skill Crystal, Heavy Attack, and Parry items on first spawn.
 5. Tap the normal Attack button to try Quick Slash.
-6. While sneaking, tap Attack to try Heavy Strike.
-7. If direct attack input is unavailable in your runtime, use the Skill Crystal menu as a fallback.
-8. Check the Minecraft Content Log if the world errors or attacks do not trigger.
+6. Use the Heavy Attack item to try Heavy Strike.
+7. Use the Parry item just before an incoming custom player attack to try a parry.
+8. If direct attack input is unavailable in your runtime, use the Skill Crystal menu as a fallback for Quick Slash and Parry.
+9. Check the Minecraft Content Log if the world errors or attacks do not trigger.
 
 ## What changed
 
 - `world.afterEvents.playerSwingStart` is feature-detected. Microsoft's current documentation marks the swing event as pre-release/experimental.
 - A swing whose `swingSource` is `Attack` starts Quick Slash; if the player is sneaking, it starts Heavy Strike.
-- The Skill Crystal menu remains as a fallback and for Parry, because Bedrock's documented stable `InputButton` enum currently exposes Jump and Sneak, not a generic Attack button.
+- The Skill Crystal menu remains as a fallback for Quick Slash and Parry, because Bedrock's documented stable `InputButton` enum currently exposes Jump and Sneak, not a generic Attack button.
 - Native attack cancellation is still separately feature-detected and depends on the pre-release `PlayerItemAttackEntityBeforeEvent`. If unavailable, vanilla melee may add extra damage.
 
 ## First-pass move values
@@ -44,7 +45,7 @@ The v0.4 input slice adds a feature-detected swing listener. It is not yet verif
 
 - The direct swing event is documented as pre-release/experimental; runtime support and touch-button behaviour must be tested on the user's device.
 - Sneak + Attack is a provisional heavy-attack modifier, not the final dedicated-button design. We should replace it with a cleaner dedicated mobile control if the Bedrock UI/input options allow it.
-- Parry remains menu-triggered for now.
+- Parry now has a dedicated hotbar item; actual parry timing and multiplayer interactions remain unverified.
 - Mob attacks are not yet routed through the custom combat state machine.
 - Guard strain/guard break, dodge, Momentum, combo buffering, custom animations, hit-stop, aerial combat, persistence and multiplayer authority hardening remain future slices.
 
