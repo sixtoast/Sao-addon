@@ -382,6 +382,32 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 });
 
+// Give each player one copy of the control items on first spawn, without
+// duplicating either item if it is already in their inventory.
+world.afterEvents.playerSpawn.subscribe((event) => {
+  if (!event.initialSpawn) return;
+  const player = event.player;
+  system.runTimeout(() => {
+    try {
+      if (!player.isValid) return;
+      const inventory = player.getComponent("minecraft:inventory")?.container;
+      if (!inventory) return;
+      const hasItem = (typeId) => {
+        for (let slot = 0; slot < inventory.size; slot++) {
+          const item = inventory.getItem(slot);
+          if (item && item.typeId === typeId) return true;
+        }
+        return false;
+      };
+      if (!hasItem(MENU_ITEM)) inventory.addItem(new ItemStack(MENU_ITEM, 1));
+      if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike.");
+    } catch (_) {
+      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token and /give @s aincrad:skill_crystal.");
+    }
+  }, 1);
+});
+
 system.runInterval(processCombatTick, 1);
 
 world.afterEvents.playerLeave.subscribe((event) => {
