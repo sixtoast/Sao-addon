@@ -106,7 +106,7 @@ function showCombatMenu(player) {
       (swingInputAvailable
         ? "Direct attacks: tap Attack for Quick Slash; sneak + Attack for Heavy Strike."
         : "Direct attack input is unavailable in this runtime; use the menu fallback.") +
-      "\\n\\n" +
+      "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
         : "Warning: vanilla melee may still deal extra damage; cancellation is unavailable.")
