@@ -378,3 +378,15 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - The reaction is a gameplay state owned by the authoritative combat state machine; animation and effects communicate the outcome but do not determine it. Resolve the interruption and any associated damage, rewards, and resource changes at most once.
 - This decision defines the conceptual rule only. Detailed per-move profiles, exact thresholds, and implementation/testing remain open; no gameplay code is changed by this entry.
 
+## 17. Damage resolution when an attack is interrupted
+
+**Agreed — contextual damage resolution (Option D)**
+
+- Resolve damage from the same authoritative combat decision as the attack interaction, using the move's declared hit window, current phase, target eligibility, and shared exchange snapshot where the exchange is simultaneous.
+- An interruption can prevent damage that has not yet legitimately connected. It must not retroactively erase a hit already confirmed by the authoritative resolver.
+- A move being in its active phase does not automatically guarantee damage: its hit must still satisfy the move's declared hit window and target-eligibility rules at resolution.
+- Conversely, an interruption does not automatically cancel every hit associated with that move. If the hit was already confirmed in the shared snapshot, preserve it and classify the exchange consistently with the agreed clash, clean-interruption, and trade rules.
+- Move-specific exceptions are allowed only when explicitly declared and documented. Animation timing alone, script/event order, or an interruption reaction applied later must not silently change the hit result.
+- Each hit and its damage resolve at most once. The combat state machine and shared resolver remain authoritative; visual effects and animations communicate the result but do not decide it.
+- Exact hit windows, phase boundaries, and any move-specific exceptions remain open for tuning and validation. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
+
