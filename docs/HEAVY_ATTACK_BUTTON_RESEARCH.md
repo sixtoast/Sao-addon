@@ -30,7 +30,7 @@ The current pack-manifest reference says this capability allows HTML files to cr
 
 No supported, current, end-to-end path for a persistent custom HUD button has been verified yet. Do not ship a decorative button that cannot trigger combat, and do not assume a legacy HTML UI example is compatible with the current Script API.
 
-Next investigate current, maintained examples or API contracts for a supported UI-to-script event bridge. If no such route can be verified, implement a dedicated hotbar item/slot as the mobile-friendly fallback: using it would request Heavy Strike, while normal Attack requests Quick Slash. Label that honestly as a control fallback, not a custom HUD button. Keep the Skill Crystal menu as a utility/fallback.
+Current prototype: a dedicated Heavy Attack hotbar item (`aincrad:heavy_attack_token`) requests Heavy Strike when used. The existing Skill Crystal remains the utility menu. This is a dedicated hotbar control, not a custom always-visible HUD button. Its use event still needs in-game testing on iPhone.
 
 ## Prototype acceptance criteria
 
