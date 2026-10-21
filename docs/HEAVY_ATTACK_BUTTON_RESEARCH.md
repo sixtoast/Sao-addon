@@ -66,3 +66,15 @@ The custom HUD route was re-checked against current public documentation and a r
 **A genuine, always-visible, tappable Heavy Attack HUD button is not implemented and cannot currently be marked complete using a documented public add-on API.** Do not add a decorative JSON UI button or remap an essential native action and call that finished.
 
 The current dedicated Heavy Attack item is the practical fallback. A custom HUD attempt would be an unsupported experiment, not a reliable implementation. Revisit only if Mojang exposes a supported interactive HUD input/callback route, or if the project deliberately accepts a form/container-based control that interrupts normal gameplay and is therefore not the requested HUD button.
+
+
+## Follow-up: chargeable sword input route (21 October 2026)
+
+The project now has a separate prototype branch for a custom Aincrad Sword, not a persistent custom HUD button. Current item documentation exposes `minecraft:use_modifiers.start_using = "on_attack"` in item format version 1.26.30+, which may allow an item to begin use from the Attack input. The sword listens to `itemStartUse` and `itemReleaseUse`; this is materially different from a HUD button callback.
+
+This is still unverified on the user's iPhone. Do not claim that touch tap/hold behaviour works until the v0.4.6 test checklist passes. See [CHARGEABLE_SWORD_PROTOTYPE.md](CHARGEABLE_SWORD_PROTOTYPE.md).
+
+References:
+- [Microsoft Learn: minecraft:use_modifiers](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_use_modifiers?view=minecraft-bedrock-stable)
+- [Microsoft Learn: WorldAfterEvents](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable)
+- [MicrosoftDocs: ItemStartUseAfterEvent](https://github.com/MicrosoftDocs/minecraft-creator/blob/main/creator/ScriptAPI/minecraft/server/ItemStartUseAfterEvent.md)
