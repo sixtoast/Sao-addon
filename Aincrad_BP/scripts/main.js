@@ -782,8 +782,11 @@ try {
     const snapshotTarget = state?.targetSnapshot ?? null;
     const weaponMove = elapsed >= CHARGE_EARLY_HEAVY_TICKS ? "heavy" : "quick";
     let move = getMoveForPlayer(player, weaponMove, true);
-    if (weaponMove === "heavy" && elapsed < CHARGE_READY_TICKS) {
-      move = { ...move, damage: Math.max(1, Math.floor(move.damage * CHARGE_EARLY_DAMAGE_MULTIPLIER)), name: "Heavy Strike (Partial)" };
+    if (weaponMove === "heavy") {
+      move = { ...move, windup: elapsed < CHARGE_READY_TICKS ? 4 : 3 };
+      if (elapsed < CHARGE_READY_TICKS) {
+        move = { ...move, damage: Math.max(1, Math.floor(move.damage * CHARGE_EARLY_DAMAGE_MULTIPLIER)), name: "Heavy Strike (Partial)" };
+      }
     }
     if (diagnosticsEnabled.has(player.id)) {
       safeMessage(player, "§6[AINCRAD DIAG] Sword released after " + elapsed + " ticks; move=" + move.name + ", target snapshot=" + (snapshotTarget ? (snapshotTarget.nameTag || snapshotTarget.typeId) : "none") + ".");
