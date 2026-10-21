@@ -268,3 +268,9 @@ world.afterEvents.itemUse.subscribe((event) => {
     }
   }
 });
+
+// Release per-player combat state when a player disconnects; delayed callbacks
+// already guard against missing state and will therefore become harmless.
+world.afterEvents.playerLeave.subscribe((event) => {
+  combatants.delete(event.playerId);
+});
