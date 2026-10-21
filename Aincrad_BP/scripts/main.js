@@ -48,14 +48,11 @@ const MOVES = {
 const REACTION_TICKS = { flinch: 4, actionBreak: 8, stagger: 14 };
 const PARRY_WINDOW_TICKS = 5;
 
-// One Sneak press starts a defensive sequence:
-// ticks 0-2 = spot dodge, ticks 3-6 = parry, ticks 7-30 = guard.
-// This timing-based sequence also works around Bedrock touch input, which may emit
-// a Sneak press/release pair even when the touch control is held.
+// Hold Sneak for a continuous defensive stance.
+// ticks 0-2 = spot dodge, ticks 3-6 = parry, tick 7 onward = guard until release.
 const DEFENSE_DODGE_TICKS = 3;
 const DEFENSE_PARRY_TICKS = 4;
-const DEFENSE_GUARD_TICKS = 24;
-const DEFENSE_TOTAL_TICKS = DEFENSE_DODGE_TICKS + DEFENSE_PARRY_TICKS + DEFENSE_GUARD_TICKS;
+const DEFENSE_GUARD_START_TICK = DEFENSE_DODGE_TICKS + DEFENSE_PARRY_TICKS;
 const defensiveSequences = new Map();
 let sneakGuardInputAvailable = false;
 try {
@@ -63,16 +60,26 @@ try {
   if (buttonSignal && typeof buttonSignal.subscribe === "function") {
     buttonSignal.subscribe((event) => {
       const player = event.player;
-      if (!player || !player.isValid || event.button !== "Sneak" || event.newButtonState !== "Pressed") return;
+      if (!player || !player.isValid || event.button !== "Sneak") return;
       const now = system.currentTick;
       const guard = guards.get(player.id);
-      if (guard?.brokenUntil && now < guard.brokenUntil) {
-        safeMessage(player, "§c[AINCRAD] Your guard is broken.");
-        return;
+
+      if (event.newButtonState === "Pressed") {
+        if (guard?.brokenUntil && now < guard.brokenUntil) {
+          safeMessage(player, "§c[AINCRAD] Your guard is broken.");
+          return;
+        }
+        defensiveSequences.set(player.id, { startedTick: now });
+        guards.set(player.id, { held: true });
+        safeMessage(player, "§9[AINCRAD] Defensive stance.");
+      } else if (event.newButtonState === "Released") {
+        defensiveSequences.delete(player.id);
+        if (guard?.brokenUntil && now < guard.brokenUntil) {
+          guards.set(player.id, { brokenUntil: guard.brokenUntil });
+        } else {
+          guards.delete(player.id);
+        }
       }
-      defensiveSequences.set(player.id, { startedTick: now });
-      if (!guard?.brokenUntil || now >= guard.brokenUntil) guards.set(player.id, {});
-      safeMessage(player, "§9[AINCRAD] Defensive stance.");
     });
     sneakGuardInputAvailable = true;
   }
@@ -84,15 +91,9 @@ function getDefensePhase(playerId, now = system.currentTick) {
   const sequence = defensiveSequences.get(playerId);
   if (!sequence) return null;
   const elapsed = now - sequence.startedTick;
-  if (elapsed < 0 || elapsed >= DEFENSE_TOTAL_TICKS) {
-    defensiveSequences.delete(playerId);
-    const existingGuard = guards.get(playerId);
-    if (!existingGuard?.brokenUntil || now >= existingGuard.brokenUntil) guards.delete(playerId);
-    parryWindows.delete(playerId);
-    return null;
-  }
+  if (elapsed < 0) return null;
   if (elapsed < DEFENSE_DODGE_TICKS) return "dodge";
-  if (elapsed < DEFENSE_DODGE_TICKS + DEFENSE_PARRY_TICKS) return "parry";
+  if (elapsed < DEFENSE_GUARD_START_TICK) return "parry";
   return "guard";
 }
 
