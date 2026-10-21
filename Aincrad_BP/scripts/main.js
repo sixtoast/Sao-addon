@@ -354,8 +354,11 @@ function resolveAttackIntent(intent, snapshot, activeIntentIds) {
   const { actor, move, target } = intent;
   if (!actor.isValid || !target.isValid) return;
   const liveActorAction = actions.get(actor.id);
-  // A clash or interruption may have resolved this actor earlier in the same snapshot.
-  if (liveActorAction && liveActorAction.phase === "recovery" && liveActorAction.hitResolved) return;
+  // A clash can resolve both actors before the second queued intent is visited.
+  // In that case both actions are already marked as resolved and neither hit applies.
+  if (liveActorAction &&
+      (liveActorAction.phase === "recovery" || liveActorAction.phase === "interrupted") &&
+      liveActorAction.hitResolved) return;
 
   // A single Sneak press cycles through spot dodge, parry, then guard.
   // The guard pose can remain the visual stance; hit timing selects the actual defense.
