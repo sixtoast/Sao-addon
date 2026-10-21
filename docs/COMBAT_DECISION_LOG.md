@@ -422,3 +422,16 @@ These are conceptual workshop decisions, not implemented or in-game-verified fea
 - Resolve the exchange deterministically using the same authoritative state/timing principles as other combat interactions. Visual animation and event order must not decide advantage.
 - This decision concerns ordinary player combat; boss-specific interactions remain deferred. This is a conceptual design decision only; no gameplay code or prototype branch is changed.
 
+
+## 21. Attack-to-defence cancellation
+
+**Agreed — move-defined defensive cancels (Option D)**
+
+- An attack does not grant a universal right to cancel into block or dodge. Each move explicitly declares whether defensive cancellation is allowed, which defensive actions are valid, and the permitted timing window or attack phase.
+- Committed attacks generally retain meaningful risk: if a move does not declare a defensive cancel for the current state, the player must complete its defined action/recovery before defending.
+- Selected moves may permit a deliberate defensive cancel where it supports their intended role and balance. These exceptions must be explicit and testable rather than inferred from animation or input timing alone.
+- Cancellation changes the authoritative combat state and must consistently resolve pending hit windows, buffered inputs, recovery, and any already-confirmed hits. It must not erase a hit that has already legitimately connected or create duplicate hit resolution.
+- A successful cancel does not make the player invulnerable by itself. Block and dodge apply their own eligibility, timing, facing/coverage, and vulnerability rules; any invulnerability frames, if used, must be separately and explicitly defined.
+- Input handling and state transitions must be deterministic and must not depend on animation callbacks or script/event ordering. Exact cancel windows, move exceptions, and how cancellation interacts with buffering remain open for tuning and platform validation.
+- This is a conceptual design decision only. No gameplay code is changed, and the gameplay prototype branch is untouched.
+
