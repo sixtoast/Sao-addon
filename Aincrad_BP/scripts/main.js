@@ -123,6 +123,17 @@ try {
       }
       if (phase === "parry") {
         event.cancel = true;
+        // Stagger ordinary mobs with a short push away from the defender.
+        // This is feedback for the parry; the incoming damage remains cancelled.
+        try {
+          const dx = attacker.location.x - target.location.x;
+          const dz = attacker.location.z - target.location.z;
+          const length = Math.sqrt(dx * dx + dz * dz) || 1;
+          attacker.applyKnockback(dx / length, dz / length, 0.8, 0.15);
+        } catch (_) {
+          // Some entity types may not support knockback; damage is still cancelled.
+        }
+        safeMessage(target, "§d[AINCRAD] Parry!");
         return;
       }
 
