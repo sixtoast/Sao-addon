@@ -229,3 +229,16 @@ For a repeatable guard test, use a Creative test world and two players: compare 
 ## Version 0.4.5 — diagnostics runtime hotfix
 
 Version 0.4.4 could throw `ReferenceError: diagnosticsEnabled is not defined` from the combat tick. This is fixed by declaring the per-player diagnostics set. The optional native `world.beforeEvents.playerItemAttackEntity` feature-detection warning is now worded as an API-probe limitation, not as proof that combat cancellation is broken. The existing cancellation path remains in place; test it in-game as usual.
+
+
+## v0.4.8 — Heavy Strike through Interact (not yet device-verified)
+
+1. Import the v0.4.8 test build into a Creative world and check the Content Log for item-component or script errors.
+2. Equip the Heavy Attack item and aim at a living entity. Confirm the contextual touch button is labelled **Heavy Strike**.
+3. Tap that Interact button once. Confirm one Heavy Strike begins, shows the prepare message, and resolves for 12 damage to a valid target.
+4. Confirm the same input does not trigger Quick Slash or two Heavy Strikes.
+5. Select an ordinary weapon and tap normal Attack. Confirm Quick Slash remains separate.
+6. Test with the Heavy Attack item aimed at an entity that is out of attack range; it should not hit through the existing combat range checks.
+7. Re-test Guard, guard break, Parry, and diagnostics. The stable release remains unchanged; if the Interact event does not fire on iPhone, report the exact touch behaviour and Content Log.
+
+The Interact button is contextual and appears when looking at an entity. It is not a persistent custom HUD button.
