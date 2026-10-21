@@ -511,7 +511,11 @@ function processCombatTick() {
   }
 
   for (const [id, guardState] of guards) {
-    if (guardState.brokenUntil && now >= guardState.brokenUntil) guards.delete(id);
+    if (guardState.brokenUntil && now >= guardState.brokenUntil) {
+      // If Sneak's defensive sequence is still active, restore held Guard after recovery.
+      if (defensiveSequences.has(id)) guards.set(id, { held: true });
+      else guards.delete(id);
+    }
   }
 
   // Capture the post-transition state once, then resolve all attacks entering their
@@ -579,7 +583,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack = Heavy Strike; Sneak = Guard; Parry = Parry.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack = Heavy Strike; hold Sneak = Spot Dodge, Parry, then Guard.");
     } catch (_) {
       safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
     }
@@ -592,6 +596,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   actions.delete(event.playerId);
   parryWindows.delete(event.playerId);
   guards.delete(event.playerId);
+  defensiveSequences.delete(event.playerId);
   guardStrain.delete(event.playerId);
   menuOpen.delete(event.playerId);
 });
