@@ -3,10 +3,12 @@ import { ActionFormData } from "@minecraft/server-ui";
 
 const MENU_ITEM = "aincrad:skill_crystal";
 const HEAVY_ITEM = "aincrad:heavy_attack_token";
+const SWORD_ITEM = "aincrad:aincrad_sword";
 const PARRY_ITEM = "aincrad:parry_token";
 const GUARD_ITEM = "aincrad:guard_token";
 const menuOpen = new Set();
 const actions = new Map();
+const chargeStates = new Map();
 const parryWindows = new Map();
 const guards = new Map();
 const guardStrain = new Map();
@@ -49,6 +51,20 @@ const MOVES = {
 };
 
 const REACTION_TICKS = { flinch: 4, actionBreak: 8, stagger: 14 };
+const CHARGE_READY_TICKS = 9;
+const CHARGE_EARLY_HEAVY_TICKS = 7;
+const CHARGE_EARLY_DAMAGE_MULTIPLIER = 0.75;
+const TARGET_SNAPSHOT_TOLERANCE = 0.75;
+const WEAPON_ITEM_IDS = new Set([
+  SWORD_ITEM,
+  "minecraft:wooden_sword", "minecraft:stone_sword", "minecraft:iron_sword",
+  "minecraft:golden_sword", "minecraft:diamond_sword", "minecraft:netherite_sword",
+  "minecraft:wooden_axe", "minecraft:stone_axe", "minecraft:iron_axe",
+  "minecraft:golden_axe", "minecraft:diamond_axe", "minecraft:netherite_axe",
+  "minecraft:wooden_spear", "minecraft:stone_spear", "minecraft:iron_spear",
+  "minecraft:golden_spear", "minecraft:diamond_spear", "minecraft:netherite_spear",
+  "minecraft:trident", "minecraft:mace"
+]);
 const PARRY_WINDOW_TICKS = 5;
 
 // Hold Sneak for a continuous defensive stance.
@@ -192,15 +208,9 @@ try {
       const player = event.player;
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
 
-      // Using the Heavy Attack control item can also emit a generic Attack swing.
-      // Do not let that secondary swing request Quick Slash over the dedicated Heavy Strike.
-      try {
-        const inventory = player.getComponent("minecraft:inventory")?.container;
-        const selectedItem = inventory?.getItem(player.selectedSlotIndex);
-        if (selectedItem?.typeId === HEAVY_ITEM) return;
-      } catch (_) {
-        // If inventory state is unavailable, preserve normal Quick Slash input.
-      }
+      // The chargeable sword handles tap and hold through item-use events.
+      const selectedItem = getSelectedItem(player);
+      if (selectedItem?.typeId === SWORD_ITEM || selectedItem?.typeId === HEAVY_ITEM) return;
 
       // Defer Quick Slash by one tick so itemUse can claim a Heavy Attack
       // activation first. On touch/controller input, the generic swing event can
@@ -213,16 +223,40 @@ try {
             current.phase !== "recovery" && current.phase !== "idle") return;
         // Re-check the selected slot after the input events have settled.
         try {
-          const inventory = player.getComponent("minecraft:inventory")?.container;
-          if (inventory?.getItem(player.selectedSlotIndex)?.typeId === HEAVY_ITEM) return;
+          const selectedItem = getSelectedItem(player);
+          if (selectedItem?.typeId === SWORD_ITEM || selectedItem?.typeId === HEAVY_ITEM) return;
         } catch (_) {}
-        beginAttack(player, MOVES.quick);
+        beginAttack(player, getMoveForPlayer(player, "quick"));
       }, 1);
     });
     swingInputAvailable = true;
   }
 } catch (_) {
   // This runtime does not expose player swing input; use the menu fallback.
+}
+
+function getSelectedItem(player) {
+  try {
+    const inventory = player.getComponent("minecraft:inventory")?.container;
+    return inventory?.getItem(player.selectedSlotIndex) ?? undefined;
+  } catch (_) {
+    return undefined;
+  }
+}
+
+function isWeaponItem(item) {
+  return !!item && WEAPON_ITEM_IDS.has(item.typeId);
+}
+
+function getMoveForPlayer(player, moveId, weaponOverride = null) {
+  const base = MOVES[moveId];
+  const weaponHeld = weaponOverride === null ? isWeaponItem(getSelectedItem(player)) : weaponOverride;
+  const damage = moveId === "quick" ? (weaponHeld ? 7 : 1) : (weaponHeld ? 12 : 5);
+  return { ...base, damage };
+}
+
+function setActionBar(player, message) {
+  try { player.onScreenDisplay.setActionBar(message); } catch (_) {}
 }
 
 function safeMessage(player, message) {
@@ -254,15 +288,15 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry.") +
+        ? "Aincrad Sword: tap Attack for Quick Slash; hold Attack for 9 ticks, then release for Heavy Strike. The Heavy Attack token remains a compatibility fallback."
+        : "Direct swing input is unavailable in this runtime. Test the Aincrad Sword's chargeable item-use input; use this menu as a fallback for Quick Slash and Heavy Strike.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
         : "Native attack-cancel event is not exposed by this runtime; the tested combat damage-cancellation path remains enabled.")
     )
-    .button("Quick Slash\n§7Fast • 7 damage")
-    .button("Heavy Strike\n§7Committed • 12 damage")
+    .button("Quick Slash\n§7Weapon 7 • unarmed 1 damage")
+    .button("Heavy Strike\n§7Weapon 12 • unarmed 5 damage")
     .button("Parry\n§7Short timing window");
 
   form.button("Diagnostics: Toggle ON/OFF");
@@ -271,8 +305,8 @@ function showCombatMenu(player) {
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
     if (response.canceled || response.selection === undefined) return;
-    if (response.selection === 0) beginAttack(player, MOVES.quick);
-    else if (response.selection === 1) beginAttack(player, MOVES.heavy);
+    if (response.selection === 0) beginAttack(player, getMoveForPlayer(player, "quick"));
+    else if (response.selection === 1) beginAttack(player, getMoveForPlayer(player, "heavy"));
     else if (response.selection === 2) beginParry(player);
     else if (response.selection === 3) {
       if (diagnosticsEnabled.has(player.id)) {
@@ -299,7 +333,7 @@ function reportGuardStatus(player) {
   safeMessage(player, "§6[AINCRAD DIAG] Guard status: phase=" + phase + ", strain=" + strain + "/" + GUARD_MAX_STRAIN + ", broken=" + (remaining > 0 ? "YES (" + remaining + " ticks left)" : "no") + ".");
 }
 
-function beginAttack(player, move) {
+function beginAttack(player, move, targetSnapshot = null) {
   if (!player.isValid) return;
   const current = actions.get(player.id);
   if (current && !(current.phase === "recovery" && system.currentTick >= current.recoveryUntil) && current.phase !== "idle") {
@@ -315,7 +349,8 @@ function beginAttack(player, move) {
     elapsed: 0,
     hitResolved: false,
     recoveryUntil: 0,
-    interrupted: false
+    interrupted: false,
+    targetSnapshot
   });
   safeMessage(player, "§b[AINCRAD] §f" + move.name + " §7— prepare");
 }
@@ -555,6 +590,25 @@ function resolveAttackIntent(intent, snapshot, intentByActor) {
 function processCombatTick() {
   const now = system.currentTick;
 
+  // Update charge feedback without requiring UI forms or extra controls.
+  const onlinePlayers = world.getAllPlayers();
+  for (const [id, charge] of chargeStates) {
+    const player = onlinePlayers.find((candidate) => candidate.id === id);
+    if (!player || !player.isValid) { chargeStates.delete(id); continue; }
+    const elapsed = Math.max(0, now - charge.startedTick);
+    if (elapsed >= CHARGE_READY_TICKS) {
+      if (!charge.readyNotified) {
+        charge.readyNotified = true;
+        setActionBar(player, "§e✦ HEAVY READY — RELEASE!");
+        try { player.playSound("random.orb"); } catch (_) {}
+      } else {
+        setActionBar(player, "§e✦ HEAVY READY — RELEASE!");
+      }
+    } else {
+      setActionBar(player, "§bAINCRAD SWORD §7Charging Heavy Strike… " + elapsed + "/" + CHARGE_READY_TICKS);
+    }
+  }
+
   // Reconcile defence with the actual sneak state, not press/release events.
   // Toggle sneak remains active until the player toggles it off; hold mode ends
   // as soon as the player stops sneaking.
@@ -629,17 +683,40 @@ function processCombatTick() {
       action.phase = "active";
       if (!action.hitResolved) {
         action.hitResolved = true;
-        const candidates = getTargetCandidates(action.actor, action.move);
-        if (candidates.length > 0) {
-          if (diagnosticsEnabled.has(action.actor.id)) {
-            const chosen = candidates[0];
-            safeMessage(action.actor, "§6[AINCRAD DIAG] Target selected: " + (chosen.target.nameTag || chosen.target.typeId) + ", distance=" + chosen.distance.toFixed(2) + ", aim-dot=" + chosen.dot.toFixed(3) + ", eligible targets=" + candidates.length + ".");
+        let selectedTarget = null;
+        let selectedDistance = null;
+        let selectedDot = null;
+        let eligibleCount = 0;
+        if (action.targetSnapshot) {
+          // Charge attacks keep the target acquired at hold-start. Allow a small
+          // range tolerance for thumb/camera drift during the charge.
+          const locked = action.targetSnapshot;
+          if (locked.isValid) {
+            const dx = locked.location.x - action.actor.location.x;
+            const dy = (locked.location.y + 0.9) - action.actor.getHeadLocation().y;
+            const dz = locked.location.z - action.actor.location.z;
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (distance <= action.move.range + TARGET_SNAPSHOT_TOLERANCE) {
+              selectedTarget = locked;
+              selectedDistance = distance;
+              selectedDot = "locked";
+              eligibleCount = 1;
+            }
           }
-          intents.push({
-            actor: action.actor,
-            move: action.move,
-            target: candidates[0].target
-          });
+        } else {
+          const candidates = getTargetCandidates(action.actor, action.move);
+          if (candidates.length > 0) {
+            selectedTarget = candidates[0].target;
+            selectedDistance = candidates[0].distance;
+            selectedDot = candidates[0].dot.toFixed(3);
+            eligibleCount = candidates.length;
+          }
+        }
+        if (selectedTarget) {
+          if (diagnosticsEnabled.has(action.actor.id)) {
+            safeMessage(action.actor, "§6[AINCRAD DIAG] Target selected: " + (selectedTarget.nameTag || selectedTarget.typeId) + ", distance=" + selectedDistance.toFixed(2) + ", aim-dot=" + selectedDot + ", eligible targets=" + eligibleCount + (action.targetSnapshot ? ", charge snapshot." : ".") );
+          }
+          intents.push({ actor: action.actor, move: action.move, target: selectedTarget });
         } else {
           safeMessage(action.actor, "§7[AINCRAD] " + action.move.name + " missed.");
         }
@@ -670,14 +747,68 @@ function processCombatTick() {
 
 const intents = [];
 
+// The custom sword uses the 1.26.30+ start_using:on_attack item component.
+// Tap attacks resolve on release; holds of 9+ ticks become Heavy Strike.
+try {
+  world.afterEvents.itemStartUse.subscribe((event) => {
+    const player = event.source;
+    if (!player || !player.isValid || event.itemStack?.typeId !== SWORD_ITEM) return;
+    const candidates = getTargetCandidates(player, MOVES.heavy);
+    const state = {
+      startedTick: system.currentTick,
+      totalDuration: typeof event.useDuration === "number" ? event.useDuration : null,
+      targetSnapshot: candidates.length > 0 ? candidates[0].target : null,
+      readyNotified: false
+    };
+    chargeStates.set(player.id, state);
+    setActionBar(player, "§bAINCRAD SWORD §7Charging Heavy Strike… " + 0 + "/" + CHARGE_READY_TICKS);
+    if (diagnosticsEnabled.has(player.id)) {
+      safeMessage(player, "§6[AINCRAD DIAG] Sword charge started; target snapshot=" + (state.targetSnapshot ? (state.targetSnapshot.nameTag || state.targetSnapshot.typeId) : "none") + ".");
+    }
+  });
+} catch (_) {
+  // Feature-detected at event-registration time; runtime test will confirm availability.
+}
+
+try {
+  world.afterEvents.itemReleaseUse.subscribe((event) => {
+    const player = event.source;
+    if (!player || !player.isValid || event.itemStack?.typeId !== SWORD_ITEM) return;
+    const state = chargeStates.get(player.id);
+    chargeStates.delete(player.id);
+    setActionBar(player, "");
+    const tickElapsed = state ? Math.max(0, system.currentTick - state.startedTick) : 0;
+    const durationElapsed = state && typeof state.totalDuration === "number" && typeof event.useDuration === "number"
+      ? Math.max(0, state.totalDuration - event.useDuration)
+      : 0;
+    const elapsed = Math.max(tickElapsed, durationElapsed);
+    const snapshotTarget = state?.targetSnapshot ?? null;
+    const weaponMove = elapsed >= CHARGE_EARLY_HEAVY_TICKS ? "heavy" : "quick";
+    let move = getMoveForPlayer(player, weaponMove, true);
+    if (weaponMove === "heavy") {
+      move = { ...move, windup: elapsed < CHARGE_READY_TICKS ? 4 : 3 };
+      if (elapsed < CHARGE_READY_TICKS) {
+        move = { ...move, damage: Math.max(1, Math.floor(move.damage * CHARGE_EARLY_DAMAGE_MULTIPLIER)), name: "Heavy Strike (Partial)" };
+      }
+    }
+    if (diagnosticsEnabled.has(player.id)) {
+      safeMessage(player, "§6[AINCRAD DIAG] Sword released after " + elapsed + " ticks; move=" + move.name + ", target snapshot=" + (snapshotTarget ? (snapshotTarget.nameTag || snapshotTarget.typeId) : "none") + ".");
+    }
+    beginAttack(player, move, snapshotTarget);
+  });
+} catch (_) {
+  // Feature-detected at event-registration time; runtime test will confirm availability.
+}
+
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
   if (!event.itemStack) return;
 
   if (event.itemStack.typeId === HEAVY_ITEM) {
-    // Dedicated hotbar control: using this item requests Heavy Strike.
-    beginAttack(player, MOVES.heavy);
+    // Compatibility fallback only; it is no longer granted on spawn.
+    // The token itself is not a weapon, so this resolves as unarmed Heavy Strike (5 damage).
+    beginAttack(player, getMoveForPlayer(player, "heavy"));
     return;
   }
 
@@ -738,6 +869,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   lastDefensePhase.delete(id);
   menuOpen.delete(id);
   tickCounters.delete(id);
+  chargeStates.delete(id);
   diagnosticsEnabled.delete(id);
 });
 
@@ -757,10 +889,10 @@ world.afterEvents.playerSpawn.subscribe((event) => {
         return false;
       };
       if (!hasItem(MENU_ITEM)) inventory.addItem(new ItemStack(MENU_ITEM, 1));
-      if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
+      if (!hasItem(SWORD_ITEM)) inventory.addItem(new ItemStack(SWORD_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Heavy Attack item = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Aincrad Sword tap = Quick Slash; hold 9 ticks then release = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
@@ -772,7 +904,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
         safeMessage(player, "§c[AINCRAD] Guard/dodge/parry hurt hook failed to register. Check the Content Log and Minecraft version.");
       }
     } catch (_) {
-      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
+      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:aincrad_sword, /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
     }
   }, 1);
 });

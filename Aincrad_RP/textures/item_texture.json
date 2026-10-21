@@ -8,6 +8,9 @@
     "aincrad_heavy_attack_token": {
       "textures": "textures/items/diamond_sword"
     },
+    "aincrad_sword": {
+      "textures": "textures/items/diamond_sword"
+    },
     "aincrad_parry_token": {
       "textures": "textures/items/shield"
     },

@@ -1,10 +1,12 @@
 name: Build Minecraft Add-on
+# Feature branches validate pack JSON and JavaScript before packaging.
 
 on:
   push:
     branches:
       - feature/heavy-attack-button-v0.5
       - feature/heavy-attack-token-fix-v0.6
+      - feature/chargeable-aincrad-sword-v0.4.6
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
@@ -20,6 +22,14 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Validate source and manifests
+        run: |
+          node --input-type=module --check < Aincrad_BP/scripts/main.js
+          python3 -m json.tool Aincrad_BP/manifest.json >/dev/null
+          python3 -m json.tool Aincrad_BP/items/aincrad_sword.json >/dev/null
+          python3 -m json.tool Aincrad_RP/manifest.json >/dev/null
+          python3 -m json.tool Aincrad_RP/textures/item_texture.json >/dev/null
 
       - name: Package Behaviour Pack
         run: |

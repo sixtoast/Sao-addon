@@ -1,18 +1,18 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP v0.4.5",
-    "description": "Aincrad Combat v0.4.5 | SAO-inspired combat prototype, custom attacks and opt-in test diagnostics.",
+    "name": "Aincrad Combat BP v0.4.7",
+    "description": "Aincrad Combat v0.4.7 | Chargeable sword combat prototype, weapon-aware damage and opt-in diagnostics.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
       4,
-      5
+      7
     ],
     "min_engine_version": [
       1,
-      21,
-      0
+      26,
+      30
     ]
   },
   "modules": [
@@ -22,7 +22,7 @@
       "version": [
         0,
         4,
-        4
+        7
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         0,
         4,
-        4
+        7
       ],
       "entry": "scripts/main.js"
     }
