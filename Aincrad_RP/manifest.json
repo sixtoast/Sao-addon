@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat RP v0.4.8",
-    "description": "Aincrad Combat v0.4.8 | Heavy Attack Interact button label and combat resources.",
+    "name": "Aincrad Combat RP v0.5.0",
+    "description": "Aincrad Combat v0.5.0 | Combat item resources; no experimental form overlay.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
     "version": [
       0,
-      4,
-      8
+      5,
+      0
     ],
     "min_engine_version": [
       1,
@@ -20,10 +20,10 @@
       "type": "resources",
       "uuid": "48bdf47b-b278-41b2-adb4-7ca0a55207d8",
       "version": [
-      0,
-      4,
-      8
-    ]
+        0,
+        5,
+        0
+      ]
     }
   ]
 }

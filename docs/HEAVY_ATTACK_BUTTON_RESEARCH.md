@@ -75,3 +75,25 @@ The public-API route remains blocked. Community UI examples show how to inject J
 The user explicitly approved the fallback if this investigation found no viable HUD route. The next prototype therefore uses the supported `minecraft:interact_button` item component to label the contextual touch interaction as **Heavy Strike**, plus `world.afterEvents.playerInteractWithEntity` to request the move when the Heavy Attack item is selected. The normal Attack swing remains Quick Slash. A short debounce guards against duplicate event routes. This contextual control appears when aiming at an interactable entity; it is not an always-visible HUD button, and it requires iPhone in-game verification before being considered complete.
 
 Official API reference: [PlayerInteractWithEntityAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerinteractwithentityafterevent?view=minecraft-bedrock-stable). Item component reference: [Bedrock Wiki: Interact Button](https://wiki.bedrock.dev/items/item-components.html).
+
+
+## Server Form Overlay prototype decision (21 October 2026)
+
+The user asked to try [YasserNull/Server Form Overlay](https://github.com/YasserNull/server-form-overlay) despite its unsupported status. Its README and research paper confirm the approach: render the Script API server form as a transparent overlay using `is_showing_menu: false`, allow background touch input with `absorbs_input: false`, keep gameplay rendering active, remove screen animations, and set `prevent_touch_input: true` on the actual button to stop the tap passing through. The project is released under the Unlicense, but this prototype uses the technique rather than copying the whole project.
+
+Implementation plan: override the vanilla `ui/server_form.json` in the resource pack; set the server form screen as a gameplay overlay; anchor the long-form panel near the bottom-right; add `prevent_touch_input` to the dynamic form button; and show a one-button `ActionFormData` labelled **HEAVY STRIKE**. The Script API response calls the existing `beginAttack(player, MOVES.heavy)` state machine, then reopens the overlay. Cancel/back hides it; the Skill Crystal menu can reopen it. The overlay is touch-only by design and is not expected to work on keyboard/controller.
+
+Source references:
+- Project README and Unlicense: https://github.com/YasserNull/server-form-overlay
+- Technical research: https://github.com/YasserNull/server-form-overlay/blob/main/docs/overlay-technique-paper.md
+- Mojang vanilla server form structure used as reference: https://github.com/Mojang/bedrock-samples/blob/main/resource_pack/ui/server_form.json
+- Community JSON UI input properties: https://wiki.bedrock.dev/json-ui/json-ui-documentation.html
+
+Risks to test on Bedrock 26.52 iPhone: whether the current Ore UI build still permits this screen-stack trick, whether form taps remain reliable while the game is active, whether HUD controls are still visible, and whether the form can be reopened after an attack without flicker or input blocking. This remains an experimental branch; do not merge until the user tests it.
+
+
+## v0.4.9 device-test result and v0.5.0 fallback (21 October 2026)
+
+The user tested the v0.4.9 Server Form Overlay build on iPhone and reported that the Heavy Strike button did not appear. They also could not interact with the Skill Activation Book while the earlier contextual Interact fallback was present. The overlay is therefore considered failed on the target runtime; successful packaging and JSON parsing did not establish runtime compatibility. Do not merge v0.4.9.
+
+The v0.5.0 test branch removes the experimental `Aincrad_RP/ui/server_form.json` override and all overlay-form scheduling. It also removes `minecraft:interact_button` from the Heavy Attack item and removes the `playerInteractWithEntity` activation listener, so Heavy Strike no longer takes over the contextual Interact action. The only item-based activation path is `world.afterEvents.itemUse` when the Heavy Attack item is used. This should restore ordinary Interact use for the Skill Activation Book, but the user must verify both book interaction and Heavy Strike activation in-game. If item-use does not activate on the target touch runtime, do not re-add the contextual Interact override; use the Skill Crystal combat menu's Heavy Strike action as the non-conflicting fallback while researching a separate input route.

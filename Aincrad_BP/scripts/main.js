@@ -255,8 +255,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack item for Heavy Strike and the Parry item to parry.") +
+        ? "Direct attack: tap Attack for Quick Slash. Use the Heavy Attack item to activate Heavy Strike. Use the Parry item to parry."
+        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Use the Heavy Attack item to activate Heavy Strike. Use the Parry item to parry.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
@@ -683,13 +683,8 @@ function requestHeavyAttack(player) {
   beginAttack(player, MOVES.heavy);
 }
 
-world.afterEvents.playerInteractWithEntity.subscribe((event) => {
-  const player = event.player;
-  if (!player || !player.isValid) return;
-  const heldItem = event.itemStack ?? event.beforeItemStack;
-  if (heldItem?.typeId !== HEAVY_ITEM) return;
-  requestHeavyAttack(player);
-});
+// Heavy Strike intentionally does not override the contextual Interact button.
+// Use the Heavy Attack item normally; itemUse is the only item-based activation route.
 
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
@@ -764,8 +759,8 @@ world.afterEvents.playerLeave.subscribe((event) => {
 });
 
 world.afterEvents.playerSpawn.subscribe((event) => {
-  if (!event.initialSpawn) return;
   const player = event.player;
+  if (!event.initialSpawn) return;
   system.runTimeout(() => {
     try {
       if (!player.isValid) return;
@@ -782,7 +777,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; Interact with Heavy Attack selected = Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: Attack = Quick Slash; use the Heavy Attack item for Heavy Strike; Sneak = Spot Dodge → Parry → Guard.");
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
