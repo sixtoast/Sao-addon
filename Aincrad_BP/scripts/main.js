@@ -13,6 +13,16 @@ const COMBO = {
   ]
 };
 
+// Temporary prototype input: sneak + Skill Crystal starts a committed heavy attack.
+const HEAVY_ATTACK = {
+  range: 3.4,
+  halfAngleDegrees: 55,
+  damage: 8,
+  startupTicks: 8,
+  activeTicks: 1,
+  recoveryTicks: 18
+};
+
 const PHASE = {
   READY: "ready",
   STARTUP: "startup",
@@ -28,6 +38,7 @@ function getState(playerId) {
     state = {
       phase: PHASE.READY,
       attackId: 0,
+      moveType: null,
       comboStep: 0,
       bufferedInputs: 0
     };
@@ -85,11 +96,30 @@ function chooseTarget(player, origin, direction, attack) {
   return best;
 }
 
+function resolveAttackHit(player, origin, direction, attack) {
+  try {
+    const target = chooseTarget(player, origin, direction, attack);
+    if (!target) return false;
+    target.applyDamage(attack.damage, {
+      cause: EntityDamageCause.entityAttack,
+      damagingEntity: player
+    });
+    return true;
+  } catch (_) {
+    // Invalid or non-damageable targets do not break the combat state machine.
+    return false;
+  }
+}
+
 function beginQuickAttack(player) {
   const state = getState(player.id);
 
   if (state.phase !== PHASE.READY) {
-    if (state.comboStep < COMBO.maxSteps && state.bufferedInputs < COMBO.bufferInputs) {
+    if (
+      state.moveType === "quick" &&
+      state.comboStep < COMBO.maxSteps &&
+      state.bufferedInputs < COMBO.bufferInputs
+    ) {
       state.bufferedInputs += 1;
       player.sendMessage("§7[AINCRAD] Follow-up queued.");
     }
@@ -112,6 +142,7 @@ function beginQuickAttack(player) {
   };
   const attackId = state.attackId + 1;
   state.attackId = attackId;
+  state.moveType = "quick";
   state.comboStep = stepIndex + 1;
   state.phase = PHASE.STARTUP;
   state.bufferedInputs = 0;
@@ -123,20 +154,7 @@ function beginQuickAttack(player) {
     if (!current || current.attackId !== attackId || current.phase !== PHASE.STARTUP) return;
 
     current.phase = PHASE.ACTIVE;
-    let hit = false;
-    try {
-      const target = chooseTarget(player, origin, direction, attack);
-      if (target) {
-        target.applyDamage(attack.damage, {
-          cause: EntityDamageCause.entityAttack,
-          damagingEntity: player
-        });
-        hit = true;
-      }
-    } catch (_) {
-      // Invalid or non-damageable targets do not break the combat state machine.
-    }
-
+    const hit = resolveAttackHit(player, origin, direction, attack);
     player.sendMessage(hit
       ? `§b[AINCRAD] Combo hit (${stepIndex + 1}).`
       : `§7[AINCRAD] Combo miss (${stepIndex + 1}).`);
@@ -150,10 +168,12 @@ function beginQuickAttack(player) {
         const recovering = combatants.get(player.id);
         if (!recovering || recovering.attackId !== attackId || recovering.phase !== PHASE.RECOVERY) return;
 
-        const hasFollowUp = recovering.bufferedInputs > 0 &&
+        const hasFollowUp = recovering.moveType === "quick" &&
+          recovering.bufferedInputs > 0 &&
           recovering.comboStep < COMBO.maxSteps;
 
         recovering.phase = PHASE.READY;
+        recovering.moveType = null;
         if (hasFollowUp) {
           recovering.bufferedInputs -= 1;
           beginQuickAttack(player);
@@ -167,12 +187,71 @@ function beginQuickAttack(player) {
   }, attack.startupTicks);
 }
 
+function beginHeavyAttack(player) {
+  const state = getState(player.id);
+  if (state.phase !== PHASE.READY) {
+    player.sendMessage("§7[AINCRAD] Heavy attack unavailable during commitment or recovery.");
+    return;
+  }
+
+  const direction = player.getViewDirection();
+  const origin = {
+    x: player.location.x,
+    y: player.location.y + 1.2,
+    z: player.location.z
+  };
+  const attackId = state.attackId + 1;
+  state.attackId = attackId;
+  state.moveType = "heavy";
+  state.comboStep = 0;
+  state.bufferedInputs = 0;
+  state.phase = PHASE.STARTUP;
+
+  player.sendMessage("§6[AINCRAD] Heavy attack committed...");
+
+  system.runTimeout(() => {
+    const current = combatants.get(player.id);
+    if (!current || current.attackId !== attackId || current.moveType !== "heavy" ||
+        current.phase !== PHASE.STARTUP) return;
+
+    current.phase = PHASE.ACTIVE;
+    const hit = resolveAttackHit(player, origin, direction, HEAVY_ATTACK);
+    player.sendMessage(hit
+      ? "§6[AINCRAD] Heavy hit."
+      : "§7[AINCRAD] Heavy miss.");
+
+    system.runTimeout(() => {
+      const active = combatants.get(player.id);
+      if (!active || active.attackId !== attackId || active.moveType !== "heavy" ||
+          active.phase !== PHASE.ACTIVE) return;
+      active.phase = PHASE.RECOVERY;
+
+      system.runTimeout(() => {
+        const recovering = combatants.get(player.id);
+        if (!recovering || recovering.attackId !== attackId || recovering.moveType !== "heavy" ||
+            recovering.phase !== PHASE.RECOVERY) return;
+
+        recovering.phase = PHASE.READY;
+        recovering.moveType = null;
+        recovering.comboStep = 0;
+        recovering.bufferedInputs = 0;
+        player.sendMessage("§8[AINCRAD] Ready.");
+      }, HEAVY_ATTACK.recoveryTicks);
+    }, HEAVY_ATTACK.activeTicks);
+  }, HEAVY_ATTACK.startupTicks);
+}
+
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
   if (!event.itemStack || event.itemStack.typeId !== ATTACK_ITEM) return;
 
   try {
+    if (player.isSneaking) {
+      beginHeavyAttack(player);
+      return;
+    }
+
     const state = getState(player.id);
     if (state.phase === PHASE.READY) {
       state.comboStep = 0;
@@ -183,6 +262,7 @@ world.afterEvents.itemUse.subscribe((event) => {
     const state = combatants.get(player.id);
     if (state) {
       state.phase = PHASE.READY;
+      state.moveType = null;
       state.bufferedInputs = 0;
       state.comboStep = 0;
     }
