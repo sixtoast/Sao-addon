@@ -68,7 +68,7 @@ try {
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
       // Touchscreen-friendly mapping: tap Attack for Quick Slash; attack while
       // sneaking for Heavy Strike. The sneak modifier needs real-device testing.
-      beginAttack(player, player.isSneaking ? MOVES.heavy : MOVES.quick);
+      beginAttack(player, MOVES.quick);
     });
     swingInputAvailable = true;
   }
