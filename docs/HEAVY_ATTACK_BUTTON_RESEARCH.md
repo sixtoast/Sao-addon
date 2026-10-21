@@ -66,3 +66,12 @@ The custom HUD route was re-checked against current public documentation and a r
 **A genuine, always-visible, tappable Heavy Attack HUD button is not implemented and cannot currently be marked complete using a documented public add-on API.** Do not add a decorative JSON UI button or remap an essential native action and call that finished.
 
 The current dedicated Heavy Attack item is the practical fallback. A custom HUD attempt would be an unsupported experiment, not a reliable implementation. Revisit only if Mojang exposes a supported interactive HUD input/callback route, or if the project deliberately accepts a form/container-based control that interrupts normal gameplay and is therefore not the requested HUD button.
+
+
+## Decision after the final feasibility pass (21 October 2026)
+
+The public-API route remains blocked. Community UI examples show how to inject JSON UI controls, but do not establish a supported bridge from a persistent HUD touch target to Behavior Pack Script API. The community Server Form Overlay project demonstrates an unsupported workaround, not a portable add-on-only solution that can be relied on for the user's iPhone. See [Bedrock Wiki: Adding HUD Elements](https://wiki.bedrock.dev/json-ui/add-hud-elements.html), [Bedrock Wiki: JSON UI button mappings](https://wiki.bedrock.dev/json-ui/json-ui-intro.html), and [Server Form Overlay technical notes](https://github.com/YasserNull/server-form-overlay/blob/main/docs/overlay-technique-paper.md).
+
+The user explicitly approved the fallback if this investigation found no viable HUD route. The next prototype therefore uses the supported `minecraft:interact_button` item component to label the contextual touch interaction as **Heavy Strike**, plus `world.afterEvents.playerInteractWithEntity` to request the move when the Heavy Attack item is selected. The normal Attack swing remains Quick Slash. A short debounce guards against duplicate event routes. This contextual control appears when aiming at an interactable entity; it is not an always-visible HUD button, and it requires iPhone in-game verification before being considered complete.
+
+Official API reference: [PlayerInteractWithEntityAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerinteractwithentityafterevent?view=minecraft-bedrock-stable). Item component reference: [Bedrock Wiki: Interact Button](https://wiki.bedrock.dev/items/item-components.html).
