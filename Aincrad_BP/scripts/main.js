@@ -97,6 +97,68 @@ function getDefensePhase(playerId, now = system.currentTick) {
   return "guard";
 }
 
+// Route ordinary mob melee damage through the same Sneak defensive phases.
+// This uses the cancellable before-hurt event, so blocked/evaded hits do not also
+// apply vanilla damage. Player-vs-player custom moves remain handled by resolveAttackIntent.
+let mobDefenseInputAvailable = false;
+try {
+  const hurtSignal = world.beforeEvents.entityHurt;
+  if (hurtSignal && typeof hurtSignal.subscribe === "function") {
+    hurtSignal.subscribe((event) => {
+      const target = event.hurtEntity;
+      const attacker = event.damageSource?.damagingEntity;
+      if (!target || !target.isValid || !isPlayer(target)) return;
+      if (!attacker || !attacker.isValid || isPlayer(attacker)) return;
+
+      const cause = event.damageSource?.cause;
+      if (cause !== "entityAttack" && cause !== "entity_sweep_attack") return;
+
+      const phase = getDefensePhase(target.id);
+      if (!phase) return;
+
+      // Dodge and parry are timing windows. Both negate this incoming mob hit.
+      if (phase === "dodge") {
+        event.cancel = true;
+        safeMessage(target, "§b[AINCRAD] Spot dodge!");
+        return;
+      }
+      if (phase === "parry") {
+        event.cancel = true;
+        setReaction(attacker, "stagger", "a parry");
+        safeMessage(target, "§d[AINCRAD] Perfect parry!");
+        return;
+      }
+
+      const guard = guards.get(target.id);
+      if (!guard?.held || (guard.brokenUntil && system.currentTick < guard.brokenUntil)) return;
+
+      const view = target.getViewDirection();
+      const dx = attacker.location.x - target.location.x;
+      const dz = attacker.location.z - target.location.z;
+      const length = Math.sqrt(dx * dx + dz * dz) || 1;
+      const facingDot = (view.x * dx + view.z * dz) / length;
+      if (facingDot < 0.35) return;
+
+      const strain = (guardStrain.get(target.id) || 0) + 3;
+      guardStrain.set(target.id, strain);
+      if (strain >= GUARD_MAX_STRAIN) {
+        guardStrain.delete(target.id);
+        guard.held = false;
+        guard.brokenUntil = system.currentTick + GUARD_BREAK_TICKS;
+        guards.set(target.id, guard);
+        event.cancel = true;
+        safeMessage(target, "§c[AINCRAD] Guard broken! §7You are staggered.");
+      } else {
+        event.damage = Math.max(1, Math.ceil(event.damage * 0.25));
+        safeMessage(target, "§9[AINCRAD] Blocked! §7Guard strain " + strain + "/" + GUARD_MAX_STRAIN + ".");
+      }
+    });
+    mobDefenseInputAvailable = true;
+  }
+} catch (_) {
+  // Older runtimes keep ordinary mob damage unchanged; custom combat remains available.
+}
+
 // The native attack cancellation event is still pre-release in current Microsoft
 // documentation. Feature-detect it; never assume vanilla attacks are suppressed.
 let nativeAttackCancellationAvailable = false;
