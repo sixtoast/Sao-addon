@@ -16,12 +16,18 @@ Replace the separate Heavy Attack hotbar control with one custom sword. A tap of
 
 ## Implementation notes
 
-- The custom item uses `minecraft:use_modifiers.start_using = "on_attack"`, introduced in item format version 1.26.30, so charge begins from Attack rather than Interact/Use. A `minecraft:food` use behaviour is included because use modifiers alone do not provide an item-use behaviour. It gives zero nutrition and converts back to the same sword if the very long 3,600-second use ever completes.
+- The prototype currently sets `minecraft:use_modifiers.start_using = "on_attack"`. This is now a known compatibility blocker, not a verified supported value: the 26.30 changelog says the accepted values are `always` and `if_first`, and the Bedrock Wiki plus community-maintained JSON schema list only those two values. Microsoft Learn currently contradicts those sources by documenting `on_attack`. Do not treat this component value as valid until it is confirmed in the actual runtime. A `minecraft:food` use behaviour was added as a workaround because use modifiers alone do not provide an item-use behaviour; it gives zero nutrition and converts back to the same sword if the 3,600-second use ever completes.
 - `world.afterEvents.itemStartUse` snapshots the best eligible target and starts action-bar feedback.
 - `world.afterEvents.itemReleaseUse` uses both the documented remaining-use duration and elapsed game ticks to calculate the charge.
 - 9 ticks is approximately 0.45 seconds. Full/partial heavy attacks use a short 3/4-tick release wind-up so the charge itself does not get counted twice as wind-up.
 - Charge target lock allows 0.75 blocks of distance tolerance; if the target is invalid or too far away at the hit frame, the attack misses rather than silently switching to a different target.
 - Ready feedback uses an action-bar cue and a best-effort sound. Sound playback is guarded so unsupported sounds cannot break combat.
+
+## Investigation update (2026-10-21)
+
+- Community cross-check found a concrete documentation conflict: Microsoft Learn describes `start_using: "on_attack"`, but the Minecraft 26.30 changelog says the field values are `always` and `if_first`; the Bedrock Wiki and Blockception community JSON schema also list only `always` and `if_first`. References: [Minecraft 26.30 changelog](https://www.minecraft.net/en-us/article/minecraft-26-30-bedrock-changelog), [Bedrock Wiki item format history](https://wiki.bedrock.dev/items/item-format-history.html), [Bedrock Wiki item components](https://wiki.bedrock.dev/items/item-components.html), [community JSON schema](https://github.com/Blockception/Minecraft-bedrock-json-schemas/blob/main/behavior/items/items.json), [Microsoft Learn use modifiers](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_use_modifiers?view=minecraft-bedrock-stable).
+- Because v0.4.6 and v0.4.7 both failed to start charging on the user's iPhone, the next iteration must not assume `on_attack` works. Validate the allowed component values and select an input design that does not silently break the item. Do not switch Heavy Strike to Interact/Use without the user's explicit approval.
+- No code or item-component behaviour was changed during this investigation; this commit records the evidence and prevents the same unsupported assumption from being repeated.
 
 ## Known risks
 
