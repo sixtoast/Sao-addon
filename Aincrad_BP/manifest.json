@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP v0.5.3",
-    "description": "Aincrad Combat v0.5.3 | Native throwable charge prototype.",
+    "name": "Aincrad Combat BP v0.5.4",
+    "description": "Aincrad Combat v0.5.4 | Attack-button native throwable charge test.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
       5,
-      3
+      4
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         0,
         5,
-        3
+        4
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         0,
         5,
-        3
+        4
       ],
       "entry": "scripts/main.js"
     }
@@ -43,7 +43,7 @@
       "version": [
         0,
         5,
-        3
+        4
       ]
     },
     {
