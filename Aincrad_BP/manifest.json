@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP v0.5.3",
-    "description": "Aincrad Combat v0.5.3 | Native throwable charge prototype.",
+    "name": "Aincrad Combat BP v0.5.7",
+    "description": "Aincrad Combat v0.5.7 | Native throwable charge prototype.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
       5,
-      3
+      7
     ],
     "min_engine_version": [
       1,
