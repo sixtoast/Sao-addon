@@ -10,6 +10,7 @@ const actions = new Map();
 const parryWindows = new Map();
 const guards = new Map();
 const guardStrain = new Map();
+const customDamageTargets = new Set();
 const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
 const tickCounters = new Map();
@@ -54,38 +55,9 @@ const DEFENSE_DODGE_TICKS = 3;
 const DEFENSE_PARRY_TICKS = 4;
 const DEFENSE_GUARD_START_TICK = DEFENSE_DODGE_TICKS + DEFENSE_PARRY_TICKS;
 const defensiveSequences = new Map();
-let sneakGuardInputAvailable = false;
-try {
-  const buttonSignal = world.afterEvents.playerButtonInput;
-  if (buttonSignal && typeof buttonSignal.subscribe === "function") {
-    buttonSignal.subscribe((event) => {
-      const player = event.player;
-      if (!player || !player.isValid || event.button !== "Sneak") return;
-      const now = system.currentTick;
-      const guard = guards.get(player.id);
-
-      if (event.newButtonState === "Pressed") {
-        if (guard?.brokenUntil && now < guard.brokenUntil) {
-          safeMessage(player, "§c[AINCRAD] Your guard is broken.");
-          return;
-        }
-        defensiveSequences.set(player.id, { startedTick: now });
-        guards.set(player.id, { held: true });
-        safeMessage(player, "§9[AINCRAD] Defensive stance.");
-      } else if (event.newButtonState === "Released") {
-        defensiveSequences.delete(player.id);
-        if (guard?.brokenUntil && now < guard.brokenUntil) {
-          guards.set(player.id, { brokenUntil: guard.brokenUntil });
-        } else {
-          guards.delete(player.id);
-        }
-      }
-    });
-    sneakGuardInputAvailable = true;
-  }
-} catch (_) {
-  // Keep the Guard item fallback if button input is unavailable.
-}
+// Sneak is read from the player's actual state each tick. This works with both
+// hold and toggle controls, unlike button events which may last only one tick.
+const sneakGuardInputAvailable = false;
 
 function getDefensePhase(playerId, now = system.currentTick) {
   const sequence = defensiveSequences.get(playerId);
@@ -107,10 +79,21 @@ try {
     hurtSignal.subscribe((event) => {
       const target = event.hurtEntity;
       const attacker = event.damageSource?.damagingEntity;
-      if (!target || !target.isValid || !isPlayer(target)) return;
-      if (!attacker || !attacker.isValid || isPlayer(attacker)) return;
+      if (!target || !target.isValid || !attacker || !attacker.isValid) return;
 
       const cause = event.damageSource?.cause;
+
+      // Cancel vanilla player-vs-mob melee so its immediate damage/knockback does
+      // not move the target before Quick Slash's custom active frame.
+      // Custom combat damage is tagged synchronously and is allowed through.
+      if (isPlayer(attacker) && !isPlayer(target) &&
+          cause === EntityDamageCause.entityAttack &&
+          !customDamageTargets.has(target.id)) {
+        event.cancel = true;
+        return;
+      }
+
+      if (!isPlayer(target) || isPlayer(attacker)) return;
       // EntityDamageSource.cause is an EntityDamageCause enum value, not a snake_case string.
       if (cause !== EntityDamageCause.entityAttack) return;
 
@@ -361,6 +344,9 @@ function setReaction(target, reaction, sourceName) {
 }
 
 function applyMoveDamage(attacker, target, move) {
+  // The before-hurt hook suppresses vanilla player melee against mobs. Mark this
+  // intentional custom hit so the same hook does not cancel the scripted damage.
+  customDamageTargets.add(target.id);
   try {
     const applied = target.applyDamage(move.damage, {
       cause: EntityDamageCause.entityAttack,
@@ -369,6 +355,8 @@ function applyMoveDamage(attacker, target, move) {
     return applied !== false;
   } catch (_) {
     return false;
+  } finally {
+    customDamageTargets.delete(target.id);
   }
 }
 
@@ -487,6 +475,34 @@ function resolveAttackIntent(intent, snapshot, intentByActor) {
 
 function processCombatTick() {
   const now = system.currentTick;
+
+  // Reconcile defence with the actual sneak state, not press/release events.
+  // Toggle sneak remains active until the player toggles it off; hold mode ends
+  // as soon as the player stops sneaking.
+  for (const player of world.getAllPlayers()) {
+    try {
+      if (!player.isValid) continue;
+      if (player.isSneaking) {
+        if (!defensiveSequences.has(player.id)) {
+          defensiveSequences.set(player.id, { startedTick: now });
+        }
+        const currentGuard = guards.get(player.id);
+        if (!(currentGuard?.brokenUntil && now < currentGuard.brokenUntil)) {
+          guards.set(player.id, { ...(currentGuard || {}), held: true });
+        }
+      } else if (defensiveSequences.has(player.id)) {
+        defensiveSequences.delete(player.id);
+        const currentGuard = guards.get(player.id);
+        if (currentGuard?.brokenUntil && now < currentGuard.brokenUntil) {
+          guards.set(player.id, { brokenUntil: currentGuard.brokenUntil });
+        } else {
+          guards.delete(player.id);
+        }
+      }
+    } catch (_) {
+      // Ignore players whose state becomes unavailable during this tick.
+    }
+  }
   for (const [id, action] of actions) {
     if (!action.actor.isValid) {
       actions.delete(id);
