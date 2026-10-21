@@ -588,27 +588,32 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === GUARD_ITEM) {
-    if (!sneakGuardInputAvailable) {
-      // On runtimes without button-state events, make the Guard item a toggle
-      // instead of trapping the player in a stance that cannot be released.
-      if (defensiveSequences.has(player.id)) {
-        defensiveSequences.delete(player.id);
-        guards.delete(player.id);
-        safeMessage(player, "§7[AINCRAD] Guard released.");
-      } else {
-        const guard = guards.get(player.id);
-        if (guard?.brokenUntil && system.currentTick < guard.brokenUntil) {
-          safeMessage(player, "§c[AINCRAD] Your guard is broken.");
-          return;
-        }
-        defensiveSequences.set(player.id, {
-          // The fallback item is a direct Guard control, not a delayed Sneak sequence.
-          startedTick: system.currentTick - DEFENSE_GUARD_START_TICK
-        });
-        guards.set(player.id, { held: true });
-        safeMessage(player, "§9[AINCRAD] Guard active. Use Guard again to release.");
+    // Sneak state is authoritative. Never let the compatibility item cancel a
+    // stance while the player is sneaking in either hold or toggle mode.
+    let sneaking = false;
+    try { sneaking = player.isSneaking; } catch (_) {}
+    if (sneaking) {
+      safeMessage(player, "§7[AINCRAD] Keep Sneak active: Spot Dodge, Parry, then Guard.");
+      return;
+    }
+
+    // Outside Sneak, retain a direct Guard toggle as a compatibility fallback.
+    if (defensiveSequences.has(player.id)) {
+      defensiveSequences.delete(player.id);
+      guards.delete(player.id);
+      safeMessage(player, "§7[AINCRAD] Guard released.");
+    } else {
+      const guard = guards.get(player.id);
+      if (guard?.brokenUntil && system.currentTick < guard.brokenUntil) {
+        safeMessage(player, "§c[AINCRAD] Your guard is broken.");
+        return;
       }
-    } else safeMessage(player, "§7[AINCRAD] Sneak cycles Spot Dodge, Parry, then Guard.");
+      defensiveSequences.set(player.id, {
+        startedTick: system.currentTick - DEFENSE_GUARD_START_TICK
+      });
+      guards.set(player.id, { held: true });
+      safeMessage(player, "§9[AINCRAD] Guard active. Use Guard again to release.");
+    }
     return;
   }
 
