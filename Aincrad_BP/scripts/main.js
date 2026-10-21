@@ -197,8 +197,22 @@ try {
         // If inventory state is unavailable, preserve normal Quick Slash input.
       }
 
-      // Normal Attack always requests Quick Slash. Sneaking does not alter move selection.
-      beginAttack(player, MOVES.quick);
+      // Defer Quick Slash by one tick so itemUse can claim a Heavy Attack
+      // activation first. On touch/controller input, the generic swing event can
+      // arrive before itemUse even though the Heavy Attack item is selected.
+      system.runTimeout(() => {
+        if (!player.isValid) return;
+        // A Heavy Strike started by itemUse in the same input frame takes priority.
+        const current = actions.get(player.id);
+        if (current && current.move?.id === "heavy" &&
+            current.phase !== "recovery" && current.phase !== "idle") return;
+        // Re-check the selected slot after the input events have settled.
+        try {
+          const inventory = player.getComponent("minecraft:inventory")?.container;
+          if (inventory?.getItem(player.selectedSlotIndex)?.typeId === HEAVY_ITEM) return;
+        } catch (_) {}
+        beginAttack(player, MOVES.quick);
+      }, 1);
     });
     swingInputAvailable = true;
   }
