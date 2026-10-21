@@ -12,22 +12,21 @@
 - Verify the input and damage path on iPhone; replace the temporary consumable activator
 - Tune attack timing, range and damage against a target dummy
 
-## Prototype 0.3 — combo loop
-- Custom sword/input path with reliable activation
-- Branching quick-attack chains and bounded input buffering
-- Heavy attack commitment and recovery
-- Combat feedback and test coverage for miss, hit, interruption and invalid target cases
+## Prototype 0.3 — quick-combo loop
+- Three-step quick-attack chain with move-specific startup, range, angle, damage and recovery values (provisional)
+- One buffered follow-up input; no multi-input queue
+- Follow-up starts at the legal transition after recovery
+- Verify that the third step ends the chain and that misses/hits do not duplicate damage
+- Replace the food-style activator with a stable-version-compatible, non-consuming input path before treating this as playable
+- Add local test cases for buffer, target selection and recovery edge cases
 
-## Player defence
-- Block, parry and spot-dodge input validation
-- Explicit defence windows and recovery
-- Interruption, poise and punish rules
-- Momentum rewards and anti-farming checks
-
-## Sword skills and aerial combat
-- Skill definitions, Momentum costs and legal combo transitions
-- Ground/aerial variants and aerial recovery
-- Weapon proficiency and equipment data
+## Next player-combat milestones
+1. Reliable iPhone input path and combat feedback
+2. Heavy attack commitment and recovery
+3. Block, parry and spot-dodge input validation
+4. Interruption, poise and punish rules
+5. Momentum and sword-skill transitions
+6. Ground/aerial variants and aerial recovery
 
 ## RPG foundation
 - Persistent character level and experience
@@ -43,3 +42,5 @@
 - Expand the vertical slice into a floor-based Aincrad RPG
 - Add weapon classes, sword skills, NPCs, crafting, parties and raid encounters
 - Optimise and test on iPhone before expanding content
+
+> Boss battles are explicitly out of scope for the current implementation phase. The roadmap retains them only as a later vertical-slice milestone.
