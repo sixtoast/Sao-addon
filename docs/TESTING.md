@@ -313,3 +313,17 @@ This candidate changes only the Heavy Attack input mechanism. It replaces the fo
 9. If charging does not start, record the exact on-screen message and inspect the Content Log before changing timing values.
 
 The use of a native throwable is a hypothesis to test, not a verified fix. Keep this branch separate from `main` until the iPhone test passes.
+
+
+## v0.5.4 — charge-input instructions and focused regression pass
+
+This is a clarity/versioning candidate based on v0.5.3. It corrects the first-spawn instructions so they match the current native throwable implementation. It does **not** claim that Attack-button charging works: device tests found that the undocumented Attack-button state probe fails, and the prior `start_using: "on_attack"` experiment did not start the item-use lifecycle.
+
+1. Confirm both BP and RP show version **0.5.4** after importing the candidate.
+2. Select **Heavy Attack**, hold the item's **Use** input, and confirm the “Heavy Strike charging...” message and charge bar appear.
+3. Hold for at least 9 ticks, release, and check for exactly one full-damage Heavy Strike. Then try releasing after 7–8 ticks for the reduced-damage version.
+4. Release before 7 ticks. The charge should cancel; do not assume this input becomes Quick Slash. Use normal Attack with another item or the Skill Menu to test Quick Slash separately.
+5. Confirm no snowball remains or travels, and the Heavy Attack token stays in its hotbar slot without overwriting another item.
+6. Re-test Sneak: Spot Dodge (ticks 0–2), Parry (ticks 3–6), then Guard from tick 7 for as long as Sneak remains active. Release Sneak and confirm Guard ends.
+7. Re-test frontal/rear Guard, guard break, directional aiming, clashes, Skill Crystal, Parry item, and diagnostics. Check Content Log for item parse or script errors.
+8. Keep stable `main` unchanged. This candidate only corrects the misleading input instructions and pack version; it does not resolve the unsupported Attack-button charge route.
