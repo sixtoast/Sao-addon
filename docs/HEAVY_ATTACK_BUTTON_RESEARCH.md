@@ -158,3 +158,8 @@ Device test:
 Interpretation: repeated events during a sustained hold with a consistent gap may support a heuristic charge detector; only one event per press or inconsistent gaps means this is not reliable enough for charge-and-release. This does not provide true button-release detection and must not be treated as a production implementation.
 
 Known-good baseline remains v0.5.3 Use-button charging. Do not merge the diagnostic build into main.
+
+
+## v0.5.8 undocumented Attack button-state probe (23 October 2026)
+
+After the iPhone v0.5.7 test confirmed that Attack swings are event-based rather than continuous, a final low-risk probe was prepared: call `player.inputInfo.getButtonState("Attack")` with the string value, despite the documented `InputButton` enum containing only Jump and Sneak. This is a diagnostic experiment only. The code catches and reports API errors once per player and reports only state transitions; it does not feed the result into combat logic. Do not claim Attack hold support unless the target iPhone actually reports Pressed and Released transitions.
