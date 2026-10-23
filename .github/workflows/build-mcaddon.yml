@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - feature/heavy-attack-button-v0.5
+      - feature/heavy-attack-token-fix-v0.6
+      - feature/server-form-overlay-heavy-button-v0.4.9
+      - feature/heavy-item-use-fallback-v0.5.0
+      - feature/hold-attack-charge-v0.5.1
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
@@ -19,6 +23,18 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Validate JavaScript and pack JSON
+        run: |
+          node --check Aincrad_BP/scripts/main.js
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for root in (Path('Aincrad_BP'), Path('Aincrad_RP')):
+              for path in root.rglob('*.json'):
+                  json.loads(path.read_text(encoding='utf-8'))
+          print('All pack JSON files parse successfully.')
+          PY
 
       - name: Package Behaviour Pack
         run: |

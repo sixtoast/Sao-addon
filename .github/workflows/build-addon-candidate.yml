@@ -1,0 +1,50 @@
+name: Build Bedrock addon candidate
+
+on:
+  push:
+    branches:
+      - feature/interact-tap-heavy-charge-stronger-v0.5.5
+    paths:
+      - 'Aincrad_BP/**'
+      - 'Aincrad_RP/**'
+      - '.github/workflows/build-addon-candidate.yml'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate script and pack JSON
+        run: |
+          node --check Aincrad_BP/scripts/main.js
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for root in (Path("Aincrad_BP"), Path("Aincrad_RP")):
+              for path in root.rglob("*.json"):
+                  json.loads(path.read_text(encoding="utf-8"))
+          print("All pack JSON files parse successfully.")
+          PY
+      - name: Package Behaviour Pack
+        run: |
+          cd Aincrad_BP
+          zip -qr ../Aincrad_BP.mcpack .
+      - name: Package Resource Pack
+        run: |
+          cd Aincrad_RP
+          zip -qr ../Aincrad_RP.mcpack .
+      - name: Bundle installable add-on
+        run: zip -q Sao-addon-v0.5.5.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sao-addon-v0.5.5
+          path: Sao-addon-v0.5.5.mcaddon
+          if-no-files-found: error
+          retention-days: 14
