@@ -136,3 +136,25 @@ The next isolated candidate replaces the food-based use mechanism with the docum
 - A placeholder snowball is configured with zero launch power and removed by an owner-scoped entity-spawn cleanup while the charge is active. This is an experimental way to use native charge input without intentionally shipping a ranged attack. Item restoration is guarded so an occupied hotbar slot is not overwritten.
 
 This is still a hypothesis, not a confirmed fix. Validate JSON, JavaScript syntax, and pack versioning before testing. On iPhone, hold the native Use action with Heavy Attack selected, watch for the charge message/meter, then release and confirm one melee Heavy Strike. Also check that no arrow remains visible, the Heavy Attack item is not lost, normal Attack still behaves as intended, and the Skill Activation Book still works. If `itemStartUse` still does not fire, inspect the Content Log and actual touch input route before changing combat timing or adding fallback controls.
+
+
+## v0.5.7 Attack swing cadence diagnostic (22 October 2026)
+
+Purpose: test whether `playerSwingStart` produces a useful cadence signal on Bedrock mobile, before attempting to infer a hold/release gesture.
+
+This is a diagnostic-only build:
+- Every observed `swingSource === "Attack"` event logs `[SWING DIAG 0.5.7] Attack swing; tick=...; gap=...; selected=...`.
+- `gap` is the number of script ticks since the previous Attack swing event for that player.
+- The normal swing-to-Quick-Slash/Heavy-Strike handler is intentionally bypassed in this candidate, so Attack swings do not trigger the custom combat moves.
+- Native Use-button throwable charging remains in the item definition, but do not use Use during this test; the purpose is to observe Attack.
+
+Device test:
+1. Import the v0.5.7 diagnostic build into a test world, enable the same required experimental/script settings as the working v0.5.3 pack, and select any item.
+2. Tap Attack three times with a clear pause between taps. Note each line's `gap`.
+3. Hold Attack for about three seconds while aiming at a safe target or swinging in air, if the touch UI permits. Note whether additional lines appear and their gaps.
+4. Release Attack and wait two seconds. Note whether any new lines appear after release.
+5. Report a few consecutive lines from the tap sequence and hold sequence.
+
+Interpretation: repeated events during a sustained hold with a consistent gap may support a heuristic charge detector; only one event per press or inconsistent gaps means this is not reliable enough for charge-and-release. This does not provide true button-release detection and must not be treated as a production implementation.
+
+Known-good baseline remains v0.5.3 Use-button charging. Do not merge the diagnostic build into main.

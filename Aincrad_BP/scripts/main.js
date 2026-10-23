@@ -192,6 +192,7 @@ try {
 
 // Player swing input is experimental in the current Creator documentation.
 // Feature-detect it so unsupported runtimes keep the menu as a fallback.
+const attackSwingDiagnosticTicks = new Map();
 let swingInputAvailable = false;
 try {
   const swingSignal = world.afterEvents.playerSwingStart;
@@ -200,9 +201,25 @@ try {
       const player = event.player;
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
 
-      // Defer Quick Slash by one tick so itemUse can claim a Heavy Attack
-      // activation first. On touch/controller input, the generic swing event can
-      // arrive before itemUse even though the Heavy Attack item is selected.
+      // v0.5.7 diagnostic-only listener: measure Attack swing event intervals
+      // on the user's Bedrock mobile runtime. This does not infer charge or
+      // trigger combat moves; it only reports event cadence for a short test.
+      const diagnosticTick = system.currentTick;
+      const previousDiagnosticTick = attackSwingDiagnosticTicks.get(player.id);
+      attackSwingDiagnosticTicks.set(player.id, diagnosticTick);
+      let selectedItemType = "unknown";
+      try {
+        const inventory = player.getComponent("minecraft:inventory")?.container;
+        selectedItemType = inventory?.getItem(player.selectedSlotIndex)?.typeId ?? "empty";
+      } catch (_) {}
+      const swingGap = previousDiagnosticTick === undefined
+        ? "first"
+        : String(diagnosticTick - previousDiagnosticTick) + " ticks";
+      safeMessage(player, "§b[SWING DIAG 0.5.7] Attack swing; tick=" + diagnosticTick +
+        "; gap=" + swingGap + "; selected=" + selectedItemType);
+      return;
+
+      // Original combat handler is intentionally unreachable in this diagnostic build.
       system.runTimeout(() => {
         if (!player.isValid) return;
         // A held Attack input belongs to the charge lifecycle, not Quick Slash.
