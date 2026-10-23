@@ -335,3 +335,10 @@ Device test:
 Interpretation: repeated events during a sustained hold with a consistent gap may support a heuristic charge detector; only one event per press or inconsistent gaps means this is not reliable enough for charge-and-release. This does not provide true button-release detection and must not be treated as a production implementation.
 
 Known-good baseline remains v0.5.3 Use-button charging. Do not merge the diagnostic build into main.
+
+
+## v0.5.7 iPhone result — Attack hold detection rejected (23 October 2026)
+
+The user tested the diagnostic on iPhone. The log showed individual Attack swing events, but holding Attack for about three seconds emitted only one message. Example observed gaps between separate swings included 7 ticks, 24 ticks, 48 ticks, and 84 ticks; these are not evidence of a held-button state. The player runtime also reported that `world.beforeEvents.playerItemAttackEntity` is not exposed. The existing combat cancellation path was reported active, and the hurt/guard hook was available.
+
+Conclusion: `playerSwingStart` detects a swing start, not continuous Attack-button state or release. Do not build an Attack hold/release charge heuristic from event cadence, and do not merge this diagnostic-only build into main. Stable Script API `InputButton` documents Jump and Sneak, not Attack. The known-good charge route remains native Interact/Use via the throwable item. Revisit Attack charging only if a supported input API becomes available or a new, evidence-backed item/input mechanism can be demonstrated on the target iPhone runtime.
