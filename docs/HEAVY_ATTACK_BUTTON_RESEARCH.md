@@ -66,3 +66,73 @@ The custom HUD route was re-checked against current public documentation and a r
 **A genuine, always-visible, tappable Heavy Attack HUD button is not implemented and cannot currently be marked complete using a documented public add-on API.** Do not add a decorative JSON UI button or remap an essential native action and call that finished.
 
 The current dedicated Heavy Attack item is the practical fallback. A custom HUD attempt would be an unsupported experiment, not a reliable implementation. Revisit only if Mojang exposes a supported interactive HUD input/callback route, or if the project deliberately accepts a form/container-based control that interrupts normal gameplay and is therefore not the requested HUD button.
+
+
+## Decision after the final feasibility pass (21 October 2026)
+
+The public-API route remains blocked. Community UI examples show how to inject JSON UI controls, but do not establish a supported bridge from a persistent HUD touch target to Behavior Pack Script API. The community Server Form Overlay project demonstrates an unsupported workaround, not a portable add-on-only solution that can be relied on for the user's iPhone. See [Bedrock Wiki: Adding HUD Elements](https://wiki.bedrock.dev/json-ui/add-hud-elements.html), [Bedrock Wiki: JSON UI button mappings](https://wiki.bedrock.dev/json-ui/json-ui-intro.html), and [Server Form Overlay technical notes](https://github.com/YasserNull/server-form-overlay/blob/main/docs/overlay-technique-paper.md).
+
+The user explicitly approved the fallback if this investigation found no viable HUD route. The next prototype therefore uses the supported `minecraft:interact_button` item component to label the contextual touch interaction as **Heavy Strike**, plus `world.afterEvents.playerInteractWithEntity` to request the move when the Heavy Attack item is selected. The normal Attack swing remains Quick Slash. A short debounce guards against duplicate event routes. This contextual control appears when aiming at an interactable entity; it is not an always-visible HUD button, and it requires iPhone in-game verification before being considered complete.
+
+Official API reference: [PlayerInteractWithEntityAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerinteractwithentityafterevent?view=minecraft-bedrock-stable). Item component reference: [Bedrock Wiki: Interact Button](https://wiki.bedrock.dev/items/item-components.html).
+
+
+## Server Form Overlay prototype decision (21 October 2026)
+
+The user asked to try [YasserNull/Server Form Overlay](https://github.com/YasserNull/server-form-overlay) despite its unsupported status. Its README and research paper confirm the approach: render the Script API server form as a transparent overlay using `is_showing_menu: false`, allow background touch input with `absorbs_input: false`, keep gameplay rendering active, remove screen animations, and set `prevent_touch_input: true` on the actual button to stop the tap passing through. The project is released under the Unlicense, but this prototype uses the technique rather than copying the whole project.
+
+Implementation plan: override the vanilla `ui/server_form.json` in the resource pack; set the server form screen as a gameplay overlay; anchor the long-form panel near the bottom-right; add `prevent_touch_input` to the dynamic form button; and show a one-button `ActionFormData` labelled **HEAVY STRIKE**. The Script API response calls the existing `beginAttack(player, MOVES.heavy)` state machine, then reopens the overlay. Cancel/back hides it; the Skill Crystal menu can reopen it. The overlay is touch-only by design and is not expected to work on keyboard/controller.
+
+Source references:
+- Project README and Unlicense: https://github.com/YasserNull/server-form-overlay
+- Technical research: https://github.com/YasserNull/server-form-overlay/blob/main/docs/overlay-technique-paper.md
+- Mojang vanilla server form structure used as reference: https://github.com/Mojang/bedrock-samples/blob/main/resource_pack/ui/server_form.json
+- Community JSON UI input properties: https://wiki.bedrock.dev/json-ui/json-ui-documentation.html
+
+Risks to test on Bedrock 26.52 iPhone: whether the current Ore UI build still permits this screen-stack trick, whether form taps remain reliable while the game is active, whether HUD controls are still visible, and whether the form can be reopened after an attack without flicker or input blocking. This remains an experimental branch; do not merge until the user tests it.
+
+
+## v0.4.9 device-test result and v0.5.0 fallback (21 October 2026)
+
+The user tested the v0.4.9 Server Form Overlay build on iPhone and reported that the Heavy Strike button did not appear. They also could not interact with the Skill Activation Book while the earlier contextual Interact fallback was present. The overlay is therefore considered failed on the target runtime; successful packaging and JSON parsing did not establish runtime compatibility. Do not merge v0.4.9.
+
+The v0.5.0 test branch removes the experimental `Aincrad_RP/ui/server_form.json` override and all overlay-form scheduling. It also removes `minecraft:interact_button` from the Heavy Attack item and removes the `playerInteractWithEntity` activation listener, so Heavy Strike no longer takes over the contextual Interact action. The only item-based activation path is `world.afterEvents.itemUse` when the Heavy Attack item is used. This should restore ordinary Interact use for the Skill Activation Book, but the user must verify both book interaction and Heavy Strike activation in-game. If item-use does not activate on the target touch runtime, do not re-add the contextual Interact override; use the Skill Crystal combat menu's Heavy Strike action as the non-conflicting fallback while researching a separate input route.
+
+
+## v0.5.1 hold-Attack charge prototype (21 October 2026)
+
+The v0.5.0 item-use fallback is replaced in this test branch with a hold-to-charge input path adapted from the supplied Claude handler and integrated into the existing combat state machine. The repository currently has no custom sword item matching the sample ID `sao:elucidator`; this prototype therefore uses the existing `aincrad:heavy_attack_token` as the selected combat item. With it selected, a short Attack press should request Quick Slash, while holding Attack starts charge and release requests Heavy Strike.
+
+The Heavy Attack item uses `minecraft:use_modifiers.start_using: "on_attack"`, with item format version `1.26.30`. Microsoft documents `on_attack` as a start-using option requiring format version 1.26.30 or later; the user's target runtime is Bedrock 26.52. The Script API `itemStartUse`, `itemReleaseUse`, and `itemStopUse` signals are documented as chargeable-item lifecycle events. References:
+- https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_use_modifiers?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
+- https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerswingstartafterevent?view=minecraft-bedrock-experimental
+- https://wiki.bedrock.dev/items/item-components
+
+The zero-nutrition food component is a compatibility mechanism to make the custom item usable; its 3600-second use duration is intentionally far longer than a normal charge. It must be tested for unwanted consumption/animation behaviour on the target runtime. The item also uses the spear use animation as a visible charge pose. This is an experiment, not a claim of proven runtime support.
+
+Charge design: 9 ticks for full 12-damage Heavy Strike; release at 7-8 ticks gives 9 damage; shorter taps remain Quick Slash. Charge feedback uses an action-bar meter and a ready cue. The target is snapshotted at charge start and preferred at strike time if it remains within a forgiving range/cone. Heavy Strike's charge replaces the normal wind-up. A 6-tick recovery buffer is supported. The existing dodge/parry/guard, guard-break, and diagnostics code is preserved.
+
+Do not merge until the user confirms on iPhone that tapping Attack gives one Quick Slash, holding Attack then releasing gives one Heavy Strike, charge feedback appears, and the Skill Activation Book still works. If the charge lifecycle does not fire, capture the Content Log and return to a different input plan rather than claiming success.
+
+
+## v0.5.2 device-test response (21 October 2026)
+
+The user tested v0.5.1 on Bedrock 26.52 for iPhone: the charge meter did not appear, and using/tapping the Heavy Attack token resulted in Quick Slash. Treat this as evidence that the expected charge start/release lifecycle is not firing reliably on the target touch runtime; documentation support for `start_using: "on_attack"` is not proof of actual runtime behaviour.
+
+The v0.5.2 candidate adds a guarded fallback in the deferred swing handler: if no charge state was created and the Heavy Attack token is still selected, it requests Heavy Strike rather than falling through to Quick Slash. It also bumps BP/RP versions to 0.5.2. This is a wrong-move fallback only; it does not claim to fix charge feedback. Test the fallback first, then decide whether to abandon this charge input route if `itemStartUse` still does not fire.
+
+
+## v0.5.3 native throwable charge prototype (21 October 2026)
+
+The v0.5.2 iPhone test confirmed that the Heavy Strike fallback works, but the food-based use mechanism with `minecraft:use_modifiers.start_using: "on_attack"` did not create a charge state or meter. Do not keep tuning that route as if it were firing.
+
+The next isolated candidate replaces the food-based use mechanism with the documented native throwable path:
+
+- `minecraft:throwable` enables native draw/release handling; Microsoft specifically documents its draw-duration scaling properties for charged throws such as tridents: https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_throwable?view=minecraft-bedrock-stable
+- `minecraft:projectile` names the spawned projectile.
+- `minecraft:use_animation: "spear"` requests the trident-style arm-raising pose.
+- Script API `itemStartUse` and `itemReleaseUse` remain responsible for the combat charge timer, meter, and invoking the existing melee Heavy Strike state machine: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
+- A placeholder snowball is configured with zero launch power and removed by an owner-scoped entity-spawn cleanup while the charge is active. This is an experimental way to use native charge input without intentionally shipping a ranged attack. Item restoration is guarded so an occupied hotbar slot is not overwritten.
+
+This is still a hypothesis, not a confirmed fix. Validate JSON, JavaScript syntax, and pack versioning before testing. On iPhone, hold the native Use action with Heavy Attack selected, watch for the charge message/meter, then release and confirm one melee Heavy Strike. Also check that no arrow remains visible, the Heavy Attack item is not lost, normal Attack still behaves as intended, and the Skill Activation Book still works. If `itemStartUse` still does not fire, inspect the Content Log and actual touch input route before changing combat timing or adding fallback controls.

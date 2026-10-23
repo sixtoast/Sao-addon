@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP",
-    "description": "SAO-inspired custom combat and skill menu prototype",
+    "name": "Aincrad Combat BP v0.5.4",
+    "description": "Aincrad Combat v0.5.4 | Native throwable charge prototype.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
-      4,
-      2
+      5,
+      4
     ],
     "min_engine_version": [
       1,
@@ -20,9 +20,7 @@
       "type": "data",
       "uuid": "7f8e317e-1d2a-4d71-ac05-277b552a5b9d",
       "version": [
-        0,
-        4,
-        2
+        0, 5, 4
       ]
     },
     {
@@ -30,9 +28,7 @@
       "language": "javascript",
       "uuid": "c8bdea32-2485-48e6-8c63-8837cb457783",
       "version": [
-        0,
-        4,
-        2
+        0, 5, 4
       ],
       "entry": "scripts/main.js"
     }
@@ -41,9 +37,7 @@
     {
       "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
       "version": [
-        0,
-        4,
-        2
+        0, 5, 4
       ]
     },
     {

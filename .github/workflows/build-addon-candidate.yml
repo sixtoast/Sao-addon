@@ -1,0 +1,41 @@
+name: Build Bedrock addon candidate
+
+on:
+  push:
+    branches:
+      - feature/combat-charge-input-clarity-v0.5.4
+    paths:
+      - 'Aincrad_BP/**'
+      - 'Aincrad_RP/**'
+      - '.github/workflows/build-addon-candidate.yml'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate pack manifests and item JSON
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for root in (Path("Aincrad_BP"), Path("Aincrad_RP")):
+              manifest = root / "manifest.json"
+              json.loads(manifest.read_text())
+          for p in Path("Aincrad_BP/items").glob("*.json"):
+              json.loads(p.read_text())
+          print("JSON validation passed")
+          PY
+      - name: Package addon
+        run: |
+          zip -r Sao-addon-v0.5.4.mcaddon Aincrad_BP Aincrad_RP
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sao-addon-v0.5.4
+          path: Sao-addon-v0.5.4.mcaddon
+          if-no-files-found: error
+          retention-days: 14

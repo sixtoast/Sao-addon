@@ -203,3 +203,127 @@ The previous hotfix reused pack version 0.4.0, which can leave Minecraft loading
 - The generic player swing event can fire while the Heavy Attack hotbar item is used. The swing handler now checks the selected hotbar item and ignores that generic swing when Heavy Attack is selected, so it cannot start Quick Slash over the dedicated Heavy Strike request.
 - Behavior Pack and Resource Pack versions are bumped to 0.4.2 so Minecraft can distinguish this package from the previous import.
 - Build validation does not replace the in-game check: verify that using Heavy Attack reports Heavy Strike and deals its 12-damage move, while ordinary Attack still starts Quick Slash.
+
+
+## Heavy Attack input-order fix (0.4.3 candidate)
+
+- The direct swing handler now defers Quick Slash by one tick. This allows the dedicated Heavy Attack item's `itemUse` event to start Heavy Strike first if Bedrock dispatches the generic swing event earlier in the same touch/controller input frame.
+- The deferred callback also re-checks the selected hotbar item and preserves an already-started Heavy Strike.
+- This is a targeted input-order fix, not yet verified in-game. Test the Heavy Attack token and ordinary Attack separately on Bedrock 26.52 touch controls. Confirm Heavy Strike starts once, deals 12 damage, and ordinary Attack still starts Quick Slash.
+
+
+## Version 0.4.4 — opt-in combat diagnostics (candidate)
+
+This test build adds two buttons to the Skill Menu: **Diagnostics: Toggle ON/OFF** and **Diagnostics: Guard Status**. Diagnostics are off by default to avoid chat spam. Enable them before testing, then:
+
+- **Damage reduction:** for player-versus-player custom attacks, diagnostics report raw move damage, requested reduced damage, observed health loss when the health component updates synchronously, whether `applyDamage` accepted the call, and guard strain. For ordinary mob melee, the cancellable hurt event reports incoming damage, adjusted damage, and prevented damage. These are runtime observations, not proof that every source of vanilla damage is cancelled.
+- **Guard break:** reports the 10-point strain threshold and 40-tick recovery. Guard Status reports current phase, strain and remaining break ticks.
+- **Directional targeting:** reports the selected living target, distance, aim-dot score, and number of eligible targets. Put multiple mobs at different angles to see which candidate wins.
+- **Clashes:** reports both moves, interruption strengths, and the action-break duration when equal-strength active attacks meet.
+
+For a repeatable guard test, use a Creative test world and two players: compare the defender's health before and after a hit without Guard, then repeat from the front during Guard. Reset health between trials. Also test an attack from behind and a heavy hit that should exceed the guard-strain threshold. The damage diagnostic can be unavailable if Bedrock updates health later than the script callback; in that case the requested damage and event adjustment are still shown.
+
+**Version labels:** from v0.4.4 onward, both pack names and descriptions include the add-on version so BP/RP can be distinguished in Minecraft's Add-Ons list.
+
+
+## Version 0.4.5 — diagnostics runtime hotfix
+
+Version 0.4.4 could throw `ReferenceError: diagnosticsEnabled is not defined` from the combat tick. This is fixed by declaring the per-player diagnostics set. The optional native `world.beforeEvents.playerItemAttackEntity` feature-detection warning is now worded as an API-probe limitation, not as proof that combat cancellation is broken. The existing cancellation path remains in place; test it in-game as usual.
+
+
+## v0.4.8 — Heavy Strike through Interact (not yet device-verified)
+
+1. Import the v0.4.8 test build into a Creative world and check the Content Log for item-component or script errors.
+2. Equip the Heavy Attack item and aim at a living entity. Confirm the contextual touch button is labelled **Heavy Strike**.
+3. Tap that Interact button once. Confirm one Heavy Strike begins, shows the prepare message, and resolves for 12 damage to a valid target.
+4. Confirm the same input does not trigger Quick Slash or two Heavy Strikes.
+5. Select an ordinary weapon and tap normal Attack. Confirm Quick Slash remains separate.
+6. Test with the Heavy Attack item aimed at an entity that is out of attack range; it should not hit through the existing combat range checks.
+7. Re-test Guard, guard break, Parry, and diagnostics. The stable release remains unchanged; if the Interact event does not fire on iPhone, report the exact touch behaviour and Content Log.
+
+The Interact button is contextual and appears when looking at an entity. It is not a persistent custom HUD button.
+
+
+## v0.4.9 — Experimental Server Form Overlay Heavy Strike button
+
+1. Import the v0.4.9 test build and enable the Resource Pack and Behavior Pack for the world.
+2. Join the world on iPhone touch controls. After the initial spawn, a small **HEAVY STRIKE** button should appear near the bottom-right while the world continues running.
+3. Tap the button once. Confirm Heavy Strike begins and resolves once; confirm the overlay button returns after the attack.
+4. Check that tapping empty areas of the screen still moves/looks around and that the tap on the Heavy Strike button does not also trigger the normal Attack action.
+5. Confirm normal Attack still performs Quick Slash and Sneak still cycles Spot Dodge → Parry → Guard.
+6. Close/dismiss the overlay. Use the Skill Crystal and choose **Show Heavy Strike HUD Button** to reopen it.
+7. Open inventory and pause screens; check that they remain usable and that the overlay does not block their controls. Check whether the button reappears after respawn.
+8. Record any missing touch controls, frozen movement, flicker, chat errors, Content Log errors, or duplicate damage. This UI technique is unsupported and touch-only; keep the stable release unchanged.
+
+
+## v0.4.9 result and v0.5.0 Heavy Strike item-use fallback
+
+The v0.4.9 overlay prototype was tested on iPhone and failed: the HUD button did not appear, and the previous contextual Interact fallback interfered with using the Skill Activation Book. Do not merge v0.4.9.
+
+For v0.5.0, import the new package and enable both packs. Verify:
+1. The Skill Activation Book can be used normally and opens the Skill Crystal combat menu.
+2. The Heavy Attack item no longer displays a custom contextual Interact label or hijacks Interact.
+3. With Heavy Attack selected, use the item normally and confirm exactly one Heavy Strike begins and resolves for 12 damage when in range.
+4. Normal Attack still starts Quick Slash, and Sneak still cycles Spot Dodge → Parry → Guard.
+5. If Heavy Attack item-use does not fire on touch, use the Skill Crystal combat menu's Heavy Strike action as a temporary fallback and report the exact button behaviour. Do not restore the contextual Interact component without checking the book interaction conflict.
+6. Check the Content Log for item or script errors. Stable `main` remains unchanged; this is a test branch only.
+
+
+## v0.5.1 hold-Attack charge prototype
+
+Import the v0.5.1 package and enable both packs. The selected combat item is currently the existing Heavy Attack control item (this repo has no custom `sao:elucidator` sword item yet).
+
+1. Select **Heavy Attack** in the hotbar.
+2. Tap Attack briefly. Expect one Quick Slash and no charge meter lingering.
+3. Hold Attack for at least 9 ticks, watching the action-bar charge meter. Release. Expect one Heavy Strike, a ready cue at full charge, and 12 damage when a target is in range.
+4. Hold for 7-8 ticks then release. Expect an early Heavy Strike for 9 damage.
+5. Hold for less than 7 ticks then release. Expect a Quick Slash, not Heavy Strike.
+6. Test with a target in front at close range and another target moving during charge. Confirm target snapshot behaviour feels sensible.
+7. Confirm no extra duplicate attack occurs on release; confirm Skill Activation Book still opens the menu; confirm Sneak still cycles Spot Dodge → Parry → Guard and Guard/guard-break diagnostics still work.
+8. Check the Content Log for item-format, `start_using`, or Script API errors. The zero-nutrition food/use-animation compatibility mechanism must not consume the item on ordinary releases or block the input.
+9. This is an unmerged test branch. Stable `main` and the v0.5.0 branch remain unchanged.
+
+
+## v0.5.2 regression check — device report pending
+
+The v0.5.1 device test failed: no charge meter appeared and the Heavy Attack token produced Quick Slash. v0.5.2 adds a fallback that requests Heavy Strike when the token is selected but no charge state exists. Import the v0.5.2 build and check:
+
+1. BP and RP both show version 0.5.2 in Minecraft.
+2. Select Heavy Attack and tap Attack once. It should request Heavy Strike rather than Quick Slash if charging does not begin; watch for the message “Charge input was not detected; using Heavy Strike fallback.”
+3. Hold Attack and release. Check whether “Heavy Strike charging...” and the action-bar meter appear. If they do not, the charge lifecycle still is not working and must not be reported as fixed.
+4. Confirm ordinary Attack with a different hotbar item remains Quick Slash.
+5. Confirm the Skill Activation Book still opens, and Sneak defence remains intact.
+6. Check Content Log for item parser and Script API errors.
+
+This package is a test candidate. Keep stable `main` unchanged and do not merge until the user reports results.
+
+
+## v0.5.3 native throwable charge test
+
+This candidate changes only the Heavy Attack input mechanism. It replaces the food-based `start_using: "on_attack"` experiment with `minecraft:throwable` plus `minecraft:projectile`, following Microsoft's documented charged-throw pattern for tridents. The placeholder snowball should be removed immediately by script; the intended result is still a melee Heavy Strike, not a projectile attack.
+
+1. Confirm both packs display version 0.5.3 after import.
+2. Select Heavy Attack and use/hold it as you would charge a trident on touch controls.
+3. Confirm the chat message says Heavy Strike is charging and the action-bar meter appears.
+4. Hold past the full-charge cue, then release. Confirm exactly one melee Heavy Strike occurs.
+5. Release early after about 7–8 ticks and check for the reduced-damage Heavy Strike.
+6. Tap/release very quickly and check whether the normal Quick Slash path behaves as expected.
+7. Confirm no arrow remains visible or flies away, and Heavy Attack remains in the original hotbar slot.
+8. Check that the Skill Activation Book, Parry, Guard, and Sneak dodge/parry/guard sequence still work.
+9. If charging does not start, record the exact on-screen message and inspect the Content Log before changing timing values.
+
+The use of a native throwable is a hypothesis to test, not a verified fix. Keep this branch separate from `main` until the iPhone test passes.
+
+
+## v0.5.4 — charge-input instructions and focused regression pass
+
+This is a clarity/versioning candidate based on v0.5.3. It corrects the first-spawn instructions so they match the current native throwable implementation. It does **not** claim that Attack-button charging works: device tests found that the undocumented Attack-button state probe fails, and the prior `start_using: "on_attack"` experiment did not start the item-use lifecycle.
+
+1. Confirm both BP and RP show version **0.5.4** after importing the candidate.
+2. Select **Heavy Attack**, hold the item's **Use** input, and confirm the “Heavy Strike charging...” message and charge bar appear.
+3. Hold for at least 9 ticks, release, and check for exactly one full-damage Heavy Strike. Then try releasing after 7–8 ticks for the reduced-damage version.
+4. Release before 7 ticks. The charge should cancel; do not assume this input becomes Quick Slash. Use normal Attack with another item or the Skill Menu to test Quick Slash separately.
+5. Confirm no snowball remains or travels, and the Heavy Attack token stays in its hotbar slot without overwriting another item.
+6. Re-test Sneak: Spot Dodge (ticks 0–2), Parry (ticks 3–6), then Guard from tick 7 for as long as Sneak remains active. Release Sneak and confirm Guard ends.
+7. Re-test frontal/rear Guard, guard break, directional aiming, clashes, Skill Crystal, Parry item, and diagnostics. Check Content Log for item parse or script errors.
+8. Keep stable `main` unchanged. This candidate only corrects the misleading input instructions and pack version; it does not resolve the unsupported Attack-button charge route.

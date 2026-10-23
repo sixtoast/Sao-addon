@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat RP",
-    "description": "Resources for the SAO-inspired combat prototype",
+    "name": "Aincrad Combat RP v0.5.4",
+    "description": "Aincrad Combat v0.5.4 | Native throwable charge prototype.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
     "version": [
       0,
-      4,
-      2
+      5,
+      4
     ],
     "min_engine_version": [
       1,
@@ -20,9 +20,7 @@
       "type": "resources",
       "uuid": "48bdf47b-b278-41b2-adb4-7ca0a55207d8",
       "version": [
-        0,
-        4,
-        2
+        0, 5, 4
       ]
     }
   ]
