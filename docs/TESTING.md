@@ -327,3 +327,36 @@ This is a clarity/versioning candidate based on v0.5.3. It corrects the first-sp
 6. Re-test Sneak: Spot Dodge (ticks 0–2), Parry (ticks 3–6), then Guard from tick 7 for as long as Sneak remains active. Release Sneak and confirm Guard ends.
 7. Re-test frontal/rear Guard, guard break, directional aiming, clashes, Skill Crystal, Parry item, and diagnostics. Check Content Log for item parse or script errors.
 8. Keep stable `main` unchanged. This candidate only corrects the misleading input instructions and pack version; it does not resolve the unsupported Attack-button charge route.
+
+
+## v0.5.5 — Interact tap Heavy Strike, hold for stronger strike
+
+This candidate returns to the native Interact/Use lifecycle. It does not attempt to charge from the Attack button.
+
+- Tap/release Heavy Attack before 7 ticks: normal Heavy Strike, 12 damage.
+- Release after 7–8 ticks: charged Heavy Strike, 15 damage.
+- Hold for at least 9 ticks, then release: full-charge Heavy Strike, 18 damage.
+- Quick Slash remains on normal Attack with a different selected item (or the Skill Menu fallback).
+- Existing target snapshot, custom damage hook, placeholder-projectile cleanup, hotbar-token restoration, and Sneak defence code are retained.
+
+### Test sequence
+
+1. Import the v0.5.5 candidate and confirm both packs report version 0.5.5.
+2. Tap Interact with Heavy Attack selected. Confirm one 12-damage Heavy Strike occurs, not Quick Slash and not a cancelled charge.
+3. Hold Interact for 7–8 ticks and release. Confirm one 15-damage strike.
+4. Hold for at least 9 ticks and release. Confirm one 18-damage strike.
+5. Confirm the placeholder snowball never travels or remains, and the Heavy Attack token returns to its original slot without overwriting another item.
+6. Try tapping and charging while no target is in range, then try an aimed target. Confirm each activation resolves no more than one attack.
+7. Regression-test Quick Slash, Sneak Spot Dodge → Parry → Guard, guard break, frontal/rear guard, directional aim, clashes, Skill Crystal, and diagnostics. Check Content Log for parse/runtime errors.
+8. Keep main unchanged until this candidate passes in-game testing.
+
+## Better Bedrock research notes
+
+The user's reference is the Better Bedrock Bedrock Edition texture/resource pack at https://betterbedrock.com/, not the separate “Better on Bedrock” gameplay add-on. Its public feature pages describe a configurable mod menu, HUD modules, redesigned UI/screens, and extension packs. These are useful reference areas for Sao's future presentation and usability, but a resource pack cannot replace the Behaviour Pack Script API that owns combat logic. Resource-pack UI capabilities also have platform/runtime limits.
+
+Reference pages:
+- https://betterbedrock.com/
+- https://betterbedrock.com/downloads/better-bedrock
+- https://betterbedrock.com/information/general
+
+Use these as behaviour/visual research references. Do not copy Better Bedrock's code, textures, or UI assets into Sao without checking its current licence/permissions and obtaining permission where required. Implement independent equivalents using documented Bedrock resource-pack/JSON UI capabilities and the existing Sao Script API architecture.
