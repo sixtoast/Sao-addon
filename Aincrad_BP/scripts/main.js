@@ -193,6 +193,8 @@ try {
 // Player swing input is experimental in the current Creator documentation.
 // Feature-detect it so unsupported runtimes keep the menu as a fallback.
 const attackSwingDiagnosticTicks = new Map();
+const attackButtonStateProbe = new Map();
+const attackButtonProbeErrors = new Set();
 let swingInputAvailable = false;
 try {
   const swingSignal = world.afterEvents.playerSwingStart;
@@ -676,6 +678,31 @@ function resolveAttackIntent(intent, snapshot, intentByActor) {
 function processCombatTick() {
   const now = system.currentTick;
 
+  // v0.5.8 diagnostic only: probe the undocumented string "Attack" through
+  // InputInfo.getButtonState. The public InputButton enum currently exposes
+  // only Jump and Sneak, so this may throw or remain Released on this runtime.
+  // Never use this probe to drive combat until the device proves it works.
+  for (const player of world.getAllPlayers()) {
+    if (!player?.isValid || attackButtonProbeErrors.has(player.id)) continue;
+    try {
+      const inputInfo = player.inputInfo;
+      if (!inputInfo || typeof inputInfo.getButtonState !== "function") {
+        attackButtonProbeErrors.add(player.id);
+        safeMessage(player, "§c[INPUT PROBE 0.5.8] Player.inputInfo/getButtonState unavailable.");
+        continue;
+      }
+      const state = String(inputInfo.getButtonState("Attack"));
+      const previous = attackButtonStateProbe.get(player.id);
+      if (previous !== state) {
+        attackButtonStateProbe.set(player.id, state);
+        safeMessage(player, "§b[INPUT PROBE 0.5.8] Attack state=" + state + "; tick=" + now + ".");
+      }
+    } catch (error) {
+      attackButtonProbeErrors.add(player.id);
+      safeMessage(player, "§c[INPUT PROBE 0.5.8] getButtonState(\"Attack\") failed: " + String(error));
+    }
+  }
+
   for (const player of world.getAllPlayers()) {
     const cleanupUntil = chargeProjectileCleanupUntil.get(player.id) ?? 0;
     if (cleanupUntil && cleanupUntil < now) chargeProjectileCleanupUntil.delete(player.id);
@@ -887,6 +914,8 @@ world.afterEvents.playerLeave.subscribe((event) => {
   lastDefensePhase.delete(id);
   menuOpen.delete(id);
   tickCounters.delete(id);
+  attackButtonStateProbe.delete(id);
+  attackButtonProbeErrors.delete(id);
   diagnosticsEnabled.delete(id);
 });
 
