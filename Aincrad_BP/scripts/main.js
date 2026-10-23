@@ -20,7 +20,8 @@ const queuedAttacks = new Map();
 const tickCounters = new Map();
 const HEAVY_FULL_TICKS = 9;
 const HEAVY_MIN_TICKS = 7;
-const EARLY_DAMAGE_MULT = 0.75;
+const CHARGED_DAMAGE_MULT = 1.25;
+const FULL_CHARGE_DAMAGE_MULT = 1.5;
 const BUFFER_TICKS = 6;
 // Per-player opt-in diagnostics, controlled from the Skill Menu.
 const diagnosticsEnabled = new Set();
@@ -208,7 +209,8 @@ try {
         // A held Attack input belongs to the charge lifecycle, not Quick Slash.
         const charge = heavyChargeStates.get(player.id);
         if (charge) {
-          charge.quickRequested = true;
+          // The Interact charge owns this activation; Attack swings must not
+          // convert a short use into Quick Slash.
           return;
         }
         if ((suppressQuickUntil.get(player.id) ?? 0) > system.currentTick) return;
@@ -269,8 +271,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "With Heavy Attack selected: use and hold the item to charge Heavy Strike, then release. Attack swings and Sneak defence remain separate. Use the Parry item to parry."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. Heavy Strike: hold Use with Heavy Attack selected, then release. Use the Parry item to parry.") +
+        ? "With Heavy Attack selected: tap Interact for Heavy Strike; hold Interact and release for a stronger charged Heavy Strike. Normal Attack with another item = Quick Slash. Sneak defence remains separate."
+        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. With Heavy Attack selected, tap Interact for Heavy Strike or hold and release for a stronger charged Heavy Strike.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
@@ -364,7 +366,7 @@ function beginHeavyCharge(event) {
   if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
   if (event.itemStack?.typeId !== HEAVY_ITEM || heavyChargeStates.has(player.id)) return;
   const targetCandidates = getTargetCandidates(player, { ...MOVES.heavy, range: MOVES.heavy.range * 1.15, minDot: Math.max(0, MOVES.heavy.minDot - 0.1) });
-  heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, slotIndex: player.selectedSlotIndex, readyCued: false, quickRequested: false });
+  heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, slotIndex: player.selectedSlotIndex, readyCued: false });
   try { player.playSound("random.click"); } catch (_) {}
   safeMessage(player, "§b[AINCRAD] Heavy Strike charging...");
 }
@@ -394,15 +396,17 @@ function releaseHeavyCharge(event) {
   const heldTicks = system.currentTick - charge.startedTick;
   if (heldTicks >= HEAVY_FULL_TICKS) {
     suppressQuickUntil.set(player.id, system.currentTick + 3);
-    requestChargedHeavy(player, charge.snapshotTargetId, 1);
-    safeMessage(player, "§b[AINCRAD] Heavy Strike released!");
+    requestChargedHeavy(player, charge.snapshotTargetId, FULL_CHARGE_DAMAGE_MULT);
+    safeMessage(player, "§b[AINCRAD] FULL CHARGE — Powerful Heavy Strike!");
   } else if (heldTicks >= HEAVY_MIN_TICKS) {
     suppressQuickUntil.set(player.id, system.currentTick + 3);
-    requestChargedHeavy(player, charge.snapshotTargetId, EARLY_DAMAGE_MULT);
-    safeMessage(player, "§e[AINCRAD] Early release — reduced Heavy Strike.");
+    requestChargedHeavy(player, charge.snapshotTargetId, CHARGED_DAMAGE_MULT);
+    safeMessage(player, "§e[AINCRAD] Charged Heavy Strike!");
   } else {
-    safeMessage(player, "§7[AINCRAD] Charge cancelled — tap for Quick Slash.");
-    if (charge.quickRequested && player.isValid) beginAttack(player, MOVES.quick);
+    // Short Interact use is always a Heavy Strike, never Quick Slash or a cancel.
+    suppressQuickUntil.set(player.id, system.currentTick + 3);
+    requestChargedHeavy(player, charge.snapshotTargetId, 1);
+    safeMessage(player, "§b[AINCRAD] Heavy Strike!");
   }
 }
 
@@ -892,7 +896,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: use and hold the Heavy Attack item to charge Heavy Strike, then release; use normal Attack with another item for Quick Slash. Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: tap Interact with Heavy Attack for Heavy Strike; hold Interact and release for a stronger charged Heavy Strike. Normal Attack with another item = Quick Slash. Sneak = Spot Dodge → Parry → Guard.");
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
