@@ -293,3 +293,15 @@ Start combat on a confirmed attack request or a confirmed incoming combat hit, n
 - Existing Quick Slash, Heavy Strike tap/charge, Sneak defence, skill menu, durability and ordinary inventory behaviour pass regression tests.
 
 Until these gates pass, the prototype remains design/input research only; the current slot-change probe does not modify inventory or combat behaviour.
+
+
+### Follow-up storage investigation (2026-10-23)
+
+Official Bedrock entity documentation confirms that a custom entity can expose a `minecraft:inventory` container with configurable `inventory_size`, `private`, and `restrict_to_owner`, and `minecraft:persistent` marks an entity as persistent in the game world. This makes a dedicated hidden storage entity a plausible avenue for preserving actual ItemStacks rather than serializing them into JSON. It is not yet proven safe: entity loading/chunk lifetime, ownership association, protection from players/hoppers, inventory access while the entity is unloaded, death/removal behaviour, and survival across world reload must be tested.
+
+Sources:
+- Microsoft, [Entity `minecraft:inventory` component](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_inventory?view=minecraft-bedrock-stable)
+- Microsoft, [Entity `minecraft:persistent` component](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_persistent?view=minecraft-bedrock-stable)
+- Microsoft, [EntityInventoryComponent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entityinventorycomponent?view=minecraft-bedrock-stable)
+
+**Next implementation decision:** prototype a private, non-interactive, persistent storage entity in a separate branch, with an inventory large enough for a player's original hotbar and a stable owner key. Test that it saves/restores cloned ItemStacks with enchantments, durability, lore, names, custom item data and stack amounts after unload/reload. Do not connect it to combat mode until those tests pass. If the entity cannot be reliably found after rejoin/reload, reject this route rather than falling back to memory-only storage.
