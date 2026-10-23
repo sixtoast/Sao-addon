@@ -266,24 +266,30 @@ function showCombatMenu(player) {
   if (menuOpen.has(player.id)) return;
   menuOpen.add(player.id);
 
-  const form = new ActionFormData()
-    .title("AINCRAD • Combat Prototype")
-    .body(
-      "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
-      (swingInputAvailable
-        ? "With Heavy Attack selected: tap Interact for Heavy Strike; hold Interact and release for a stronger charged Heavy Strike. Normal Attack with another item = Quick Slash. Sneak defence remains separate."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. With Heavy Attack selected, tap Interact for Heavy Strike or hold and release for a stronger charged Heavy Strike.") +
-      "\n\n" +
-      (nativeAttackCancellationAvailable
-        ? "Vanilla attack cancellation event detected."
-        : "Native attack-cancel event is not exposed by this runtime; the tested combat damage-cancellation path remains enabled.")
-    )
-    .button("Quick Slash\n§7Fast • 7 damage")
-    .button("Heavy Strike\n§7Committed • 12 damage")
-    .button("Parry\n§7Short timing window");
+  const diagnosticsLabel = diagnosticsEnabled.has(player.id)
+    ? "Diagnostics: Turn OFF"
+    : "Diagnostics: Turn ON";
 
-  form.button("Diagnostics: Toggle ON/OFF");
-  form.button("Diagnostics: Guard Status");
+  const form = new ActionFormData()
+    .title("AINCRAD • Combat")
+    .body(
+      "COMBAT ARTS\nChoose an action. Timing and recovery are handled by the combat system.\n\n" +
+      (swingInputAvailable
+        ? "HEAVY STRIKE\nWith Heavy Attack selected, tap Interact for a Heavy Strike. Hold Interact and release for a stronger strike. Normal Attack with another item performs Quick Slash.\n\n"
+        : "HEAVY STRIKE\nDirect Quick Slash input is unavailable in this runtime. Use this menu for Quick Slash. With Heavy Attack selected, tap Interact for a Heavy Strike or hold and release for a stronger strike.\n\n") +
+      "DEFENCE\nHold Sneak to cycle Spot Dodge → Parry → Guard.\n\n" +
+      (nativeAttackCancellationAvailable
+        ? "Runtime status: attack-cancellation event detected."
+        : "Runtime status: native attack-cancellation event unavailable; the existing combat damage path remains active.")
+    )
+    .header("Combat actions")
+    .button("Quick Slash\n§7Fast • 7 damage", "textures/items/diamond_sword")
+    .button("Heavy Strike\n§7Committed • 12 damage", "textures/items/diamond_sword")
+    .button("Parry\n§7Short timing window", "textures/items/shield")
+    .divider()
+    .header("Diagnostics")
+    .button(diagnosticsLabel)
+    .button("Guard status");
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
