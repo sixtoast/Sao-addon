@@ -360,3 +360,8 @@ Interpretation:
 - This build is diagnostic-only and must not be merged or used for normal combat; it intentionally retains the swing diagnostic's bypass of custom swing-to-combat handling.
 
 References: [Microsoft InputInfo](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputinfo?view=minecraft-bedrock-stable), [InputButton](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputbutton?view=minecraft-bedrock-stable).
+
+
+## v0.5.8 iPhone result — undocumented Attack value rejected (23 October 2026)
+
+The user tested v0.5.8 on iPhone. The probe logged: `getButtonState("Attack") failed: TypeError: Native type conversion failed, Function argument expected type: InputButton`. This confirms the runtime requires a valid `InputButton` enum value and rejects the string `"Attack"`; do not retry this exact call or treat it as a combat failure. The v0.5.7 swing diagnostic again showed individual Attack swing events, which do not reveal sustained hold or release. The stable documented input options do not currently provide an Attack state. Stop pursuing this undocumented string route. Keep the known-working v0.5.3 native Use/Interact charge route as the fallback, and keep the diagnostic branch unmerged.
