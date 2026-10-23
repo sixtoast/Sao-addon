@@ -189,3 +189,40 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 - [ ] Validate repeated hotbar-slot input on the target runtime, especially repeated Activate Skill presses.
 - [ ] Test `prototype/skill-input-probe` in Minecraft on iPhone; repository code is not yet device-validated.
 - [ ] Confirm whether three slots must be reserved and obtain user approval if so.
+
+
+## User-proposed alternative: contextual combat hotbar (2026-10-23)
+
+The user proposed filling the hotbar with skills while in combat, leaving one slot for the sword, then removing the skill controls outside combat. This is the preferred design direction to investigate before investing in a three-button custom HUD.
+
+### Intended behaviour
+
+- Out of combat: the player's normal hotbar is available.
+- On entering combat: preserve the current hotbar contents and selected slot, then show the sword plus temporary skill controls in the other hotbar slots.
+- Skill selection/activation: each temporary control must invoke a distinct move through the existing combat state machine; do not duplicate targeting, damage, defence, clash or recovery logic.
+- On leaving combat: restore the exact original hotbar contents and selected slot.
+- Heavy Strike charge and Sneak defence remain independent and must not be overwritten by the skill-bar transition.
+
+### Combat state proposal
+
+Use a per-player combat timeout, refreshed by meaningful combat activity (dealing or receiving combat damage / a confirmed attack). Initial design value: 10 seconds after the last combat event, then exit combat. This is a proposal, not an implemented or device-tested value. Avoid entering/exiting repeatedly between combo hits.
+
+### Critical implementation risks
+
+- Inventory slots are real player inventory, not a free HUD layer. Never clear or replace them without first preserving their full ItemStack data and counts.
+- Inventory restoration must be safe when the player dies, disconnects, changes dimension, has a full inventory, or the script/world reloads. An in-memory map alone does not survive a script restart. Do not silently drop or duplicate items.
+- If the sword is kept in one slot, decide whether it is pinned to the player's original sword slot or moved to a fixed slot. Preserve any original item in that slot.
+- Skill activation must be a verified event. A selected control item does not automatically mean that a tap invokes itemUse; Attack, Interact and itemUse have different semantics. Test on iPhone before wiring moves.
+- Temporary skill items should be non-droppable / non-consumable where supported, and must not be mistaken for the existing Heavy Attack, Parry, Guard or Skill Crystal items.
+- Decide how entering combat is detected: the first confirmed attack or incoming combat hit is the simplest predictable trigger. Proximity to hostile mobs alone can cause unwanted combat mode changes.
+- If safe persistence/recovery cannot be guaranteed, prototype with a small set of dedicated slots only after explicit approval of the inventory trade-off; do not ship a system that risks item loss.
+
+### Implementation gate
+
+1. Prototype combat-state detection independently of inventory changes.
+2. Prove a temporary control item reliably produces exactly one intended activation on touch.
+3. Prove a full hotbar snapshot/restore round trip with mixed item stacks and counts.
+4. Test combat entry/exit, death, leave/rejoin, script reload, and a full inventory without item loss/duplication.
+5. Only then connect the first Quick Slash -> Linear Strike combo and regression-test Heavy Strike, Sneak defence, Skill Crystal and ordinary inventory behaviour.
+
+This alternative supersedes the earlier assumption that three custom HUD buttons are the primary target. Keep main untouched; test on an isolated prototype branch.
