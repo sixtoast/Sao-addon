@@ -48,6 +48,12 @@ Relevant sources:
 - Microsoft, [Player.selectedSlotIndex](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable)
 - Microsoft, [PlayerHotbarSelectedSlotChangeAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerhotbarselectedslotchangeafterevent?view=minecraft-bedrock-stable)
 
+### Repository inspection (2026-10-23)
+
+The skill-combo design branch currently contains the tested v0.5.5 candidate's `Aincrad_BP` and `Aincrad_RP` packs. The resource pack currently has no `ui/` directory, `_ui_defs.json`, or `hud_screen.json`; a HUD layout prototype would therefore be the first JSON UI override in this pack. The behavior pack depends on `@minecraft/server` 2.10.0 and `@minecraft/server-ui` 2.2.0, and its script already has the existing `BUFFER_TICKS = 6` constant and shared move/action logic. Do not touch combat code just to test layout.
+
+The Mojang `bedrock-samples` `hud_screen.json` and Bedrock Wiki custom-HUD docs confirm that the hotbar is built from nested UI controls and the `hotbar_chooser` component. This supports testing a small resource-pack-only layout override first, while keeping the original slot-selection/use semantics intact. JSON UI internals are version-sensitive and must be tested on the actual mobile client.
+
 ### Best candidate for a controlled prototype (not yet validated)
 
 Prototype the user's clarified idea: move/restyle three existing hotbar slots so they sit near Attack and Interact and look like three custom skill buttons. Use hotbar-slot selection changes as the potential signal into script; do not invent a custom UI callback. The three slots would mean Previous Skill, Activate Skill and Next Skill.
@@ -152,6 +158,7 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 - [x] Recorded user's clarified layout: reposition/restyle three hotbar slots near Attack and Interact to resemble dedicated Previous Skill, Activate Skill and Next Skill buttons.
 - [x] Made UI-to-script feasibility a mandatory gate before combat implementation.
 - [x] Researched current JSON UI button capabilities and the supported hotbar-selection event route.
+- [x] Inspected repository structure: RP has no existing UI overrides; reviewed the Mojang sample HUD's hotbar chooser structure.
 - [x] Inspected the candidate RP/BP structure and recorded that custom JSON UI would be a new resource-pack override.
 - [ ] Validate repeated hotbar-slot input on the target runtime, especially repeated Activate Skill presses.
 - [ ] Confirm whether three slots must be reserved and obtain user approval if so.
