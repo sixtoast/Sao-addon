@@ -913,5 +913,40 @@ world.afterEvents.playerSpawn.subscribe((event) => {
   }, 1);
 });
 
+// ISOLATED INPUT PROBE: reports hotbar slot changes so the target-device
+// interaction can be verified before any slots are repurposed for skills.
+// This listener is only on prototype/skill-input-probe; stable combat branches
+// are unchanged. Slot indices in the API are zero-based, so display 1-9 to players.
+try {
+  const hotbarSignal = world.afterEvents.playerHotbarSelectedSlotChange;
+  if (hotbarSignal && typeof hotbarSignal.subscribe === "function") {
+    hotbarSignal.subscribe((event) => {
+      const player = event.player;
+      if (!player || !player.isValid) return;
+      const itemName = event.itemStack?.typeId ?? "empty";
+      safeMessage(
+        player,
+        "§e[AINCRAD INPUT TEST] Slot " + (event.previousSlotSelected + 1) +
+          " → " + (event.newSlotSelected + 1) + " | " + itemName +
+          ". If tapping the selected slot again produces no message, it emits no slot-change event."
+      );
+    });
+  } else {
+    world.afterEvents.playerSpawn.subscribe((event) => {
+      if (event.initialSpawn) {
+        system.runTimeout(() => safeMessage(event.player,
+          "§c[AINCRAD INPUT TEST] playerHotbarSelectedSlotChange is unavailable in this runtime."), 2);
+      }
+    });
+  }
+} catch (error) {
+  world.afterEvents.playerSpawn.subscribe((event) => {
+    if (event.initialSpawn) {
+      system.runTimeout(() => safeMessage(event.player,
+        "§c[AINCRAD INPUT TEST] Could not register slot-change listener: " + String(error)), 2);
+    }
+  });
+}
+
 system.runInterval(processCombatTick, 1);
 
