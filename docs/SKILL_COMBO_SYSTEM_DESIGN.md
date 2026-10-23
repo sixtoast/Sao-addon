@@ -1,6 +1,6 @@
 # SAO Aincrad Skill-Combo System Design
 
-**Status:** Input design updated; implementation not started.
+**Status:** Isolated hotbar input probe added; awaiting target-device test. Skill-combo implementation not started.
 **Date:** 2026-10-23
 **Design branch:** `design/skill-combo-system`
 **Base:** v0.5.5 candidate `0fc83dd9877b184f9372779c5c4f87659d71499d`
@@ -53,6 +53,28 @@ Relevant sources:
 The skill-combo design branch currently contains the tested v0.5.5 candidate's `Aincrad_BP` and `Aincrad_RP` packs. The resource pack currently has no `ui/` directory, `_ui_defs.json`, or `hud_screen.json`; a HUD layout prototype would therefore be the first JSON UI override in this pack. The behavior pack depends on `@minecraft/server` 2.10.0 and `@minecraft/server-ui` 2.2.0, and its script already has the existing `BUFFER_TICKS = 6` constant and shared move/action logic. Do not touch combat code just to test layout.
 
 The Mojang `bedrock-samples` `hud_screen.json` and Bedrock Wiki custom-HUD docs confirm that the hotbar is built from nested UI controls and the `hotbar_chooser` component. This supports testing a small resource-pack-only layout override first, while keeping the original slot-selection/use semantics intact. JSON UI internals are version-sensitive and must be tested on the actual mobile client.
+
+### Additional Script API input research (2026-10-23)
+
+Current stable Microsoft documentation adds two useful details:
+
+- `PlayerButtonInputAfterEvent` and `Player.inputInfo.getButtonState()` can report supported player input changes.
+- The documented stable `InputButton` enum currently lists only `Jump` and `Sneak`; it does not expose an arbitrary user-defined HUD button identifier. The input event therefore does not, by itself, solve the custom skill-button bridge.
+- `PlayerHotbarSelectedSlotChangeAfterEvent` explicitly reports `previousSlotSelected`, `newSlotSelected`, `itemStack`, and `player`. It is a valid signal for a slot-change probe, but it only describes a change of selected slot, not a tap on the already-selected slot.
+
+Sources:
+- Microsoft, [PlayerButtonInputAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerbuttoninputafterevent?view=minecraft-bedrock-stable)
+- Microsoft, [InputButton](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputbutton?view=minecraft-bedrock-stable)
+- Microsoft, [InputInfo](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputinfo?view=minecraft-bedrock-stable)
+- Microsoft, [PlayerHotbarSelectedSlotChangeAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerhotbarselectedslotchangeafterevent?view=minecraft-bedrock-stable)
+
+### Isolated probe branch (2026-10-23)
+
+Branch: `prototype/skill-input-probe`, based on `design/skill-combo-system`.
+
+Added a diagnostic-only listener to `Aincrad_BP/scripts/main.js`. It reports the previous slot, new slot, and selected item whenever the hotbar selection changes. It does not modify combat resolution, reserve slots, add HUD controls, or alter stable `main`. This gives a small in-game check of whether touch hotbar changes arrive as expected before any UI work is attempted.
+
+**Device test required:** import/run this prototype in Minecraft on the target iPhone and change hotbar slots. Confirm each actual slot change prints exactly one `[AINCRAD INPUT TEST]` message. Then tap the already-selected slot again and note whether a second message appears. This listener cannot prove a custom HUD click callback exists; it only tests the documented slot-change route.
 
 ### Best candidate for a controlled prototype (not yet validated)
 
@@ -117,7 +139,9 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 ### Slice A — HUD/control feasibility
 - [x] Research current JSON UI custom-button behaviour and official script event options.
 - [x] Inspect the current repo's RP structure and manifest: no existing `ui/` folder; RP minimum engine version is 1.21.0.
-- [ ] Build an isolated proof-of-concept for previous, activate and next.
+- [x] Add an isolated script-side hotbar slot-change probe on `prototype/skill-input-probe`.
+- [ ] Test the probe on the target iPhone; no device result is claimed yet.
+- [ ] Build a UI/input proof-of-concept for previous, activate and next only if the slot probe supports a viable interaction.
 - [ ] Confirm one press triggers exactly one action on touch.
 - [ ] Confirm no regression to Attack, Interact charge, Sneak defence or Skill Crystal menu.
 - Stop if no reliable supported input path exists.
@@ -158,7 +182,10 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 - [x] Recorded user's clarified layout: reposition/restyle three hotbar slots near Attack and Interact to resemble dedicated Previous Skill, Activate Skill and Next Skill buttons.
 - [x] Made UI-to-script feasibility a mandatory gate before combat implementation.
 - [x] Researched current JSON UI button capabilities and the supported hotbar-selection event route.
+- [x] Checked current stable Script API input docs: only Jump/Sneak are listed in InputButton; documented hotbar event reports slot changes only.
+- [x] Created `prototype/skill-input-probe` and added a diagnostic-only slot-change listener without changing combat logic.
 - [x] Inspected repository structure: RP has no existing UI overrides; reviewed the Mojang sample HUD's hotbar chooser structure.
 - [x] Inspected the candidate RP/BP structure and recorded that custom JSON UI would be a new resource-pack override.
 - [ ] Validate repeated hotbar-slot input on the target runtime, especially repeated Activate Skill presses.
+- [ ] Test `prototype/skill-input-probe` in Minecraft on iPhone; repository code is not yet device-validated.
 - [ ] Confirm whether three slots must be reserved and obtain user approval if so.
