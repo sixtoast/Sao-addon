@@ -1,0 +1,42 @@
+name: Package iPhone input probe
+
+on:
+  push:
+    branches:
+      - prototype/skill-input-probe
+    paths:
+      - 'Aincrad_BP/**'
+      - 'Aincrad_RP/**'
+      - '.github/workflows/package-input-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out probe branch
+        uses: actions/checkout@v4
+      - name: Package behavior and resource packs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Aincrad_BP/manifest.json
+          test -f Aincrad_RP/manifest.json
+          mkdir -p dist
+          (cd Aincrad_BP && zip -qr ../dist/Aincrad_BP.mcpack .)
+          (cd Aincrad_RP && zip -qr ../dist/Aincrad_RP.mcpack .)
+          cp dist/Aincrad_BP.mcpack dist/Aincrad_RP.mcpack .
+          zip -q dist/Aincrad-Input-Probe.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+          rm Aincrad_BP.mcpack Aincrad_RP.mcpack
+          unzip -t dist/Aincrad-Input-Probe.mcaddon
+          ls -lh dist/
+      - name: Upload installable add-on
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aincrad-Input-Probe-mcaddon
+          path: dist/Aincrad-Input-Probe.mcaddon
+          if-no-files-found: error
+          retention-days: 14
