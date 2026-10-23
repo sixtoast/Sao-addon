@@ -8,6 +8,9 @@ on:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
       - '.github/workflows/build-addon-candidate.yml'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
