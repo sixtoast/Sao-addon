@@ -342,3 +342,21 @@ Known-good baseline remains v0.5.3 Use-button charging. Do not merge the diagnos
 The user tested the diagnostic on iPhone. The log showed individual Attack swing events, but holding Attack for about three seconds emitted only one message. Example observed gaps between separate swings included 7 ticks, 24 ticks, 48 ticks, and 84 ticks; these are not evidence of a held-button state. The player runtime also reported that `world.beforeEvents.playerItemAttackEntity` is not exposed. The existing combat cancellation path was reported active, and the hurt/guard hook was available.
 
 Conclusion: `playerSwingStart` detects a swing start, not continuous Attack-button state or release. Do not build an Attack hold/release charge heuristic from event cadence, and do not merge this diagnostic-only build into main. Stable Script API `InputButton` documents Jump and Sneak, not Attack. The known-good charge route remains native Interact/Use via the throwable item. Revisit Attack charging only if a supported input API becomes available or a new, evidence-backed item/input mechanism can be demonstrated on the target iPhone runtime.
+
+
+## v0.5.8 experimental Attack button-state probe (23 October 2026)
+
+The v0.5.7 device test showed that `playerSwingStart` emits only one message during a sustained Attack hold. Before abandoning the Attack route entirely, this diagnostic candidate probes `player.inputInfo.getButtonState("Attack")` by passing the string `"Attack"` even though Microsoft's documented stable `InputButton` enum lists only `Jump` and `Sneak`. This is explicitly an undocumented-value experiment, not an API assumption.
+
+Test on iPhone:
+1. Import v0.5.8 into a separate test world and select any item.
+2. Check for an initial `[INPUT PROBE 0.5.8] Attack state=...` message.
+3. Tap Attack once, hold it for about three seconds, then release it.
+4. Send every `[INPUT PROBE 0.5.8]` line.
+
+Interpretation:
+- If it transitions to `Pressed` when held and `Released` on release, we have a possible input signal to validate further.
+- If it throws an error or remains `Released` during the hold, this route is unsupported on the target runtime.
+- This build is diagnostic-only and must not be merged or used for normal combat; it intentionally retains the swing diagnostic's bypass of custom swing-to-combat handling.
+
+References: [Microsoft InputInfo](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputinfo?view=minecraft-bedrock-stable), [InputButton](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/inputbutton?view=minecraft-bedrock-stable).
