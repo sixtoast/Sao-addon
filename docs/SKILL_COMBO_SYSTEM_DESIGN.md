@@ -226,3 +226,70 @@ Use a per-player combat timeout, refreshed by meaningful combat activity (dealin
 5. Only then connect the first Quick Slash -> Linear Strike combo and regression-test Heavy Strike, Sneak defence, Skill Crystal and ordinary inventory behaviour.
 
 This alternative supersedes the earlier assumption that three custom HUD buttons are the primary target. Keep main untouched; test on an isolated prototype branch.
+
+
+## Accepted design update: contextual hotbar with select-to-activate (2026-10-23)
+
+This section supersedes the earlier three-button HUD proposal and earlier tentative sword-slot wording.
+
+### User-approved interaction
+
+- Out of combat, the player's ordinary hotbar is restored and usable.
+- On entering combat, slot 1 (zero-based index 0) is reserved for the sword; the remaining hotbar slots become the skill bar.
+- Selecting a skill slot immediately requests that skill. No separate Activate button is required.
+- After a skill slot is selected, investigate setting `player.selectedSlotIndex = 0` to return focus to the sword slot. The slot-change handler must ignore slot 0 so the return cannot trigger a skill. This also allows the same skill to be selected repeatedly.
+- The first combo target remains Quick Slash -> Linear Strike; Arc Sweep and Counter Edge follow after the input and restoration tests pass.
+- Heavy Strike remains the existing dedicated charge/release mechanic; Sneak defence remains independent.
+
+### Verified API facts
+
+Microsoft's current Script API reference documents:
+- `world.afterEvents.playerHotbarSelectedSlotChange` provides the player, previous and new selected slot indices, and the newly selected `itemStack`.
+- `Player.selectedSlotIndex` is writable except in restricted-execution mode.
+- `ItemStack.clone()` creates an exact copy including custom data/properties.
+- `Container.getItem(slot)` returns an item stack copy and `Container.setItem(slot, itemStack)` writes a stack to a chosen slot.
+
+References:
+- Microsoft, [Player.selectedSlotIndex](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable)
+- Microsoft, [PlayerHotbarSelectedSlotChangeAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerhotbarselectedslotchangeafterevent?view=minecraft-bedrock-stable)
+- Microsoft, [ItemStack.clone](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemstack?view=minecraft-bedrock-stable)
+- Microsoft, [Container](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/container?view=minecraft-bedrock-stable)
+
+### Inventory safety finding and implementation decision
+
+The hotbar is part of the player's real inventory. A correct in-memory `ItemStack.clone()` snapshot is useful while the script is running, but it is not sufficient recovery if the script or world reloads. The public ItemStack API exposes cloning and individual properties/components; the investigated API references do not establish a general supported serializer/deserializer that round-trips arbitrary ItemStacks (including custom components, enchantments, durability, names, lore, dynamic properties and add-on item data) through a player dynamic-property string.
+
+Therefore **do not implement hotbar replacement yet**. First design and prove a durable storage/recovery path that preserves actual ItemStack objects and metadata across disconnect/rejoin and script/world reload. Do not assume JSON.stringify(ItemStack) is a supported lossless serializer.
+
+Possible approaches to investigate, in order:
+1. A persistent, world-saved container/storage entity or other supported inventory container that can hold the original ItemStacks themselves, keyed safely to each player; verify entity persistence, access control, capacity and cleanup.
+2. A fail-closed prototype that refuses to enter combat unless all slots that would be replaced are empty, if a persistent container approach is not reliable. This avoids item loss but is only a restricted test harness, not the intended final UX.
+3. Keep the existing inventory untouched and defer contextual bar implementation if neither approach can be made safe. Do not silently choose a lossy serialization or memory-only snapshot.
+
+Before any mutation, preflight the entire transaction: confirm storage capacity and access, move original stacks into storage, verify each move, and only then place temporary skill controls. On exit, restore original stacks first and verify them before removing the recovery record. If any step fails, abort the transition and roll back safely. Never clear all inventory, overwrite slot 0's sword, drop overflow on the ground as the primary fallback, or duplicate a stack to simulate backup.
+
+### Input handling prototype
+
+The existing probe reports slot-change events. Next, add an isolated selection-only test (without changing inventory) that:
+1. logs selected hotbar slot and item type;
+2. when a test skill slot is selected, logs the requested skill;
+3. tries to return to slot index 0 and records whether the slot-change event fires again;
+4. suppresses any event for slot 0 and prevents duplicate skill requests in the same tick.
+
+Test on the target iPhone for event order, UI flicker, repeated same-skill activation, quick switching between skill slots, and interaction with the existing Heavy Strike charge token. Do not yet bind actual moves or replace real hotbar items.
+
+### Combat state
+
+Start combat on a confirmed attack request or a confirmed incoming combat hit, not merely because a hostile entity is nearby. Refresh a 10-second inactivity timer on relevant combat events; this is an initial test value only. Do not exit combat during an active move, queued follow-up, charge, or immediate defence resolution. Restore the normal hotbar only after combat state is idle.
+
+### Required acceptance checks before gameplay implementation
+
+- The same skill can be activated repeatedly by selecting it each time because focus returns to slot 1.
+- Selecting slot 1 itself never activates a skill.
+- Slot-change recursion is suppressed and each selection yields at most one request.
+- Hotbar transaction preserves every original stack exactly, including empty slots and mixed stack counts.
+- Recovery survives death, disconnect/rejoin, and world/script reload without loss or duplication.
+- Full inventory and unavailable storage fail closed without altering the player's inventory.
+- Existing Quick Slash, Heavy Strike tap/charge, Sneak defence, skill menu, durability and ordinary inventory behaviour pass regression tests.
+
+Until these gates pass, the prototype remains design/input research only; the current slot-change probe does not modify inventory or combat behaviour.
