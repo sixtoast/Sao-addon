@@ -360,3 +360,26 @@ Reference pages:
 - https://betterbedrock.com/information/general
 
 Use these as behaviour/visual research references. Do not copy Better Bedrock's code, textures, or UI assets into Sao without checking its current licence/permissions and obtaining permission where required. Implement independent equivalents using documented Bedrock resource-pack/JSON UI capabilities and the existing Sao Script API architecture.
+
+## v0.5.6 — touch-friendly Skill Crystal menu polish
+
+This candidate builds on the user-tested v0.5.5 combat behaviour and makes a scoped menu-only change:
+- clearer Combat Actions, Heavy Strike, Defence, and Diagnostics sections;
+- original button labels retained for Quick Slash, Heavy Strike, and Parry;
+- item icon paths added to the attack/parry menu buttons;
+- diagnostics button text now reflects whether diagnostics are currently ON or OFF;
+- pack version bumped to 0.5.6.
+
+### Test sequence
+
+1. Confirm both BP and RP show version 0.5.6.
+2. Open the Skill Crystal menu. Check that headers/divider render and button icons load on the target iPhone.
+3. Choose Quick Slash, Heavy Strike, and Parry one at a time; verify each still triggers the same action as v0.5.5.
+4. Toggle diagnostics twice and verify the label changes between **Diagnostics: Turn ON** and **Diagnostics: Turn OFF** and the status messages remain correct.
+5. Select Guard status and confirm it reports the same status as before.
+6. Re-test tap Interact Heavy Strike (12 damage), hold 7–8 ticks (15 damage), and hold 9+ ticks (18 damage).
+7. Confirm Sneak Spot Dodge → Parry → Guard, guard break, targeting, and normal Attack behaviour remain unchanged.
+8. Check the Content Log for form API or missing-icon errors.
+
+The menu uses documented `@minecraft/server-ui` form controls. It does not override global JSON UI, add a custom HUD button, or change combat logic. Icons are a candidate visual enhancement and must be verified in-game; if an icon path fails on the target runtime, remove that icon rather than adding risky UI overrides.
+
