@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/interact-tap-heavy-charge-stronger-v0.5.5
+      - research/better-bedrock-ui-approach
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
@@ -41,10 +42,10 @@ jobs:
           cd Aincrad_RP
           zip -qr ../Aincrad_RP.mcpack .
       - name: Bundle installable add-on
-        run: zip -q Sao-addon-v0.5.5.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+        run: zip -q Sao-addon-v0.5.6.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
       - uses: actions/upload-artifact@v4
         with:
-          name: Sao-addon-v0.5.5
-          path: Sao-addon-v0.5.5.mcaddon
+          name: Sao-addon-v0.5.6
+          path: Sao-addon-v0.5.6.mcaddon
           if-no-files-found: error
           retention-days: 14
