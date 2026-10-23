@@ -1,6 +1,6 @@
 # Better Bedrock UI Research and Sao Implementation Plan
 
-**Status:** Research complete; no UI implementation started.
+**Status:** Research complete; Slice 1 menu polish implemented on an isolated candidate branch; runtime verification pending.
 **Date:** 2026-10-23
 **Working base:** v0.5.5 candidate commit `0fc83dd9877b184f9372779c5c4f87659d71499d`
 **Branch:** `research/better-bedrock-ui-approach`
@@ -52,7 +52,7 @@ Technical references:
 
 ## Recommended implementation order
 
-### Slice 1 — Sao Skill Crystal menu polish (recommended next)
+### Slice 1 — Sao Skill Crystal menu polish (implemented; test pending)
 
 Keep the existing `ActionFormData` flow. Give the menu a clear hierarchy and consistent action names; use original Sao icon assets for supported button icons where the current pack can provide them. Keep the layout compact and touch-friendly. Preserve existing action selections and all combat behaviour.
 
@@ -79,6 +79,6 @@ Only if the user wants deeper screen/HUD styling, create an isolated branch with
 - [x] Reviewed Microsoft ActionFormData and JSON UI documentation plus community JSON UI guidance.
 - [x] Recorded the failed custom HUD-button route as a constraint.
 - [x] Created this isolated research branch and plan; stable `main` remains untouched.
-- [ ] Implement Slice 1 after confirming the exact current menu actions and available original icons.
-- [ ] Build a candidate and run automated syntax/JSON checks.
+- [x] Implemented Slice 1 on the isolated candidate branch: clearer menu sections, action icons, and a state-aware diagnostics label; combat logic unchanged.
+- [ ] Confirm the v0.5.6 candidate build passes automated syntax/JSON checks.
 - [ ] Get user in-game verification before calling the UI slice complete.
