@@ -34,7 +34,7 @@ Three distinct on-screen controls styled to match the hotbar:
 
 Changing selection must not attack. Activation must not also change selection. Show the selected skill name and a brief selection cue.
 
-The design goal is three HUD buttons, not three inventory items. Do not treat a cosmetic JSON UI element as functional until it has been proven to invoke a supported script-side action on the target Bedrock runtime.
+The intended approach is to visually reposition/restyle three existing hotbar slots so they appear as dedicated buttons near the on-screen Attack and Interact controls. The slots would carry control functions rather than act as ordinary weapons. This is still a hypothesis to prototype: changing a selected hotbar slot is observable, but tapping the already-selected slot may not emit a new slot-change event. Do not commit to consuming three inventory slots until this interaction model is proven and the user has approved the inventory trade-off.
 
 ## UI research findings (2026-10-23)
 
@@ -50,10 +50,13 @@ Relevant sources:
 
 ### Best candidate for a controlled prototype (not yet validated)
 
-Investigate whether custom HUD buttons can map to distinct built-in hotbar-slot selection actions and whether the behavior script can observe those actions through the supported hotbar-selection event/property. This may provide a bridge from a button press to script without inventing a custom callback.
+Prototype the user's clarified idea: move/restyle three existing hotbar slots so they sit near Attack and Interact and look like three custom skill buttons. Use hotbar-slot selection changes as the potential signal into script; do not invent a custom UI callback. The three slots would mean Previous Skill, Activate Skill and Next Skill.
+
+Important input limitation: selecting a different slot is detectable, but tapping the currently selected slot again may not produce a slot-change event. We must specifically test repeated activation, selection restoration, and whether normal inventory access can remain usable. If the only workable implementation permanently reserves slots, ask the user to approve that trade-off before adopting it.
 
 Risks to resolve before adopting it:
-- A slot-selection action may change the player's selected item and conflict with normal hotbar use.
+- A slot-selection action changes the player's selected item and may conflict with normal hotbar use.
+- A repeated tap on the already-selected slot may not emit a second event, making a dedicated Activate Skill slot unreliable without another signal.
 - Restoring the prior selected slot could cause visible flicker, event recursion or unreliable touch timing.
 - It may be impossible to map arbitrary UI buttons to the desired slot actions consistently across mobile/controller/keyboard.
 - The middle Activate Skill control needs a distinct observable action, not a visual-only click.
@@ -146,7 +149,8 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 - [x] Re-read v0.5.5 candidate combat constants, item definitions, use-event routing and regression checklist.
 - [x] Recorded cycle selection and hybrid combo timing.
 - [x] Created isolated design branch from tested v0.5.5 candidate; stable `main` untouched.
-- [x] Recorded user's updated preference: three HUD controls (Previous Skill, Activate Skill, Next Skill), styled as dedicated hotbar-like buttons; one skill per press.
+- [x] Recorded user's clarified layout: reposition/restyle three hotbar slots near Attack and Interact to resemble dedicated Previous Skill, Activate Skill and Next Skill buttons.
 - [x] Made UI-to-script feasibility a mandatory gate before combat implementation.
 - [x] Researched current JSON UI button capabilities and the supported hotbar-selection event route.
-- [ ] Validate a reliable HUD-control input route on the target runtime.
+- [ ] Validate repeated hotbar-slot input on the target runtime, especially repeated Activate Skill presses.
+- [ ] Confirm whether three slots must be reserved and obtain user approval if so.
