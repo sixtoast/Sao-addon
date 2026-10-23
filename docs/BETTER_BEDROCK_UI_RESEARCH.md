@@ -80,5 +80,13 @@ Only if the user wants deeper screen/HUD styling, create an isolated branch with
 - [x] Recorded the failed custom HUD-button route as a constraint.
 - [x] Created this isolated research branch and plan; stable `main` remains untouched.
 - [x] Implemented Slice 1 on the isolated candidate branch: clearer menu sections, action icons, and a state-aware diagnostics label; combat logic unchanged.
-- [ ] Confirm the v0.5.6 candidate build passes automated syntax/JSON checks.
-- [ ] Get user in-game verification before calling the UI slice complete.
+- [x] v0.5.6 candidate built successfully in GitHub Actions; JavaScript syntax, all pack JSON, pack versions, and nested .mcpack packaging verified.
+- [ ] Get user in-game verification of menu headers, icons, action selection, and unchanged combat before calling the UI slice complete.
+
+
+## v0.5.6 candidate build record
+
+- Workflow: https://github.com/sixtoast/Sao-addon/actions/runs/39963263984
+- Artifact: `Sao-addon-v0.5.6` (expires 2026-11-06)
+- Local install package was checked to contain `Aincrad_BP.mcpack` and `Aincrad_RP.mcpack`; both manifests report version 0.5.6.
+- Automated validation passed. The menu changes have **not** been tested in Minecraft yet.
