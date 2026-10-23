@@ -36,23 +36,41 @@ Changing selection must not attack. Activation must not also change selection. S
 
 The design goal is three HUD buttons, not three inventory items. Do not treat a cosmetic JSON UI element as functional until it has been proven to invoke a supported script-side action on the target Bedrock runtime.
 
+## UI research findings (2026-10-23)
+
+Community-maintained Bedrock Wiki documentation confirms that JSON UI can insert custom visuals into `hud_screen.json` and create clickable buttons. However, the documented button pattern uses predefined/hardcoded game button IDs (for example, menu navigation); it does not document a general custom callback from an arbitrary HUD click into a behavior-pack `@minecraft/server` script. The legacy HTML UI event bridge belongs to old scripting/UI systems and must not be assumed to exist in current stable Bedrock.
+
+Relevant sources:
+- Bedrock Wiki, [Adding HUD Elements](https://wiki.bedrock.dev/json-ui/add-hud-elements)
+- Bedrock Wiki, [Buttons and Toggles](https://wiki.bedrock.dev/json-ui/buttons-and-toggles)
+- Bedrock Wiki, [JSON UI Documentation](https://wiki.bedrock.dev/json-ui/json-ui-documentation)
+- Microsoft, [Working With Events](https://learn.microsoft.com/en-us/minecraft/creator/documents/scripting/events?view=minecraft-bedrock-stable)
+- Microsoft, [Player.selectedSlotIndex](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable)
+- Microsoft, [PlayerHotbarSelectedSlotChangeAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerhotbarselectedslotchangeafterevent?view=minecraft-bedrock-stable)
+
+### Best candidate for a controlled prototype (not yet validated)
+
+Investigate whether custom HUD buttons can map to distinct built-in hotbar-slot selection actions and whether the behavior script can observe those actions through the supported hotbar-selection event/property. This may provide a bridge from a button press to script without inventing a custom callback.
+
+Risks to resolve before adopting it:
+- A slot-selection action may change the player's selected item and conflict with normal hotbar use.
+- Restoring the prior selected slot could cause visible flicker, event recursion or unreliable touch timing.
+- It may be impossible to map arbitrary UI buttons to the desired slot actions consistently across mobile/controller/keyboard.
+- The middle Activate Skill control needs a distinct observable action, not a visual-only click.
+- JSON UI is a client UI modification and may break across Bedrock updates; community docs warn it is not a stable long-term API.
+
+Do not reserve or repurpose three real inventory slots without a successful proof-of-concept and explicit design decision. Do not ship controls that only look clickable.
+
 ## Critical feasibility gate: HUD button -> script
 
 Bedrock resource-pack JSON UI can alter presentation, but an arbitrary custom UI button is not automatically a supported bridge into `@minecraft/server` script events. Previous custom HUD-button attempts on the target iPhone failed. Do not invent a callback API or assume a JSON UI click can call JavaScript.
 
 Before implementing combat activation:
-1. Research current Microsoft Script API and JSON UI docs plus community-maintained Bedrock UI references and working examples.
-2. Determine whether a resource-pack UI control can trigger a reliable, documented game action that script can observe, without breaking normal Attack, Heavy Strike Interact charge, or Sneak defence.
-3. Prototype the three controls in an isolated branch and test on the user's actual Bedrock device.
-4. If a true script-connected HUD button is not feasible, report the limitation and offer a verified fallback (e.g. dedicated control items or a supported form) rather than shipping fake buttons.
-
-References:
-- Microsoft PlayerSwingStartAfterEvent: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerswingstartafterevent?view=minecraft-bedrock-stable
-- Microsoft WorldAfterEvents: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable
-- Microsoft ActionFormData: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server-ui/actionformdata?view=minecraft-bedrock-stable
-- Microsoft JSON UI definitions: https://learn.microsoft.com/en-us/minecraft/creator/reference/content/jsonuireference/examples/jsonuicomponents/ui_defs?view=minecraft-bedrock-stable
-- Community Bedrock Wiki JSON UI intro: https://wiki.bedrock.dev/json-ui/json-ui-intro
-- Better Bedrock UI research: `docs/BETTER_BEDROCK_UI_RESEARCH.md`
+1. Inspect the repo's current resource pack structure and exact manifest/API versions.
+2. Prototype the least invasive UI-to-script route described above on a separate branch.
+3. Confirm each button triggers exactly one distinct script action on the user's actual Bedrock device.
+4. Confirm no regression to normal Attack, Heavy Strike Interact charge, Sneak defence, or the Skill Crystal menu.
+5. If a reliable route is not available, report the limitation and offer a verified fallback (e.g. dedicated control items or a supported form) rather than shipping fake buttons.
 
 ## Initial skill roster
 
@@ -88,10 +106,11 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 ## Implementation slices
 
 ### Slice A — HUD/control feasibility
-- Research the UI-to-script bridge and confirm exact target version/API.
-- Prototype previous, activate and next controls in isolation.
-- Confirm one press triggers exactly one action on touch.
-- Confirm no regression to Attack, Interact charge, Sneak defence or Skill Crystal menu.
+- [x] Research current JSON UI custom-button behaviour and official script event options.
+- [ ] Inspect the current repo's RP UI structure and pack API versions.
+- [ ] Build an isolated proof-of-concept for previous, activate and next.
+- [ ] Confirm one press triggers exactly one action on touch.
+- [ ] Confirm no regression to Attack, Interact charge, Sneak defence or Skill Crystal menu.
 - Stop if no reliable supported input path exists.
 
 ### Slice B — skill selection state
@@ -129,4 +148,5 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 - [x] Created isolated design branch from tested v0.5.5 candidate; stable `main` untouched.
 - [x] Recorded user's updated preference: three HUD controls (Previous Skill, Activate Skill, Next Skill), styled as dedicated hotbar-like buttons; one skill per press.
 - [x] Made UI-to-script feasibility a mandatory gate before combat implementation.
-- [ ] Validate a reliable, documented HUD control input route on the target runtime.
+- [x] Researched current JSON UI button capabilities and the supported hotbar-selection event route.
+- [ ] Validate a reliable HUD-control input route on the target runtime.
