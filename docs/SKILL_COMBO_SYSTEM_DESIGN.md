@@ -110,7 +110,7 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 
 ### Slice A — HUD/control feasibility
 - [x] Research current JSON UI custom-button behaviour and official script event options.
-- [ ] Inspect the current repo's RP UI structure and pack API versions.
+- [x] Inspect the current repo's RP structure and manifest: no existing `ui/` folder; RP minimum engine version is 1.21.0.
 - [ ] Build an isolated proof-of-concept for previous, activate and next.
 - [ ] Confirm one press triggers exactly one action on touch.
 - [ ] Confirm no regression to Attack, Interact charge, Sneak defence or Skill Crystal menu.
@@ -152,5 +152,6 @@ Extend the existing `MOVES`/action pipeline. Do not duplicate target selection, 
 - [x] Recorded user's clarified layout: reposition/restyle three hotbar slots near Attack and Interact to resemble dedicated Previous Skill, Activate Skill and Next Skill buttons.
 - [x] Made UI-to-script feasibility a mandatory gate before combat implementation.
 - [x] Researched current JSON UI button capabilities and the supported hotbar-selection event route.
+- [x] Inspected the candidate RP/BP structure and recorded that custom JSON UI would be a new resource-pack override.
 - [ ] Validate repeated hotbar-slot input on the target runtime, especially repeated Activate Skill presses.
 - [ ] Confirm whether three slots must be reserved and obtain user approval if so.
