@@ -6,6 +6,7 @@ on:
       - prototype/hotbar-storage-spike
       - prototype/hotbar-storage-test
       - prototype/hotbar-storage-fidelity
+      - prototype/hotbar-capture-mirror
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
@@ -54,4 +55,4 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-# Packages the diagnostic-only storage spike/test branches. No real player inventory is moved.
+# Packages diagnostic-only storage/mirror branches. The mirror reads the player hotbar and clones it into hidden test storage; it never mutates player inventory.
