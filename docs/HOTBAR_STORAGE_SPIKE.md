@@ -92,3 +92,24 @@ Next investigation:
 - Record whether the selected slot actually changes while the probe is enabled and whether a successful item-use event coincides with the return.
 - Re-test rapid repeated selection after the diagnostic build.
 - Keep stable `main` untouched and do not begin hotbar storage or combo activation until the input route is reliable.
+
+
+## Diagnostic follow-up build: v0.5.8 (2026-10-24)
+
+After the v0.5.7 test, the user reported that auto-return worked for a random period, then stopped; using an item once could still result in a return to slot 1. The previous interval loop swallowed assignment exceptions, so it could not distinguish an API assignment failure from item-use/touch behaviour.
+
+The v0.5.8 diagnostic-only update:
+- Logs an `itemUse` observation and selected slot while the probe is ON.
+- Attempts the slot-1 assignment, reads the selected slot immediately afterwards, and reports an exception or a value that did not stick.
+- Reports a given failure episode only once, then resets that report after slot 1 is observed again to avoid chat spam.
+- Does not move inventory or activate skills.
+- Bumps both pack manifest versions to 0.5.8 to avoid Bedrock reusing the previous cached pack.
+
+Target-device test:
+1. Import v0.5.8 and enable the probe with the Skill Crystal.
+2. Rapidly tap a non-first slot until the auto-return appears to stop.
+3. Note whether chat reports `Auto-return assignment failed`; if it does, capture the exact message.
+4. If it stops without that diagnostic, use the selected item once and note the `itemUse observed` slot message and whether the hotbar returns to slot 1.
+5. Turn the probe OFF with the Skill Crystal.
+
+This test narrows the cause; it does not yet establish that the interaction is reliable enough for skill activation.
