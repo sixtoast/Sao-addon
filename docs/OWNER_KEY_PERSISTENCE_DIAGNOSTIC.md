@@ -138,3 +138,18 @@ This does **not** approve `persistentId` for hotbar transactions. Remaining gate
 5. Specify a fail-closed recovery protocol for interrupted inventory capture/swap/restore, including what happens when item fidelity cannot be proven.
 
 Continue on `prototype/hotbar-transaction-preflight`. No inventory mutation, hotbar writes, or automatic combat hotbar switching is authorised by this result.
+
+
+## API contract review after the persistence match (2026-10-24)
+
+The current Microsoft Learn Player API reference describes `Player.persistentId` as an identifier intended to identify a player across sessions, but explicitly marks the property **pre-release** and warns that it can throw `EngineError` or `InvalidEntityError`. JaylyMC's versioned v26.50 Script API reference likewise marks it Beta and documents those possible errors. The same-world test is consistent with the documented purpose, but cannot upgrade a pre-release API into a stable contract.
+
+References reviewed:
+- Microsoft Learn, Player class (`persistentId`): https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable
+- JaylyMC community-maintained v26.50 Player reference: https://jaylydev.github.io/scriptapi-docs/latest/classes/_minecraft_server.Player-1.html
+- Microsoft Learn, Entity class (`id` semantics): https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable
+- Microsoft Learn, `@minecraft/server` module versions: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/minecraft-server
+
+The documented `Entity.id` wording says it is intended to remain consistent across loads of a world instance, but does not promise a globally unique player identity across copied worlds or all server migration cases. Do not parse either identifier or derive meaning from its structure.
+
+**Implementation rule:** treat `persistentId` as a candidate player key only behind a guarded read, strict non-empty-string validation, explicit schema/module compatibility, and fail-closed handling for errors or changed values. Do not use `player.id` as an unreviewed automatic fallback for a destructive transaction. The next test should verify per-player isolation with two actual players; it must be read-only and must not display raw identifiers.
