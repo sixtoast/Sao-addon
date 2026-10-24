@@ -280,7 +280,8 @@ function showCombatMenu(player) {
     )
     .button("Quick Slash\n§7Fast • 7 damage")
     .button("Heavy Strike\n§7Committed • 12 damage")
-    .button("Parry\n§7Short timing window");
+    .button("Parry\\n§7Short timing window")
+    .button("Skill Loadout\\n§7View and reorder saved skills");
 
   form.button("Diagnostics: Toggle ON/OFF");
   form.button("Diagnostics: Guard Status");
@@ -291,7 +292,8 @@ function showCombatMenu(player) {
     if (response.selection === 0) beginAttack(player, MOVES.quick);
     else if (response.selection === 1) beginAttack(player, MOVES.heavy);
     else if (response.selection === 2) beginParry(player);
-    else if (response.selection === 3) {
+    else if (response.selection === 3) showSkillLoadoutMenu(player);
+    else if (response.selection === 4) {
       if (diagnosticsEnabled.has(player.id)) {
         diagnosticsEnabled.delete(player.id);
         safeMessage(player, "§7[AINCRAD DIAG] Diagnostics OFF.");
@@ -300,7 +302,7 @@ function showCombatMenu(player) {
         safeMessage(player, "§a[AINCRAD DIAG] Diagnostics ON. Damage, guard strain/breaks, target selection and clashes will be reported.");
         reportGuardStatus(player);
       }
-    } else if (response.selection === 4) reportGuardStatus(player);
+    } else if (response.selection === 5) reportGuardStatus(player);
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
@@ -885,6 +887,124 @@ function runSkillPersistenceProbe(player) {
   } catch (error) {
     safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] ERROR: " + String(error) + ". Stored data was not intentionally overwritten after this error; player hotbar was not changed.");
   }
+}
+
+const SKILL_LOADOUT_PROPERTY = "aincrad:skill_loadout_v1";
+const SKILL_REGISTRY = {
+  quick_slash: { name: "Quick Slash" },
+  heavy_strike: { name: "Heavy Strike" },
+  parry: { name: "Parry" }
+};
+const DEFAULT_SKILL_LOADOUT = {
+  kind: "AINCRAD_SKILL_LOADOUT",
+  schemaVersion: 1,
+  equippedSkillIds: ["quick_slash", "heavy_strike", "parry"],
+  selectedSkillIndex: 0
+};
+
+function validateSkillLoadout(value) {
+  if (!value || value.kind !== DEFAULT_SKILL_LOADOUT.kind || value.schemaVersion !== 1 ||
+      !Array.isArray(value.equippedSkillIds) || value.equippedSkillIds.length < 1 ||
+      value.equippedSkillIds.length > 8 || !Number.isInteger(value.selectedSkillIndex) ||
+      value.selectedSkillIndex < 0 || value.selectedSkillIndex >= value.equippedSkillIds.length) return false;
+  const seen = new Set();
+  for (const id of value.equippedSkillIds) {
+    if (!Object.prototype.hasOwnProperty.call(SKILL_REGISTRY, id) || seen.has(id)) return false;
+    seen.add(id);
+  }
+  return true;
+}
+
+function getSkillLoadout(player) {
+  try {
+    const raw = player.getDynamicProperty(SKILL_LOADOUT_PROPERTY);
+    if (raw === undefined) {
+      const encoded = JSON.stringify(DEFAULT_SKILL_LOADOUT);
+      player.setDynamicProperty(SKILL_LOADOUT_PROPERTY, encoded);
+      const readback = player.getDynamicProperty(SKILL_LOADOUT_PROPERTY);
+      if (typeof readback !== "string" || readback !== encoded) return { ok: false, reason: "initial write/readback mismatch" };
+      return { ok: true, loadout: JSON.parse(readback), created: true };
+    }
+    if (typeof raw !== "string") return { ok: false, reason: "stored value has unexpected type; retained without overwrite" };
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch (_) { return { ok: false, reason: "stored JSON malformed; retained without overwrite" }; }
+    if (!validateSkillLoadout(parsed)) return { ok: false, reason: "unknown schema or invalid skill IDs; retained without overwrite" };
+    return { ok: true, loadout: parsed, created: false };
+  } catch (error) { return { ok: false, reason: String(error) }; }
+}
+
+function saveSkillLoadout(player, loadout) {
+  if (!validateSkillLoadout(loadout)) return { ok: false, reason: "invalid loadout refused" };
+  try {
+    const encoded = JSON.stringify(loadout);
+    player.setDynamicProperty(SKILL_LOADOUT_PROPERTY, encoded);
+    if (player.getDynamicProperty(SKILL_LOADOUT_PROPERTY) !== encoded) return { ok: false, reason: "save readback mismatch; property retained" };
+    return { ok: true };
+  } catch (error) { return { ok: false, reason: String(error) }; }
+}
+
+function formatSkillLoadout(loadout) {
+  return loadout.equippedSkillIds.map((id, index) =>
+    "Slot " + (index + 1) + ": " + SKILL_REGISTRY[id].name + (index === loadout.selectedSkillIndex ? "  < SELECTED" : "")
+  ).join("\\n");
+}
+
+function showSkillLoadoutMenu(player) {
+  if (!player || !player.isValid || menuOpen.has(player.id)) return;
+  const result = getSkillLoadout(player);
+  if (!result.ok) {
+    safeMessage(player, "§c[AINCRAD SKILL LOADOUT] BLOCKED: " + result.reason + ". No hotbar slots changed.");
+    return;
+  }
+  const loadout = result.loadout;
+  if (result.created) safeMessage(player, "§a[AINCRAD SKILL LOADOUT] Starter skill order saved and verified.");
+  menuOpen.add(player.id);
+  const form = new ActionFormData()
+    .title("AINCRAD • Skill Loadout")
+    .body("Saved skill order (slot 0 reserved for sword in future combat mode):\\n\\n" +
+      formatSkillLoadout(loadout) + "\\n\\nSelect a slot, or move the selected skill left/right.")
+    .button("Select slot 1")
+    .button("Select slot 2")
+    .button("Select slot 3")
+    .button("Move selected skill left")
+    .button("Move selected skill right")
+    .button("Back");
+  form.show(player).then((response) => {
+    menuOpen.delete(player.id);
+    if (response.canceled || response.selection === undefined) return;
+    const next = { kind: loadout.kind, schemaVersion: 1, equippedSkillIds: [...loadout.equippedSkillIds], selectedSkillIndex: loadout.selectedSkillIndex };
+    if (response.selection <= 2) {
+      if (response.selection >= next.equippedSkillIds.length) {
+        safeMessage(player, "§e[AINCRAD SKILL LOADOUT] That slot is empty.");
+        showSkillLoadoutMenu(player);
+        return;
+      }
+      next.selectedSkillIndex = response.selection;
+    } else if (response.selection === 3 || response.selection === 4) {
+      const to = next.selectedSkillIndex + (response.selection === 3 ? -1 : 1);
+      if (to < 0 || to >= next.equippedSkillIds.length) {
+        safeMessage(player, "§e[AINCRAD SKILL LOADOUT] The selected skill is already at that end of the order.");
+        showSkillLoadoutMenu(player);
+        return;
+      }
+      const from = next.selectedSkillIndex;
+      [next.equippedSkillIds[from], next.equippedSkillIds[to]] = [next.equippedSkillIds[to], next.equippedSkillIds[from]];
+      next.selectedSkillIndex = to;
+    } else {
+      showCombatMenu(player);
+      return;
+    }
+    const saved = saveSkillLoadout(player, next);
+    if (!saved.ok) {
+      safeMessage(player, "§c[AINCRAD SKILL LOADOUT] SAVE BLOCKED: " + saved.reason + ". Hotbar unchanged.");
+      return;
+    }
+    safeMessage(player, "§a[AINCRAD SKILL LOADOUT] Saved and verified.");
+    showSkillLoadoutMenu(player);
+  }).catch((error) => {
+    menuOpen.delete(player.id);
+    safeMessage(player, "§c[AINCRAD SKILL LOADOUT] Menu error: " + String(error));
+  });
 }
 
 function getStorageTestOwnerTag(player) {
