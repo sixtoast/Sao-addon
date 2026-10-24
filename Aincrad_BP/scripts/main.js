@@ -925,7 +925,23 @@ world.afterEvents.playerSpawn.subscribe((event) => {
 // Selection-only auto-return probe state. It is toggled by using the existing
 // Skill Crystal through itemUse, avoiding scriptEventReceive compatibility.
 const hotbarAutoReturnProbePlayers = new Set();
-const hotbarAutoReturnLastRequestTick = new Map();
+
+// One enforcement loop avoids a pile of competing delayed returns during rapid
+// touch input. While the opt-in probe is enabled, slot 1 is reasserted each tick.
+system.runInterval(() => {
+  for (const playerId of hotbarAutoReturnProbePlayers) {
+    try {
+      const player = world.getAllPlayers().find((candidate) => candidate.id === playerId);
+      if (!player || !player.isValid) {
+        hotbarAutoReturnProbePlayers.delete(playerId);
+        continue;
+      }
+      if (player.selectedSlotIndex !== 0) player.selectedSlotIndex = 0;
+    } catch (error) {
+      // Keep the probe alive; the slot-change listener reports relevant failures.
+    }
+  }
+}, 1);
 
 // ISOLATED INPUT PROBE: reports hotbar slot changes so the target-device
 // interaction can be verified before any slots are repurposed for skills.
@@ -939,24 +955,11 @@ try {
       if (!player || !player.isValid) return;
       const itemName = event.itemStack?.typeId ?? "empty";
       if (hotbarAutoReturnProbePlayers.has(player.id) && event.newSlotSelected !== 0) {
-        // Avoid duplicate return requests if multiple selection events arrive
-        // during the same tick. Slot 0 is deliberately ignored, preventing a
-        // return-event loop.
-        if (hotbarAutoReturnLastRequestTick.get(player.id) !== system.currentTick) {
-          hotbarAutoReturnLastRequestTick.set(player.id, system.currentTick);
-          safeMessage(player,
-            "§e[AINCRAD INPUT TEST] Slot " + (event.newSlotSelected + 1) +
-              " selected (" + itemName + "). Requesting return to slot 1.");
-          system.runTimeout(() => {
-            try {
-              if (player.isValid && hotbarAutoReturnProbePlayers.has(player.id)) {
-                player.selectedSlotIndex = 0;
-              }
-            } catch (error) {
-              safeMessage(player, "§c[AINCRAD INPUT TEST] Could not return to slot 1: " + String(error));
-            }
-          }, 1);
-        }
+        // The enforcement loop owns the return request, so repeated touch
+        // events cannot enqueue competing delayed callbacks.
+        safeMessage(player,
+          "§e[AINCRAD INPUT TEST] Slot " + (event.newSlotSelected + 1) +
+            " selected (" + itemName + "). Enforcing return to slot 1.");
       }
       safeMessage(
         player,
