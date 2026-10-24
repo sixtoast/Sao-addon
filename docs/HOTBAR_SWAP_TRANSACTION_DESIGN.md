@@ -21,7 +21,25 @@ This document defines the safety requirements for a future prototype. It does no
 6. **On uncertainty, stop and retain recovery data.** Do not automatically retry a partially completed operation by recapturing the current hotbar.
 7. **Keep snapshot fidelity limits explicit.** Compare every item property exposed by the supported Script API, but do not claim lossless preservation of unknown/custom component data without runtime evidence.
 
-## 3. State machine
+## 3. Skills and loadout persistence (required)
+
+The save/restore feature must preserve the **skill setup**, not just the nine item stacks. There are two distinct data layers:
+
+1. **Skill items in inventory slots.** The nine-slot item snapshot already includes any skill tokens/items physically present in those slots. They must be restored to the same slots, including empty slots and item metadata.
+2. **Logical skill configuration and progression.** The system must also preserve the equipped-skill list and ordering, each skill's assigned combat slot, the selected skill/cycle index where applicable, and any unlocked/learned-skill or mastery data that the game actually implements. This data may live outside the player inventory and cannot be assumed to be captured by cloning ItemStacks.
+
+Before implementation, audit the current code to identify which of these logical values exist and where they are stored. Do not invent a progression schema or save fields for features that are not implemented yet. For every implemented value, choose a durable, owner-bound representation and include it in the same versioned transaction record, or use a separately versioned record with a documented cross-reference to the hotbar transaction. Both records must be verified before a mode switch is considered successful.
+
+Required behaviour:
+- Entering combat restores the intended combat skill loadout and its slot mapping, with the sword in the agreed fixed slot.
+- Leaving combat restores the player's normal hotbar exactly and preserves the skill configuration/progression.
+- Rejoining the world does not reset the equipped-skill list, slot assignments, selected-skill state (if intended to persist), unlocked skills, or mastery.
+- A partial failure must not leave the item hotbar and logical skill mapping disagreeing. If either layer cannot be verified, block the mode switch and retain all recovery records.
+- Skill unlocks/mastery are not to be reset or overwritten by merely changing combat mode. If progression is implemented separately, mode switching should read it, not mutate it.
+
+The current v0.5.14 mirror only validates physical hotbar item snapshots. It does **not** yet prove that equipped skills, selected-skill state, unlocks, or mastery persist across reloads. These are additional acceptance gates before the full feature is considered complete.
+
+## 4. State machine
 
 Each operation uses a uniquely identified, owner-bound transaction record. The record must store a schema/version marker, owner key, transaction ID, operation kind, state, and per-slot progress markers. The exact durable representation is still to be selected after reviewing what can safely be persisted by the current Bedrock runtime.
 
@@ -38,7 +56,7 @@ Allowed forward states:
 
 Any exception, missing record, owner mismatch, invalid container, unsupported item property, or unexpected state enters a **blocked/recovery-required** condition. A blocked state is not permission to recreate the record or continue writes.
 
-## 4. Preflight (read-only)
+## 5. Preflight (read-only)
 
 Before capture:
 - Resolve the exact player and stable owner key; do not rely on display name alone if a stable identifier is available in the supported API.
@@ -50,7 +68,7 @@ Before capture:
 - Reject if another transaction is active or the record state is not a known safe terminal state.
 - Do not start from, or silently replace, the existing v0.5.14 mirror snapshot.
 
-## 5. Capture and verify
+## 6. Capture and verify
 
 1. Create a fresh transaction record and mark it `PREPARING` before storing item data.
 2. Change state to `CAPTURING` before the first storage-slot write.
@@ -61,7 +79,7 @@ Before capture:
 
 A later implementation must determine whether container writes and entity tags/properties survive the relevant reload boundaries reliably enough to represent durable transaction state. If not, this storage architecture is unsuitable for safe swapping.
 
-## 6. Apply combat loadout
+## 7. Apply combat loadout
 
 This stage is **not approved for implementation yet**. Before it is enabled, the design and test harness must define:
 - The exact combat loadout contents and slot ordering.
@@ -73,7 +91,7 @@ This stage is **not approved for implementation yet**. Before it is enabled, the
 
 The operation must re-read and validate the record immediately before the first player-slot write. It must not proceed if the recovery record no longer matches the verified original snapshot.
 
-## 7. Restore and recovery
+## 8. Restore and recovery
 
 Restoration must be possible without needing the combat loadout to be intact.
 
@@ -88,7 +106,7 @@ Restoration must be possible without needing the combat loadout to be intact.
 
 If a transaction is interrupted, recovery must first inspect the persisted state and compare both the current player hotbar and the recovery container. It must never recapture the current hotbar as the new “original” snapshot.
 
-## 8. Lifecycle and adversarial cases to test
+## 9. Lifecycle and adversarial cases to test
 
 The future test plan must include:
 - Exception before capture, during each of the nine storage writes, and during readback.
@@ -102,11 +120,11 @@ The future test plan must include:
 - Stale records from older prototype versions.
 - The client hotbar selection outline desynchronising while server-side inventory values are correct; visual HUD state must not be used as proof of item correctness.
 
-## 9. User-facing status messages
+## 10. User-facing status messages
 
 Messages must identify the transaction ID and stage without dumping item names or private inventory contents unnecessarily. Every failure message must state that the transaction record was retained and whether player slots may already have been changed. A failure after the first player write must not claim that the player inventory is unchanged.
 
-## 10. Go/no-go criteria
+## 11. Go/no-go criteria
 
 **Go to a disposable-world implementation only after:**
 - The transaction state can be persisted and recovered after world reload.
