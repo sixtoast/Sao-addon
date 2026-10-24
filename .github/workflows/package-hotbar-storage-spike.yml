@@ -1,9 +1,10 @@
-name: Package hotbar storage spike
+name: Package hotbar storage test
 
 on:
   push:
     branches:
       - prototype/hotbar-storage-spike
+      - prototype/hotbar-storage-test
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
@@ -17,7 +18,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out storage spike branch
+      - name: Check out hotbar storage test branch
         uses: actions/checkout@v4
       - name: Validate JSON and package behavior/resource packs
         shell: bash
@@ -39,16 +40,16 @@ jobs:
           (cd Aincrad_BP && zip -qr ../dist/Aincrad_BP.mcpack .)
           (cd Aincrad_RP && zip -qr ../dist/Aincrad_RP.mcpack .)
           cp dist/Aincrad_BP.mcpack dist/Aincrad_RP.mcpack .
-          zip -q dist/Aincrad-Hotbar-Storage-Spike.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+          zip -q dist/Aincrad-Hotbar-Storage-Test.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
           rm Aincrad_BP.mcpack Aincrad_RP.mcpack
           unzip -t dist/Aincrad-Hotbar-Storage-Spike.mcaddon
           ls -lh dist/
       - name: Upload installable add-on
         uses: actions/upload-artifact@v4
         with:
-          name: Aincrad-Hotbar-Storage-Spike-mcaddon
+          name: Aincrad-Hotbar-Storage-Test-mcaddon
           path: dist/Aincrad-Hotbar-Storage-Spike.mcaddon
           if-no-files-found: error
           retention-days: 14
 
-# Revalidate the current storage spike revision.
+# Packages the diagnostic-only storage spike/test branches. No real player inventory is moved.
