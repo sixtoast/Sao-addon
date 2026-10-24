@@ -262,6 +262,80 @@ function restoreMenuItem(player) {
   }, 1);
 }
 
+const OWNER_KEY_PROBE_PROPERTY = "aincrad:owner_key_probe_v1";
+
+// Read-only with respect to inventory. This diagnostic stores candidate player
+// identifiers in a dedicated player-scoped property so they can be compared
+// after a full world leave/reopen. It does not approve either identifier for
+// destructive transactions; that requires device persistence evidence first.
+function runOwnerKeyDiagnostic(player) {
+  if (!player || !player.isValid) return;
+  try {
+    let persistentId = null;
+    let entityId = null;
+    try {
+      if (typeof player.persistentId === "string" && player.persistentId.length > 0) {
+        persistentId = player.persistentId;
+      }
+    } catch (_) {}
+    try {
+      if (typeof player.id === "string" && player.id.length > 0) entityId = player.id;
+    } catch (_) {}
+
+    if (!persistentId && !entityId) {
+      safeMessage(player, "§c[AINCRAD OWNER KEY PROBE] BLOCKED: neither persistentId nor entity id is available. No inventory changed.");
+      return;
+    }
+
+    const raw = player.getDynamicProperty(OWNER_KEY_PROBE_PROPERTY);
+    const current = { kind: "aincrad:owner_key_probe", schemaVersion: 1, persistentId, entityId };
+    if (raw === undefined) {
+      const encoded = JSON.stringify(current);
+      player.setDynamicProperty(OWNER_KEY_PROBE_PROPERTY, encoded);
+      if (player.getDynamicProperty(OWNER_KEY_PROBE_PROPERTY) !== encoded) {
+        safeMessage(player, "§c[AINCRAD OWNER KEY PROBE] FAIL: seed readback mismatch. Inventory unchanged.");
+        return;
+      }
+      safeMessage(player, "§e[AINCRAD OWNER KEY PROBE] SEEDED: identifier availability recorded. Leave the world completely, reopen it, then run this diagnostic again. This is not yet approval for hotbar writes.");
+      return;
+    }
+
+    if (typeof raw !== "string") {
+      safeMessage(player, "§c[AINCRAD OWNER KEY PROBE] BLOCKED: saved record has an unexpected type; it was not overwritten. Inventory unchanged.");
+      return;
+    }
+
+    let saved;
+    try { saved = JSON.parse(raw); } catch (_) {
+      safeMessage(player, "§c[AINCRAD OWNER KEY PROBE] BLOCKED: saved record is malformed; it was not overwritten. Inventory unchanged.");
+      return;
+    }
+    if (!saved || saved.kind !== "aincrad:owner_key_probe" || saved.schemaVersion !== 1 ||
+        !(saved.persistentId === null || typeof saved.persistentId === "string") ||
+        !(saved.entityId === null || typeof saved.entityId === "string")) {
+      safeMessage(player, "§c[AINCRAD OWNER KEY PROBE] BLOCKED: unknown or invalid saved schema; it was not overwritten. Inventory unchanged.");
+      return;
+    }
+
+    const persistentMatches = saved.persistentId !== null &&
+      persistentId !== null && saved.persistentId === persistentId;
+    const entityMatches = saved.entityId !== null &&
+      entityId !== null && saved.entityId === entityId;
+    const persistentAvailableBoth = saved.persistentId !== null && persistentId !== null;
+    if (persistentMatches && entityMatches) {
+      safeMessage(player, "§a[AINCRAD OWNER KEY PROBE] MATCH: persistentId and entity id match the saved values. Evidence only; hotbar writes remain disabled.");
+    } else if (persistentAvailableBoth && persistentMatches) {
+      safeMessage(player, "§e[AINCRAD OWNER KEY PROBE] PARTIAL MATCH: persistentId matches but entity id differs or is unavailable. Record retained; hotbar writes remain disabled.");
+    } else if (!persistentAvailableBoth && entityMatches) {
+      safeMessage(player, "§e[AINCRAD OWNER KEY PROBE] ENTITY ID MATCH ONLY: persistentId was unavailable on at least one run. Not approved as a transaction owner key yet; hotbar writes remain disabled.");
+    } else {
+      safeMessage(player, "§c[AINCRAD OWNER KEY PROBE] MISMATCH: candidate identifier values changed or are unavailable. Saved record retained; hotbar writes remain disabled.");
+    }
+  } catch (error) {
+    safeMessage(player, "§c[AINCRAD OWNER KEY PROBE] ERROR: " + String(error) + ". Saved record retained where possible; inventory unchanged.");
+  }
+}
+
 function showCombatMenu(player) {
   if (menuOpen.has(player.id)) return;
   menuOpen.add(player.id);
@@ -286,6 +360,7 @@ function showCombatMenu(player) {
 
   form.button("Diagnostics: Toggle ON/OFF");
   form.button("Diagnostics: Guard Status");
+  form.button("Owner Key Diagnostic\\n§7Read-only identifier persistence check");
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
@@ -305,6 +380,7 @@ function showCombatMenu(player) {
         reportGuardStatus(player);
       }
     } else if (response.selection === 6) reportGuardStatus(player);
+    else if (response.selection === 7) runOwnerKeyDiagnostic(player);
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
