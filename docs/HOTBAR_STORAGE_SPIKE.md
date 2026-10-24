@@ -77,3 +77,18 @@ References for the dummy entity structure:
 - Microsoft, [`minecraft:damage_sensor`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_damage_sensor?view=minecraft-bedrock-stable)
 
 **Not yet proven:** Bedrock may still reject a component combination at runtime, and no in-game persistence test has been run. The entity is not spawned by script, is not connected to the player inventory, and no actual player items are moved. The `restrict_to_owner` behaviour, inventory API access, exact stack fidelity, entity survival after world reload and iPhone runtime compatibility remain test gates.
+
+
+## Target-device result: v0.5.7 auto-return stress test (2026-10-24)
+
+The user tested the v0.5.7 package on the target iPhone and reported:
+
+> It returns back to slot 1 but after a random amount it stops going back to slot 1. I can use the item once (including a Heavy Slash after spamming the Heavy Slash token), but it returns back to slot 1 after using the item.
+
+Interpretation: the per-tick enforcement loop improves the baseline but does not yet pass rapid repeated slot selection. Item use appears to trigger or coincide with recovery to slot 1, so selection enforcement and item-use behaviour must be distinguished. This remains a diagnostic-only probe; no skills or inventory transfer should be wired to it.
+
+Next investigation:
+- Add diagnostic visibility for exceptions from assigning `player.selectedSlotIndex`, rather than silently swallowing them.
+- Record whether the selected slot actually changes while the probe is enabled and whether a successful item-use event coincides with the return.
+- Re-test rapid repeated selection after the diagnostic build.
+- Keep stable `main` untouched and do not begin hotbar storage or combo activation until the input route is reliable.
