@@ -174,3 +174,10 @@ The fixture deliberately uses `probe:` IDs and is not production skill data. The
 **Not yet verified:** the new probe has not been tested in Minecraft on the target iPhone, and no successful CI/package result is claimed here. The required device test is documented in [`docs/SKILL_PERSISTENCE_PROBE.md`](./SKILL_PERSISTENCE_PROBE.md). Run it in the same world, leave/reopen after the first seed, and report the exact result before moving on to a real skill registry.
 
 The official `@minecraft/server` API documents entity/player dynamic-property read/write methods; that establishes API availability, not successful persistence on this specific device/world. See [Microsoft Learn: Entity](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable) and [Microsoft Learn: @minecraft/server module](https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/minecraft-server?view=minecraft-bedrock-stable).
+
+
+## 14. Device result for player-scoped persistence (2026-10-24)
+
+The user reported two `PERSISTENCE CHECK PASS` outputs from the v0.5.15 synthetic fixture on the target iPhone. The stored fixture matched expected values. Record this as a **conditional pass** because the message cannot independently establish that a full world leave/reopen occurred after the initial seed. If the user did complete that lifecycle, player-scoped dynamic-property persistence is accepted for the tested fixture and runtime. This does not validate malformed/unknown-version injection, production skill data, or inventory writes.
+
+The next development gate is a real skill registry/loadout data feature with versioned player-scoped persistence. It remains separate from hotbar mutation. The existing mirror test and its storage entity must remain untouched.
