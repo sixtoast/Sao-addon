@@ -43,14 +43,14 @@ jobs:
           (cd Aincrad_BP && zip -qr ../dist/Aincrad_BP.mcpack .)
           (cd Aincrad_RP && zip -qr ../dist/Aincrad_RP.mcpack .)
           cp dist/Aincrad_BP.mcpack dist/Aincrad_RP.mcpack .
-          zip -q dist/Aincrad-Hotbar-Storage-Fidelity.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+          zip -q dist/Aincrad-Hotbar-Capture-Mirror.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
           rm Aincrad_BP.mcpack Aincrad_RP.mcpack
           unzip -t dist/Aincrad-Hotbar-Storage-Fidelity.mcaddon
           ls -lh dist/
       - name: Upload installable add-on
         uses: actions/upload-artifact@v4
         with:
-          name: Aincrad-Hotbar-Storage-Fidelity-mcaddon
+          name: Aincrad-Hotbar-Capture-Mirror-mcaddon
           path: dist/Aincrad-Hotbar-Storage-Fidelity.mcaddon
           if-no-files-found: error
           retention-days: 14
