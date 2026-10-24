@@ -360,7 +360,7 @@ function showCombatMenu(player) {
 
   form.button("Diagnostics: Toggle ON/OFF");
   form.button("Diagnostics: Guard Status");
-  form.button("Owner Key Diagnostic\\n§7Read-only identifier persistence check");
+  form.button("Owner Key Diagnostic\n§7Read-only identifier persistence check");
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
