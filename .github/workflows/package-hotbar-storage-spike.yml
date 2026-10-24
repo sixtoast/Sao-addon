@@ -42,13 +42,13 @@ jobs:
           cp dist/Aincrad_BP.mcpack dist/Aincrad_RP.mcpack .
           zip -q dist/Aincrad-Hotbar-Storage-Test.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
           rm Aincrad_BP.mcpack Aincrad_RP.mcpack
-          unzip -t dist/Aincrad-Hotbar-Storage-Spike.mcaddon
+          unzip -t dist/Aincrad-Hotbar-Storage-Test.mcaddon
           ls -lh dist/
       - name: Upload installable add-on
         uses: actions/upload-artifact@v4
         with:
           name: Aincrad-Hotbar-Storage-Test-mcaddon
-          path: dist/Aincrad-Hotbar-Storage-Spike.mcaddon
+          path: dist/Aincrad-Hotbar-Storage-Test.mcaddon
           if-no-files-found: error
           retention-days: 14
 
