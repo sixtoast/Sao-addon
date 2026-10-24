@@ -91,3 +91,10 @@ The v0.5.18 access-detail diagnostic is additive and does not alter inventory. A
 The user reported `persistentId=available-string` on the v0.5.19 run; the prior v0.5.18 observation was `property-not-exposed`, so its value was not comparable. `player.id` remained available and matched across the tested runs. This suggests the `2.11.0-beta` module exposes the property, but does not yet demonstrate that the value persists across a same-version world reopen.
 
 **Next step:** with v0.5.19 unchanged, leave and reopen the same world and run **Owner Key Access Detail** again. Preserve the diagnostic records. Do not write or switch hotbar slots. Even a matching result would only pass this narrow lifecycle observation; multiplayer isolation, copied-world behaviour, and duplicate-record handling still require separate design and testing.
+
+
+## Diagnostic follow-up: first comparable persistentId baseline (2026-10-24)
+
+The read-only **Owner Key Access Detail** now handles a previous record whose `persistentValue` is null: when a later run first exposes a non-empty `persistentId`, it writes that value as the baseline and verifies readback. It reports **BASELINE RECORDED**, not a match. This fixes the prior loop where every run remained “not comparable” against a permanently null baseline.
+
+Test sequence: install the updated package, open the same world and run the detail check. If it reports **BASELINE RECORDED**, fully leave and reopen that same world without changing the pack, then run the check again. Only a reported `persistentId value match=yes` counts as evidence that the value survived that tested lifecycle. This still does not approve the key for transactions; multiplayer isolation, copied-world behaviour, duplicate records and recovery remain untested. Hotbar writes and automatic switching remain disabled.
