@@ -813,6 +813,9 @@ const intents = [];
 const HOTBAR_STORAGE_ENTITY = "aincrad:hotbar_storage";
 const STORAGE_TEST_TAG_PREFIX = "aincrad_storage_fidelity_v3_owner_";
 const STORAGE_TEST_SEEDED_TAG = "aincrad_storage_fidelity_seeded_v3";
+const HOTBAR_MIRROR_TAG_PREFIX = "aincrad_hotbar_mirror_v1_owner_";
+const HOTBAR_MIRROR_SEEDED_TAG = "aincrad_hotbar_mirror_seeded_v1";
+const HOTBAR_MIRROR_INCOMPLETE_TAG = "aincrad_hotbar_mirror_incomplete_v1";
 
 function getStorageTestOwnerTag(player) {
   const safeName = String(player.name || "player")
@@ -836,6 +839,101 @@ function findStorageTestRecord(ownerTag) {
     }
   }
   return undefined;
+}
+
+function getHotbarMirrorOwnerTag(player) {
+  const safeName = String(player.name || "player")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_")
+    .slice(0, 80);
+  return HOTBAR_MIRROR_TAG_PREFIX + safeName;
+}
+
+// Diagnostic-only real-hotbar mirror. It clones slots 0-8 into a separate,
+// persistent test entity and never calls setItem on the player's inventory.
+function runHotbarMirrorTest(player) {
+  if (!player || !player.isValid) return;
+  let record;
+  try {
+    const ownerTag = getHotbarMirrorOwnerTag(player);
+    record = findStorageTestRecord(ownerTag);
+    if (!record) {
+      record = player.dimension.spawnEntity(HOTBAR_STORAGE_ENTITY, {
+        x: player.location.x,
+        y: player.location.y + 1,
+        z: player.location.z
+      });
+      record.addTag(ownerTag);
+    }
+
+    const storage = record.getComponent("minecraft:inventory")?.container;
+    const inventory = player.getComponent("minecraft:inventory")?.container;
+    if (!storage || !storage.isValid || storage.size !== 9) {
+      safeMessage(player, "§c[AINCRAD HOTBAR MIRROR v1] FAIL: storage record is missing, invalid, or not nine slots. Player inventory was not changed.");
+      return;
+    }
+    if (!inventory || !inventory.isValid || inventory.size < 9) {
+      safeMessage(player, "§c[AINCRAD HOTBAR MIRROR v1] FAIL: player inventory container is unavailable or has fewer than nine slots. Nothing was changed.");
+      return;
+    }
+
+    const seeded = record.hasTag(HOTBAR_MIRROR_SEEDED_TAG);
+    const incomplete = record.hasTag(HOTBAR_MIRROR_INCOMPLETE_TAG);
+    if (incomplete && !seeded) {
+      safeMessage(player, "§c[AINCRAD HOTBAR MIRROR v1] STOP: a previous capture was incomplete. The saved record was retained and will not be overwritten. Player inventory was not changed.");
+      return;
+    }
+
+    if (!seeded) {
+      // Fail closed if this supposedly new record is not empty. Never overwrite
+      // unknown data or silently repair a partial capture.
+      for (let slot = 0; slot < 9; slot++) {
+        if (storage.getItem(slot)) {
+          safeMessage(player, "§c[AINCRAD HOTBAR MIRROR v1] STOP: unseeded storage contains data in slot " + (slot + 1) + ". Record retained; player inventory was not changed.");
+          return;
+        }
+      }
+
+      record.addTag(HOTBAR_MIRROR_INCOMPLETE_TAG);
+      for (let slot = 0; slot < 9; slot++) {
+        const item = inventory.getItem(slot);
+        storage.setItem(slot, item ? item.clone() : undefined);
+      }
+
+      const failures = [];
+      for (let slot = 0; slot < 9; slot++) {
+        const original = inventory.getItem(slot);
+        const saved = storage.getItem(slot);
+        if (describeSyntheticItem(original) !== describeSyntheticItem(saved)) {
+          failures.push("slot " + (slot + 1));
+        }
+      }
+      if (failures.length) {
+        safeMessage(player, "§c[AINCRAD HOTBAR MIRROR v1] FAIL: immediate snapshot mismatch at " + failures.join(", ") + ". Recovery record retained; player inventory was not changed.");
+        return;
+      }
+
+      record.addTag(HOTBAR_MIRROR_SEEDED_TAG);
+      safeMessage(player, "§a[AINCRAD HOTBAR MIRROR v1] CAPTURE PASS: copied and verified all nine current hotbar slots, including empty slots. This is a hidden duplicate snapshot; your real inventory was not changed. Leave/reopen, keep your hotbar unchanged, then Sneak + use Skill Crystal again to compare persistence.");
+      return;
+    }
+
+    const failures = [];
+    for (let slot = 0; slot < 9; slot++) {
+      const current = inventory.getItem(slot);
+      const saved = storage.getItem(slot);
+      if (describeSyntheticItem(current) !== describeSyntheticItem(saved)) {
+        failures.push("slot " + (slot + 1));
+      }
+    }
+    if (failures.length) {
+      safeMessage(player, "§e[AINCRAD HOTBAR MIRROR v1] COMPARE DIFFERENCE: current hotbar differs from the saved snapshot at " + failures.join(", ") + ". Snapshot retained; nothing was restored or overwritten.");
+    } else {
+      safeMessage(player, "§a[AINCRAD HOTBAR MIRROR v1] PERSISTENCE PASS: all nine current hotbar slots still match the saved snapshot after this run. Snapshot retained; no player inventory was changed.");
+    }
+  } catch (error) {
+    safeMessage(player, "§c[AINCRAD HOTBAR MIRROR v1] ERROR: " + String(error) + ". Saved record retained where possible; player inventory was not changed.");
+  }
 }
 
 function buildSyntheticHotbarMatrix() {
@@ -1011,7 +1109,13 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === MENU_ITEM) {
-    runHotbarStorageSyntheticTest(player);
+    let sneaking = false;
+    try { sneaking = player.isSneaking === true; } catch (_) {}
+    if (sneaking) {
+      runHotbarMirrorTest(player);
+    } else {
+      runHotbarStorageSyntheticTest(player);
+    }
     return;
   }
 });
