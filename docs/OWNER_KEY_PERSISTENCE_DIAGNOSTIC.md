@@ -92,3 +92,20 @@ Even a stable `persistentId` result would be evidence only for the tested lifecy
 ## Related design
 
 See [`HOTBAR_TRANSACTION_PREFLIGHT_PLAN.md`](./HOTBAR_TRANSACTION_PREFLIGHT_PLAN.md) and [`HOTBAR_SWAP_TRANSACTION_DESIGN.md`](./HOTBAR_SWAP_TRANSACTION_DESIGN.md).
+
+
+## v0.5.19 device result (2026-10-24)
+
+The user ran **Owner Key Access Detail** with the v0.5.19 beta-module package and reported:
+
+- `persistentId`: `available-string` on this run. The previous recorded run was `property-not-exposed`, so the diagnostic reported the value as not comparable.
+- `player.id`: `available-string` on both runs, with the value matching.
+- The diagnostic continued to state that the result is evidence only and hotbar writes remain disabled.
+
+Interpretation:
+- Changing from stable `@minecraft/server` `2.10.0` to `2.11.0-beta` appears to have made `persistentId` available on the target runtime.
+- This is not yet a persistence comparison for `persistentId`, because the prior observation had no value to compare.
+- Next, run **Owner Key Access Detail** again with v0.5.19 still installed, after leaving and reopening the same world. Do not reset either diagnostic record. A same-version result can then compare the saved non-empty value.
+- Even if it matches, multiplayer isolation, copied-world behaviour, and duplicate-record handling remain separate gates.
+
+**No owner key is approved yet. Hotbar writes and automatic switching remain disabled.**
