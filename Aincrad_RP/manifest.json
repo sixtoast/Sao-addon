@@ -1,8 +1,8 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat RP v0.5.8",
-    "description": "Aincrad Combat v0.5.8 | Native throwable charge prototype.",
+    "name": "Aincrad Combat RP v0.5.9",
+    "description": "Aincrad Combat v0.5.9 | Hotbar input diagnostics fix.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
     "version": [0, 5, 9],
     "min_engine_version": [
@@ -15,7 +15,7 @@
     {
       "type": "resources",
       "uuid": "48bdf47b-b278-41b2-adb4-7ca0a55207d8",
-      "version": [0, 5, 8]
+      "version": [0, 5, 9]
     }
   ]
 }
