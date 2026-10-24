@@ -819,6 +819,8 @@ world.afterEvents.itemUse.subscribe((event) => {
     safeMessage(player,
       "§d[AINCRAD INPUT DIAG] itemUse observed: " + event.itemStack.typeId +
       " | selected slot " + (player.selectedSlotIndex + 1) + ".");
+    // Keep the probe isolated: only the Skill Crystal may be used to toggle it.
+    if (event.itemStack.typeId !== MENU_ITEM) return;
   }
 
   if (event.itemStack.typeId === GUARD_ITEM) {
@@ -864,7 +866,6 @@ world.afterEvents.itemUse.subscribe((event) => {
     // which is unavailable on some target runtimes. No inventory is moved.
     if (hotbarAutoReturnProbePlayers.has(player.id)) {
       hotbarAutoReturnProbePlayers.delete(player.id);
-      hotbarAutoReturnLastRequestTick.delete(player.id);
       safeMessage(player, "§7[AINCRAD INPUT TEST] Auto-return probe OFF. Tap the Skill Crystal again to enable it.");
     } else {
       hotbarAutoReturnProbePlayers.add(player.id);
@@ -934,6 +935,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
 // Skill Crystal through itemUse, avoiding scriptEventReceive compatibility.
 const hotbarAutoReturnProbePlayers = new Set();
 const hotbarAutoReturnFailureReported = new Set();
+const hotbarAutoReturnLastSlotDiagTick = new Map();
 
 // One enforcement loop avoids a pile of competing delayed returns during rapid
 // touch input. While the opt-in probe is enabled, slot 1 is reasserted each tick.
@@ -985,18 +987,17 @@ try {
       const player = event.player;
       if (!player || !player.isValid) return;
       const itemName = event.itemStack?.typeId ?? "empty";
-      if (hotbarAutoReturnProbePlayers.has(player.id) && event.newSlotSelected !== 0) {
-        // The enforcement loop owns the return request, so repeated touch
-        // events cannot enqueue competing delayed callbacks.
-        safeMessage(player,
-          "§e[AINCRAD INPUT TEST] Slot " + (event.newSlotSelected + 1) +
-            " selected (" + itemName + "). Enforcing return to slot 1.");
-      }
+      if (!hotbarAutoReturnProbePlayers.has(player.id)) return;
+      // Rapid touch spam can flood chat and itself create visible lag. Keep one
+      // diagnostic line per player every five ticks while the probe is active.
+      const lastLogTick = hotbarAutoReturnLastSlotDiagTick.get(player.id) ?? -1000;
+      if (system.currentTick - lastLogTick < 5) return;
+      hotbarAutoReturnLastSlotDiagTick.set(player.id, system.currentTick);
       safeMessage(
         player,
         "§e[AINCRAD INPUT TEST] Slot " + (event.previousSlotSelected + 1) +
           " → " + (event.newSlotSelected + 1) + " | " + itemName +
-          ". If tapping the selected slot again produces no message, it emits no slot-change event."
+          (event.newSlotSelected === 0 ? "." : ". Auto-return enforcing slot 1.")
       );
     });
   } else {
