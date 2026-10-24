@@ -310,3 +310,8 @@ Sources:
 ### Storage spike branch started (2026-10-24)
 
 Created isolated branch `prototype/hotbar-storage-spike` from `prototype/skill-input-probe` and added [HOTBAR_STORAGE_SPIKE.md](HOTBAR_STORAGE_SPIKE.md). The spike specification captures the official API findings, the missing entity-pack structure, a synthetic-item preservation matrix, lifecycle tests, and fail-closed rules. No player inventory or combat code has been changed. This is documentation/specification progress only; the entity and runtime persistence are not yet implemented or validated.
+
+
+### Hotbar storage implementation update (2026-10-24)
+
+Created isolated branch `prototype/hotbar-storage-spike` and added the first BP/RP dummy storage entity definitions plus a dedicated packaging workflow. The entity has a nine-slot private inventory and invisible/no-collision design based on the Bedrock Wiki dummy-entity pattern. This is a schema/packaging spike only: it is not spawned or used by combat, and no player inventory is touched. JSON syntax/package validation and in-game lifecycle tests remain outstanding; do not treat this as safe for real hotbar swaps.
