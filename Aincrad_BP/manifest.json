@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP v0.5.15",
-    "description": "Aincrad Combat v0.5.15 | Synthetic fidelity test plus read-only real hotbar mirror diagnostic.",
+    "name": "Aincrad Combat BP v0.5.16",
+    "description": "Aincrad Combat v0.5.16 | Synthetic fidelity test plus read-only real hotbar mirror diagnostic.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
       5,
-      15
+      16
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
       0,
       5,
-      15
+      16
     ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
       0,
       5,
-      15
+      16
     ],
       "entry": "scripts/main.js"
     }
@@ -43,7 +43,7 @@
       "version": [
       0,
       5,
-      15
+      16
     ]
     },
     {
