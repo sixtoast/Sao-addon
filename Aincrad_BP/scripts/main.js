@@ -817,6 +817,76 @@ const HOTBAR_MIRROR_TAG_PREFIX = "aincrad_hotbar_mirror_v1_owner_";
 const HOTBAR_MIRROR_SEEDED_TAG = "aincrad_hotbar_mirror_seeded_v1";
 const HOTBAR_MIRROR_INCOMPLETE_TAG = "aincrad_hotbar_mirror_incomplete_v1";
 
+const SKILL_PERSISTENCE_PROBE_PROPERTY = "aincrad:skill_persistence_probe_v1";
+const skillProbeSeededThisSession = new Set();
+// Synthetic diagnostic fixture only. These IDs are deliberately not real skills.
+const SKILL_PERSISTENCE_PROBE_FIXTURE = {
+  kind: "AINCRAD_SKILL_PERSISTENCE_PROBE",
+  schemaVersion: 1,
+  equippedSkillIds: ["probe:skill_alpha", "probe:skill_beta"],
+  combatSlotOrder: [0, 1],
+  selectedSkillIndex: 1,
+  unlockedSkillIds: ["probe:skill_alpha", "probe:skill_beta", "probe:skill_gamma"],
+  masteryFixture: { probe_weapon: 3 }
+};
+
+function runSkillPersistenceProbe(player) {
+  if (!player || !player.isValid) return;
+  try {
+    const raw = player.getDynamicProperty(SKILL_PERSISTENCE_PROBE_PROPERTY);
+    if (raw === undefined) {
+      const fixtureText = JSON.stringify(SKILL_PERSISTENCE_PROBE_FIXTURE);
+      player.setDynamicProperty(SKILL_PERSISTENCE_PROBE_PROPERTY, fixtureText);
+      const written = player.getDynamicProperty(SKILL_PERSISTENCE_PROBE_PROPERTY);
+      if (typeof written !== "string") {
+        safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] WRITE/READBACK FAIL: player-scoped dynamic property did not return a string. No hotbar slots were changed.");
+        return;
+      }
+      let parsed;
+      try { parsed = JSON.parse(written); } catch (_) {
+        safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] READBACK FAIL: stored fixture is not valid JSON. Property retained; no hotbar slots were changed.");
+        return;
+      }
+      if (JSON.stringify(parsed) !== JSON.stringify(SKILL_PERSISTENCE_PROBE_FIXTURE)) {
+        safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] READBACK MISMATCH: fixture differs from expected data. Property retained; no hotbar slots were changed.");
+        return;
+      }
+      skillProbeSeededThisSession.add(player.id);
+      safeMessage(player, "§a[AINCRAD SKILL SAVE PROBE v1] SEED + READBACK PASS: synthetic equipped order, selected index, unlock list, and mastery fixture were stored on the player and verified. These are test values, not real skills. Leave/reopen this world, then Sneak + use Parry Token to test persistence. Player hotbar was not changed.");
+      return;
+    }
+
+    if (typeof raw !== "string") {
+      safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] STOP: stored property has an unexpected type. It was retained and not overwritten; no hotbar slots were changed.");
+      return;
+    }
+
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch (_) {
+      safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] STOP: stored property is malformed JSON. It was retained and not overwritten; no hotbar slots were changed.");
+      return;
+    }
+
+    if (!parsed || parsed.kind !== SKILL_PERSISTENCE_PROBE_FIXTURE.kind ||
+        parsed.schemaVersion !== SKILL_PERSISTENCE_PROBE_FIXTURE.schemaVersion) {
+      safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] STOP: unknown fixture kind/schema version. Stored data was retained and not overwritten; no hotbar slots were changed.");
+      return;
+    }
+    if (JSON.stringify(parsed) !== JSON.stringify(SKILL_PERSISTENCE_PROBE_FIXTURE)) {
+      safeMessage(player, "§e[AINCRAD SKILL SAVE PROBE v1] DATA MISMATCH: stored fixture does not match the expected test values. Data retained; no hotbar slots were changed.");
+      return;
+    }
+
+    if (skillProbeSeededThisSession.has(player.id)) {
+      safeMessage(player, "§a[AINCRAD SKILL SAVE PROBE v1] SAME-SESSION READBACK PASS: all synthetic skill fields match. Now leave/reopen the world before running again to test persistence. Player hotbar was not changed.");
+    } else {
+      safeMessage(player, "§a[AINCRAD SKILL SAVE PROBE v1] PERSISTENCE CHECK PASS: stored synthetic skill fields match after this player session began. If you left and reopened the world since seeding, this confirms the player-scoped fixture survived that reload. Test data retained; player hotbar was not changed.");
+    }
+  } catch (error) {
+    safeMessage(player, "§c[AINCRAD SKILL SAVE PROBE v1] ERROR: " + String(error) + ". Stored data was not intentionally overwritten after this error; player hotbar was not changed.");
+  }
+}
+
 function getStorageTestOwnerTag(player) {
   const safeName = String(player.name || "player")
     .toLowerCase()
@@ -1102,6 +1172,13 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === PARRY_ITEM) {
+    let sneakingForProbe = false;
+    try { sneakingForProbe = player.isSneaking === true; } catch (_) {}
+    if (sneakingForProbe) {
+      // Explicit diagnostic-only route; ordinary Parry Token use is unchanged.
+      runSkillPersistenceProbe(player);
+      return;
+    }
     // Compatibility fallback; Sneak is the primary shared defensive input.
     defensiveSequences.set(player.id, { startedTick: system.currentTick - DEFENSE_DODGE_TICKS });
     safeMessage(player, "§d[AINCRAD] Parry window started.");
@@ -1139,6 +1216,7 @@ world.afterEvents.playerLeave.subscribe((event) => {
   menuOpen.delete(id);
   tickCounters.delete(id);
   diagnosticsEnabled.delete(id);
+  skillProbeSeededThisSession.delete(id);
 });
 
 world.afterEvents.playerSpawn.subscribe((event) => {
