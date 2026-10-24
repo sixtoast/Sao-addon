@@ -47,3 +47,12 @@ This is only a storage-mechanism test. It does not implement or validate real eq
 - Microsoft Learn, `@minecraft/server` module (the pack declares version 2.10.0): https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/minecraft-server?view=minecraft-bedrock-stable
 - Microsoft Learn, `Entity.setDynamicProperty`: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable
 - Community-maintained versioned API reference (v26.50): https://jaylydev.github.io/scriptapi-docs/latest/classes/_minecraft_server.Entity.html
+
+
+## Target-device result (2026-10-24)
+
+The user reported two `[AINCRAD SKILL SAVE PROBE v1] PERSISTENCE CHECK PASS` messages. Both messages indicate the stored synthetic fields matched the expected fixture. This is recorded as a **conditional persistence pass**: it proves across-world-reopen persistence only if the user fully left and reopened the same world after the original `SEED + READBACK PASS`. The probe message itself cannot independently prove a full world reopen occurred.
+
+The accompanying `Defence ended` and `Defence sequence started: Spot Dodge → Parry → Guard` messages are unrelated to the skill-property check and do not validate the defence input behaviour.
+
+No player hotbar changes were reported. The next step is to build the real skill registry/loadout data as a separate feature, while keeping inventory swapping disabled until its transaction recovery tests are designed and passed.
