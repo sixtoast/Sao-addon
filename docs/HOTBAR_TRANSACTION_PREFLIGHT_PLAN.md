@@ -98,3 +98,18 @@ The user reported `persistentId=available-string` on the v0.5.19 run; the prior 
 The read-only **Owner Key Access Detail** now handles a previous record whose `persistentValue` is null: when a later run first exposes a non-empty `persistentId`, it writes that value as the baseline and verifies readback. It reports **BASELINE RECORDED**, not a match. This fixes the prior loop where every run remained “not comparable” against a permanently null baseline.
 
 Test sequence: install the updated package, open the same world and run the detail check. If it reports **BASELINE RECORDED**, fully leave and reopen that same world without changing the pack, then run the check again. Only a reported `persistentId value match=yes` counts as evidence that the value survived that tested lifecycle. This still does not approve the key for transactions; multiplayer isolation, copied-world behaviour, duplicate records and recovery remain untested. Hotbar writes and automatic switching remain disabled.
+
+
+## v0.5.20 persistence result and next gate (2026-10-24)
+
+The user reported `persistentId` and `player.id` both available as strings with `value match=yes` in the v0.5.20 **Owner Key Detail** output. Record this as a pass for the narrow same-world leave/reopen persistence check on the target device/runtime only. The baseline test is complete; do not keep repeating it.
+
+Next, work on design and read-only validation, in this order:
+
+1. **API contract review:** verify the current documented status and semantics of `Player.persistentId` for the beta module in use. Treat a pre-release API as version-sensitive and keep a fail-closed fallback.
+2. **Player isolation:** add a read-only diagnostic plan for two players in one world. Confirm each player gets a separate player-scoped record and that returning to each player does not cross-match or overwrite the other's record. Never display raw IDs.
+3. **Copied-world and stale-record model:** specify what the add-on can and cannot detect when a world is copied, restored from backup, or moved between host and Dedicated Server. Do not assume a player ID alone identifies a unique world-plus-player transaction namespace.
+4. **Transaction/recovery design:** define explicit versioned states for capture, swap, restore, and interrupted operations. Unknown, duplicate, malformed, or contradictory records must stop and preserve evidence; never auto-recapture or destroy items when state is uncertain.
+5. **Only after review:** propose a separate, tightly scoped test that can validate recovery behaviour without risking the player's real inventory. Keep all production hotbar mutation disabled until this gate is explicitly passed.
+
+Do not repeat the completed baseline test, change the existing storage mirror/synthetic diagnostic, merge to `main`, or enable hotbar writes or automatic switching.
