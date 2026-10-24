@@ -61,3 +61,19 @@ The current Bedrock Wiki custom-entity guide and Microsoft's custom-entity tutor
 - Bedrock Wiki, [Create a Custom Entity](https://wiki.bedrock.dev/guide/custom-entity)
 
 Implementation remains gated on a schema-valid, invisible/non-interactive entity definition and a synthetic-item runtime test. Do not connect the storage entity to the real player hotbar yet.
+
+
+## First implementation slice (2026-10-24)
+
+Added the initial entity definitions, isolated to this spike branch:
+
+- `Aincrad_BP/entities/hotbar_storage.json`: summonable only for controlled testing, persistent, nine-slot private inventory, no siphoning, no gravity/collision, zero-size hit test, non-pushable, and configured to ignore received damage.
+- `Aincrad_RP/entity/hotbar_storage.entity.json`, `Aincrad_RP/models/entity/hotbar_storage.geo.json`, and `Aincrad_RP/render_controllers/hotbar_storage.render.json`: matching client definition with empty geometry, following the Bedrock Wiki dummy-entity pattern.
+- `.github/workflows/package-hotbar-storage-spike.yml`: packages the two packs into an installable `.mcaddon` and checks JSON syntax.
+
+References for the dummy entity structure:
+- Bedrock Wiki, [Dummy Entities](https://wiki.bedrock.dev/entities/dummy-entities.html)
+- Microsoft, [`minecraft:inventory`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_inventory?view=minecraft-bedrock-stable)
+- Microsoft, [`minecraft:damage_sensor`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_damage_sensor?view=minecraft-bedrock-stable)
+
+**Not yet proven:** Bedrock may still reject a component combination at runtime, and no in-game persistence test has been run. The entity is not spawned by script, is not connected to the player inventory, and no actual player items are moved. The `restrict_to_owner` behaviour, inventory API access, exact stack fidelity, entity survival after world reload and iPhone runtime compatibility remain test gates.
