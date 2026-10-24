@@ -324,3 +324,17 @@ The target-device test confirms that `playerHotbarSelectedSlotChange` fires when
 **Design consequence:** never use a same-slot tap as a skill activation signal. The contextual-bar design remains viable as a *selection* input if, after a valid skill-slot selection, the script immediately requests a return to sword slot index 0. That makes a later tap on the same skill slot a real slot change again. This still needs a dedicated selection-only runtime test for event order, return reliability, recursion suppression, and touch UI flicker. Slot 0 itself must never request a skill. Do not apply auto-return to the current control tokens or connect this to live combat/inventory until the test explicitly scopes the test slot and proves it safe.
 
 No gameplay code was changed as a result of this test. Storage entity persistence and exact ItemStack preservation remain separate unproven gates.
+
+
+### Opt-in auto-return input probe implementation (2026-10-24)
+
+Added to `Aincrad_BP/scripts/main.js` on `prototype/hotbar-storage-spike` only. This probe is selection-only and is **off by default**:
+- In a separate test world, run `/scriptevent aincrad:hotbar_probe_start` as the player to enable it.
+- Select any hotbar slot other than slot 1. The script logs the selected slot/item and requests a return to slot 1 (API index 0).
+- The return event for slot 1 is ignored, avoiding recursive return requests.
+- Repeated requests in the same tick are suppressed.
+- Run `/scriptevent aincrad:hotbar_probe_stop` to disable it.
+
+It does not activate skills or mutate/move items. Because it auto-returns after selecting any non-first slot, do not enable it in a world where you need to use ordinary hotbar selection. Test the command source/permissions, selection response, return reliability, visual flicker, and repeated same-slot selection (which should become a fresh slot change only after return has completed). If the command cannot be executed from the player context or the API property cannot be set, capture the Content Log and stop; do not add workarounds that alter player inventory.
+
+This implementation is not yet runtime-tested. The packaging workflow must pass before installing it, and it must remain isolated from stable `main`.
