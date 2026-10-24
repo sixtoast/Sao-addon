@@ -50,3 +50,5 @@ jobs:
           path: dist/Aincrad-Hotbar-Storage-Spike.mcaddon
           if-no-files-found: error
           retention-days: 14
+
+# Revalidate the current storage spike revision.
