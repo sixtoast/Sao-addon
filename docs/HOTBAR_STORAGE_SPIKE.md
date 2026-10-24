@@ -51,3 +51,13 @@ The spike must initially use synthetic test items only. It must not move, clear 
 ## Exit criteria
 
 The spike is successful only when the item matrix is preserved exactly across every listed lifecycle test on the target Bedrock runtime. Repository code and static schema checks cannot replace the in-game iPhone test. Until then, contextual hotbar switching remains unimplemented.
+
+
+## Entity-pack implementation note (2026-10-24)
+
+The current Bedrock Wiki custom-entity guide and Microsoft's custom-entity tutorial both confirm that custom entities need a behaviour-pack entity definition and a resource-pack client-entity definition using the same identifier. The BP entity belongs under `Aincrad_BP/entities/`; the RP counterpart belongs under `Aincrad_RP/entity/`. This repository currently has neither entity folder, so the first code slice must add both definitions and validate them before any script tries to spawn the storage entity.
+
+- Microsoft, [Creating New Entity Types](https://learn.microsoft.com/en-us/minecraft/creator/documents/introductiontoaddentity?view=minecraft-bedrock-stable)
+- Bedrock Wiki, [Create a Custom Entity](https://wiki.bedrock.dev/guide/custom-entity)
+
+Implementation remains gated on a schema-valid, invisible/non-interactive entity definition and a synthetic-item runtime test. Do not connect the storage entity to the real player hotbar yet.
