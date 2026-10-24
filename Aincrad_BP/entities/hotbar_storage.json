@@ -48,11 +48,10 @@
         "height": 0.0001
       },
       "minecraft:damage_sensor": {
-        "triggers": [
-          {
-            "deals_damage": false
-          }
-        ]
+        "triggers": {
+          "cause": "all",
+          "deals_damage": "no"
+        }
       }
     }
   }
