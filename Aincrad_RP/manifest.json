@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat RP v0.5.19",
-    "description": "Aincrad Combat v0.5.19 | Read-only owner-key API surface test; hotbar writes disabled.",
+    "name": "Aincrad Combat RP v0.5.20",
+    "description": "Aincrad Combat v0.5.20 | Read-only owner-key API surface test; hotbar writes disabled.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
     "version": [
       0,
       5,
-      19
+      20
     ],
     "min_engine_version": [
       1,
