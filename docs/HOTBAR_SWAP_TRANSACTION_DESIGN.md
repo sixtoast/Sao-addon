@@ -141,3 +141,26 @@ Messages must identify the transaction ID and stage without dumping item names o
 - The API does not provide a reliable way to distinguish empty slots and preserve them.
 
 No production hotbar swapping, automatic combat-mode activation, or merge to stable `main` is authorised by this design.
+
+## 12. Current-code audit: logical skills are not implemented yet (2026-10-24)
+
+A read-through of `Aincrad_BP/scripts/main.js` at the v0.5.14 branch head (`612b8055be69fa321c1287b0880376e7d531abb7`) found:
+
+- The current menu presents prototype actions such as Quick Slash, Heavy Strike, and Parry. These are direct action choices, not an equipped-skill registry.
+- The physical control items (`aincrad:skill_crystal`, `aincrad:heavy_attack_token`, `aincrad:parry_token`, and `aincrad:guard_token`) are control/test items. They are not yet a learned-skill/unlock/progression model.
+- There is no existing equipped-skill list, ordered skill-slot mapping, selected-skill cycle index, unlocked-skill collection, or weapon mastery/progression value in the audited script.
+- The mirror's owner tag is derived from the player's display name. That was adequate for this diagnostic test but is not yet approved as the owner key for a destructive transaction.
+
+Therefore, there is currently no implemented logical skill loadout/progression state for the hotbar transaction to save. Do not imply those features already exist, and do not add fake progression fields to the production save path.
+
+### Required next gate before hotbar mutation
+
+1. Add an isolated, non-gameplay persistence probe for a small **synthetic skill-loadout fixture** using a player-scoped dynamic property (JSON string with an explicit schema/version marker).
+2. The fixture is test data only; it must not pretend to unlock real skills or grant mastery. It must be written/read back, validated, and reported clearly.
+3. Test that fixture across leaving/reopening the same world on the target iPhone, and verify that malformed/unknown versions fail closed without being overwritten.
+4. Keep the existing physical hotbar mirror path and its saved record untouched. Do not use the diagnostic's display-name tag as proof of a stable transaction owner key.
+5. Once player-scoped persistence is verified, implement the actual skill registry/loadout as a distinct feature with its own explicit skill IDs and slot ordering. Only after that exists should the transaction design bind real logical skill state to hotbar capture/restore.
+6. Continue to keep real player hotbar writes disabled until transaction recovery and partial-write tests are approved.
+
+This gate is intentionally smaller than hotbar switching: it proves the storage mechanism for logical skill data first, without changing combat behaviour or player inventory.
+
