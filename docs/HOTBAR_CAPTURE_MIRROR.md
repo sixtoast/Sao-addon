@@ -34,6 +34,18 @@ The synthetic fidelity test proved that a persistent nine-slot entity inventory 
 5. If you intentionally change a slot before the second run, expect `COMPARE DIFFERENCE`; that is not data loss and the snapshot will not be overwritten.
 6. Report the exact message. Do not test restoration or hotbar replacement yet.
 
+## Target-device results (2026-10-24)
+
+The user tested the v0.5.14 mirror on the target iPhone and reported all of the following:
+
+- `[AINCRAD HOTBAR MIRROR v1] PERSISTENCE PASS`: all nine current hotbar slots matched the saved snapshot after the run; snapshot retained and player inventory unchanged.
+- After intentionally changing a hotbar item, the mirror reported `[AINCRAD HOTBAR MIRROR v1] COMPARE DIFFERENCE` at slot 5 and explicitly retained the snapshot without restoring or overwriting anything.
+- After the current hotbar again matched the saved snapshot, the mirror returned `PERSISTENCE PASS` for all nine slots.
+
+**Interpretation:** the real-hotbar snapshot passed persistence comparison and detected a deliberate difference on the target runtime. The later match indicates the current hotbar once again matched the original snapshot. The user did not report any player inventory mutation. This is meaningful evidence for the read-only snapshot path, but it is not yet a test of restoring items, arbitrary custom component fidelity, or a crash/partial-write recovery transaction.
+
+The same chat log also emitted the existing defence-state messages (`Defence ended`, `Defence sequence started`, and `Guard phase active`). Those are separate from the storage result and show the sneak-defence input path was active during testing; this storage test does not validate or fix the defence input behaviour.
+
 ## Next gate
 
-Only after the actual snapshot persists and compares correctly should a separate, explicit transaction prototype be designed. That later prototype must validate the saved record, preserve a durable transaction state, and restore/verify every slot before it may ever remove recovery data. No real hotbar replacement is included here.
+The read-only mirror gate has passed on the target device. The next step is to **design and review** a separate explicit capture/restore transaction before implementing any real inventory mutation. The transaction design must include slot-by-slot preflight, a durable transaction state, fail-closed recovery after partial writes, verification after each stage, and rules for retaining recovery data. Do not implement combat/non-combat hotbar swapping until that design is reviewed. No real hotbar replacement is included in v0.5.14.
