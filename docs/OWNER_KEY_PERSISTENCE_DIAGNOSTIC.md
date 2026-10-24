@@ -118,3 +118,23 @@ Review of the reported repeat output exposed a diagnostic logic flaw: when the s
 After receiving **BASELINE RECORDED**, leave and reopen the same world without changing the add-on version, then run **Owner Key Access Detail** once more. A `value match=yes` result would be evidence for this specific world leave/reopen lifecycle only. A mismatch or unavailable value must remain a no-go. The diagnostic does not print raw identifiers and does not change inventory.
 
 The implementation is on `prototype/hotbar-transaction-preflight` only. It does not alter the older `aincrad:owner_key_probe_v1` record, enable hotbar writes, or enable automatic hotbar switching.
+
+
+## v0.5.20 device result: same-world persistence match (2026-10-24)
+
+The user reported the v0.5.20 **Owner Key Detail** output:
+
+- `persistentId`: available string on current and previous runs; `value match=yes`.
+- `player.id`: available string on current and previous runs; `value match=yes`.
+- Diagnostic still states that this is evidence only and hotbar writes remain disabled.
+
+This closes the narrow same-world leave/reopen persistence observation for `persistentId` on the user's tested Bedrock 26.52 setup with the `@minecraft/server` `2.11.0-beta` module. Do not repeat the baseline test unless the runtime, module, world lifecycle, or diagnostic schema changes.
+
+This does **not** approve `persistentId` for hotbar transactions. Remaining gates are:
+1. Review the documented/API status and limitations of the pre-release identifier.
+2. Define and test multiplayer separation, including two distinct players and per-player record isolation.
+3. Define copied-world behaviour and ensure copied state cannot silently be mistaken for a live transaction in another world.
+4. Design duplicate, stale, malformed, and unknown-version transaction record handling.
+5. Specify a fail-closed recovery protocol for interrupted inventory capture/swap/restore, including what happens when item fidelity cannot be proven.
+
+Continue on `prototype/hotbar-transaction-preflight`. No inventory mutation, hotbar writes, or automatic combat hotbar switching is authorised by this result.
