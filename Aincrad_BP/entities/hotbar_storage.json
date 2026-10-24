@@ -1,0 +1,59 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "aincrad:hotbar_storage",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "aincrad_storage",
+          "inanimate"
+        ]
+      },
+      "minecraft:persistent": {},
+      "minecraft:inventory": {
+        "container_type": "inventory",
+        "inventory_size": 9,
+        "private": true,
+        "restrict_to_owner": true,
+        "can_be_siphoned_from": false
+      },
+      "minecraft:physics": {
+        "has_gravity": false,
+        "has_collision": false
+      },
+      "minecraft:custom_hit_test": {
+        "hitboxes": [
+          {
+            "pivot": [
+              0,
+              100,
+              0
+            ],
+            "width": 0,
+            "height": 0
+          }
+        ]
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:collision_box": {
+        "width": 0.0001,
+        "height": 0.0001
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "deals_damage": false
+          }
+        ]
+      }
+    }
+  }
+}
