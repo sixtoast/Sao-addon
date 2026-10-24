@@ -211,3 +211,25 @@ Next step is an expanded synthetic-only fidelity test:
 - If the current Bedrock API does not support a reliable way to create/read these properties, document that limitation rather than weakening the test.
 
 Only after this expanded test passes should the project implement a separate capture/restore transaction prototype, still with explicit recovery checks and no stable-branch merge.
+
+
+## Synthetic item-fidelity test: v0.5.12 (2026-10-24)
+
+Created isolated branch `prototype/hotbar-storage-fidelity` from the successful v0.5.11 storage-test branch. The Skill Crystal now runs a versioned fidelity test that writes only to a new synthetic storage record. A new owner-tag prefix and v2 seeded marker avoid reusing the earlier test record with its old expected matrix.
+
+Added test cases:
+- A diamond sword with durability damage set to 37.
+- An iron sword with Sharpness II and Unbreaking I.
+- Existing stack-count, custom name/lore, add-on item, and empty-slot checks.
+
+The comparison signature now includes durability damage/max durability and sorted enchantment IDs/levels in addition to type, amount, name and lore. If the runtime cannot create or inspect the expected properties, the harness reports an error and does not touch the player inventory. The synthetic record is retained for inspection.
+
+Test procedure on the target device:
+1. Import v0.5.12 and activate the updated packs in the same test world.
+2. Use the Skill Crystal and require a PASS message for the new v2 fidelity matrix.
+3. Save, leave, reopen, and use the Skill Crystal again. Require another PASS without reseeding.
+4. Report the exact chat output if any property differs or the API reports an error.
+
+The Microsoft Script API supports the required durability component properties and enchantment component methods; the implementation uses `ItemStack.getComponent("minecraft:durability")`, `ItemStack.getComponent("minecraft:enchantable")`, and `EnchantmentTypes.get`. References: [ItemStack](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemstack?view=minecraft-bedrock-stable), [ItemDurabilityComponent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemdurabilitycomponent?view=minecraft-bedrock-stable), [ItemEnchantableComponent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemenchantablecomponent?view=minecraft-bedrock-stable), [EnchantmentTypes](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/enchantmenttypes?view=minecraft-bedrock-stable).
+
+Static/package checks do not establish that item fidelity or entity persistence works in-game; that still requires the target-device test above.
