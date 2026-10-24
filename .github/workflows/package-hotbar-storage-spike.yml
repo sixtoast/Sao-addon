@@ -7,6 +7,7 @@ on:
       - prototype/hotbar-storage-test
       - prototype/hotbar-storage-fidelity
       - prototype/hotbar-capture-mirror
+      - prototype/skill-persistence-probe
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
@@ -55,4 +56,4 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-# Packages diagnostic-only storage/mirror branches. The mirror reads the player hotbar and clones it into hidden test storage; it never mutates player inventory.
+# Packages diagnostic-only storage/mirror/skill-persistence branches. The hotbar mirror reads and clones hotbar slots; the skill persistence probe writes only a synthetic player-scoped dynamic property. Neither test changes player hotbar slots.
