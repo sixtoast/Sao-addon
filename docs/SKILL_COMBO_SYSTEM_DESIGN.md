@@ -315,3 +315,12 @@ Created isolated branch `prototype/hotbar-storage-spike` from `prototype/skill-i
 ### Hotbar storage implementation update (2026-10-24)
 
 Created isolated branch `prototype/hotbar-storage-spike` and added the first BP/RP dummy storage entity definitions plus a dedicated packaging workflow. The entity has a nine-slot private inventory and invisible/no-collision design based on the Bedrock Wiki dummy-entity pattern. This is a schema/packaging spike only: it is not spawned or used by combat, and no player inventory is touched. JSON syntax/package validation and in-game lifecycle tests remain outstanding; do not treat this as safe for real hotbar swaps.
+
+
+### iPhone hotbar selection probe result (2026-10-24)
+
+The target-device test confirms that `playerHotbarSelectedSlotChange` fires when the selected slot changes and supplies the previous slot, new slot, and newly selected item. The user's observed sequence included slots 1→3 (parry token), 3→4 (guard token), 4→2 (heavy token), 2→1 (skill crystal), then repeated changes among slots 1–4. Tapping the already-selected slot produces no event/message.
+
+**Design consequence:** never use a same-slot tap as a skill activation signal. The contextual-bar design remains viable as a *selection* input if, after a valid skill-slot selection, the script immediately requests a return to sword slot index 0. That makes a later tap on the same skill slot a real slot change again. This still needs a dedicated selection-only runtime test for event order, return reliability, recursion suppression, and touch UI flicker. Slot 0 itself must never request a skill. Do not apply auto-return to the current control tokens or connect this to live combat/inventory until the test explicitly scopes the test slot and proves it safe.
+
+No gameplay code was changed as a result of this test. Storage entity persistence and exact ItemStack preservation remain separate unproven gates.
