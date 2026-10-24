@@ -353,6 +353,31 @@ function runOwnerKeyAccessDiagnostic(player) {
       return;
     }
 
+    // v0.5.19 may expose persistentId after an earlier run saved null because
+    // the property was not exposed. Promote that first valid value to a new
+    // baseline instead of repeatedly comparing it with an unavailable value.
+    // This is diagnostic-only; it never approves or enables hotbar writes.
+    if (saved.persistentValue === null && persistentValue !== null) {
+      const promoted = {
+        kind: saved.kind,
+        schemaVersion: saved.schemaVersion,
+        persistentStatus,
+        persistentValue,
+        entityStatus: saved.entityStatus,
+        entityId: saved.entityId
+      };
+      const encoded = JSON.stringify(promoted);
+      player.setDynamicProperty(OWNER_KEY_ACCESS_PROPERTY, encoded);
+      if (player.getDynamicProperty(OWNER_KEY_ACCESS_PROPERTY) !== encoded) {
+        safeMessage(player, "§c[AINCRAD OWNER KEY DETAIL] FAIL: new persistentId baseline readback mismatch. Existing baseline may be retained; inventory unchanged.");
+        return;
+      }
+      safeMessage(player, "§e[AINCRAD OWNER KEY DETAIL] BASELINE RECORDED: persistentId is now available; this run establishes the first comparable value. Leave and reopen the same world, then run this check again. entity id=" + entityStatus +
+        " (previous value match=" + (saved.entityId !== null && entityId !== null && saved.entityId === entityId ? "yes" : "no/not comparable") +
+        "). Evidence only; hotbar writes remain disabled.");
+      return;
+    }
+
     const persistentValueMatches = saved.persistentValue !== null &&
       persistentValue !== null && saved.persistentValue === persistentValue;
     const entityValueMatches = saved.entityId !== null && entityId !== null && saved.entityId === entityId;
