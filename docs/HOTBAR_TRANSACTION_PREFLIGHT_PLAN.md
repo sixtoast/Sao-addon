@@ -84,3 +84,10 @@ Until the preflight and recovery gates have been designed and tested:
 The original read-only **Owner Key Diagnostic** remains unchanged and its record `aincrad:owner_key_probe_v1` is preserved. A separate **Owner Key Access Detail** entry was added to the Skill Crystal menu. It uses the independent `aincrad:owner_key_access_v1` record and reads `player.persistentId` at most once per run, reporting access categories without printing raw identifiers. It distinguishes property-not-exposed, property-check failure, getter exceptions, empty/unexpected values, and a non-empty string. It also compares the entity-ID candidate across runs.
 
 The v0.5.18 access-detail diagnostic is additive and does not alter inventory. A v0.5.19 package now changes only the declared `@minecraft/server` dependency to `2.11.0-beta` and bumps pack versions; it is a read-only API exposure test. Device test result: `persistentId` was `property-not-exposed` on both runs; `player.id` was available and matched across the tested world leave/reopen. Neither candidate is approved for a transaction. The next task is API-surface/version research and owner/recovery design, not hotbar writes. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
+
+
+## v0.5.19 device result (2026-10-24)
+
+The user reported `persistentId=available-string` on the v0.5.19 run; the prior v0.5.18 observation was `property-not-exposed`, so its value was not comparable. `player.id` remained available and matched across the tested runs. This suggests the `2.11.0-beta` module exposes the property, but does not yet demonstrate that the value persists across a same-version world reopen.
+
+**Next step:** with v0.5.19 unchanged, leave and reopen the same world and run **Owner Key Access Detail** again. Preserve the diagnostic records. Do not write or switch hotbar slots. Even a matching result would only pass this narrow lifecycle observation; multiplayer isolation, copied-world behaviour, and duplicate-record handling still require separate design and testing.
