@@ -62,9 +62,20 @@ Interpretation:
 - `player.id` was available and matched across this tested lifecycle, but this only establishes repeatability in this specific test. It does not prove player identity safety across multiplayer sessions, copied worlds, duplicate records, or other lifecycle boundaries.
 - No owner key is approved. Do not enable hotbar mutation based on this result.
 
+## API-surface finding (2026-10-24)
+
+The branch manifest declares `@minecraft/server` version `2.10.0`, which is the stable module dependency in this prototype. Microsoft's generated `Player.md` source places `persistentId` inside the `=minecraft-bedrock-experimental` moniker, meaning the documented property is experimental-surface-only in that source, even though some rendered Learn views can display the property in a stable-labelled page. This is a strong explanation for the target runtime reporting `property-not-exposed`; it is not proof of a runtime defect.
+
+References:
+- [MicrosoftDocs source: Player.md, experimental moniker around `persistentId`](https://github.com/MicrosoftDocs/minecraft-creator/blob/main/creator/ScriptAPI/minecraft/server/Player.md#L447-L463)
+- [Microsoft Learn: `@minecraft/server` module versions](https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/minecraft-server?view=minecraft-bedrock-stable)
+- [Microsoft Learn: Player class](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable)
+
+Do not simply change the dependency to a preview version: first verify the exact Bedrock build/API version supported by the user's installed runtime and check all other APIs for compatibility. The fact that the user enabled Beta APIs does not by itself change the manifest's declared module version.
+
 ## Next investigation
 
-Before another package or any inventory mutation, check the exact branch manifest and script API version against the target Bedrock runtime and official/community references. Determine whether the runtime is expected to expose `Player.persistentId` at all, and whether its absence is a version/preview-surface issue or an API-contract limitation. Do not try to force access through undocumented reflection or assume that a cast makes the runtime property exist.
+Before another package or any inventory mutation, confirm the target runtime's exact Bedrock/API version and whether it supports an appropriate preview module version. If a compatible version is documented, an isolated test branch/package could verify `persistentId` exposure only; it must remain read-only and must not enable inventory mutation. Do not try to force access through undocumented reflection or assume that a cast makes the runtime property exist.
 
 In parallel, review `Entity.id`'s documented scope and design a fail-closed ownership approach for transaction records that does not assume an entity ID is a durable player identity. If no suitable documented owner key is available, design explicit registration plus collision detection and recovery rather than silently falling back to display names.
 
