@@ -3,7 +3,7 @@
 **Date:** 2026-10-24  
 **Branch:** `prototype/hotbar-transaction-preflight`  
 **Base:** `prototype/skill-loadout-registry`  
-**Package baseline:** v0.5.17  
+**Package baseline:** v0.5.18  
 **Status:** planning/read-only investigation; no player inventory mutation is authorised or implemented.  
 **Stable `main`:** untouched.
 
@@ -72,6 +72,8 @@ Until the preflight and recovery gates have been designed and tested:
 - Existing transaction safety design: [`docs/HOTBAR_SWAP_TRANSACTION_DESIGN.md`](./HOTBAR_SWAP_TRANSACTION_DESIGN.md)
 - Loadout registry details: [`docs/SKILL_LOADOUT_REGISTRY.md`](./SKILL_LOADOUT_REGISTRY.md)
 
-## v0.5.17 diagnostic implementation status
+## v0.5.18 diagnostic implementation status
 
-The Skill Crystal menu includes a read-only Owner Key Diagnostic in `Aincrad_BP/scripts/main.js`. It stores candidate identifier values in `aincrad:owner_key_probe_v1`, verifies the initial dynamic-property write, and compares candidates on a later run. It refuses malformed/unknown saved data and does not overwrite it. The raw identifiers are not printed. The diagnostic does not approve either candidate for a transaction.
+The original read-only **Owner Key Diagnostic** remains unchanged and its record `aincrad:owner_key_probe_v1` is preserved. A separate **Owner Key Access Detail** entry was added to the Skill Crystal menu. It uses the independent `aincrad:owner_key_access_v1` record and reads `player.persistentId` at most once per run, reporting access categories without printing raw identifiers. It distinguishes property-not-exposed, property-check failure, getter exceptions, empty/unexpected values, and a non-empty string. It also compares the entity-ID candidate across runs.
+
+The v0.5.18 access-detail diagnostic is additive and does not alter inventory. Its device test is pending. It does not approve either candidate for a transaction. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
