@@ -138,3 +138,33 @@ The v0.5.10 follow-up:
 - Does not change inventory contents and does not activate skills while the probe is enabled.
 
 Retest briefly on the iPhone. Confirm the hotbar visibly returns to slot 1 during rapid spam and that no Heavy Strike messages appear while the probe is ON. If the UI still stays on slot 2 despite continuous assignment, the Script API property is not sufficient to force the client UI under this input pattern and we should stop treating this route as proven rather than adding more competing loops.
+
+
+## Target-device result: v0.5.10 visual hotbar bug (2026-10-24)
+
+The user confirms that the input/activation behaviour is reliable: the held item and the activated effect both correspond to hotbar slot 1, even when the visible selection outline remains on the other slot touched during rapid tapping. The remaining issue is visual selection-HUD desynchronisation, not server-side skill selection.
+
+Decision:
+- Record this as a known visual bug and stop spending time on repeated server-side selected-slot enforcement.
+- Preserve the current working input/activation behaviour.
+- Do not add a custom HUD override as part of this storage spike.
+- Resume the original purpose of this branch: safely preserving and restoring all nine real hotbar slots when switching between combat and non-combat modes.
+- No player inventory is to be moved until the storage entity passes synthetic-item and persistence tests, followed by a separate verified transaction design.
+
+Technical context:
+- Microsoft documents `Player.selectedSlotIndex` as a writable Script API property, but does not guarantee that repeatedly setting it repairs the client's visible selection outline: [Player API](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable).
+- Mojang's sample HUD draws the selected-slot image through the `#slot_selected` binding in `hotbar_collection_name`, a client HUD binding: [Mojang bedrock-samples HUD](https://github.com/Mojang/bedrock-samples/blob/main/resource_pack/ui/hud_screen.json).
+- A historical report describes hotbar flicker/desynchronisation during rapid slot switching and item use: [MCPE-78355](https://bugs.mojang.com/browse/MCPE-78355). This is contextual evidence, not proof that the current iPhone symptom is the same defect.
+
+## Next work: storage entity synthetic test (2026-10-24)
+
+The storage entity definitions are present, but there is not yet a script-driven persistence test and the entity has not been connected to a player's inventory. Next implementation slice should be a diagnostic-only synthetic test harness:
+
+1. Spawn or locate one `aincrad:hotbar_storage` record in a controlled test world.
+2. Validate the entity and its `minecraft:inventory` container are available before writing.
+3. Populate its nine slots only with synthetic test stacks; never read, clear, or write the player's inventory.
+4. Read the nine slots back immediately and report pass/fail per slot.
+5. Add a clear, explicit test cleanup path that only removes the synthetic test record after verifying it contains no test data that needs inspection.
+6. Then test persistence across save/leave/reopen and reconnect. Entity persistence and inventory survival must be observed in-game on the target runtime; JSON validation alone is not enough.
+
+Do not implement combat/non-combat hotbar swapping in this slice. After the synthetic persistence test passes, design a fail-closed transaction for capturing the original nine slots, verifying the recovery record, installing the combat loadout, restoring the originals, and verifying restoration before deleting any recovery data. If exact item fidelity or lifecycle recovery fails, stop and choose another storage architecture rather than risking player items.
