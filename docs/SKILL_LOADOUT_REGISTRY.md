@@ -50,3 +50,8 @@ The **Storage Diagnostic** menu entry runs the existing synthetic container test
 - Microsoft Learn, `@minecraft/server`: https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/minecraft-server?view=minecraft-bedrock-stable
 - Microsoft Learn, `Entity.getDynamicProperty`: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable
 - Community-maintained Bedrock Script API reference: https://jaylydev.github.io/scriptapi-docs/latest/classes/_minecraft_server.Entity.html
+
+
+## Build validation
+
+GitHub Actions run [40081642772](https://github.com/sixtoast/Sao-addon/actions/runs/40081642772) completed successfully after the Skill Crystal routing correction. Its artifact is the current v0.5.16 test build. Packaging/syntax checks passed; Minecraft runtime testing remains pending.
