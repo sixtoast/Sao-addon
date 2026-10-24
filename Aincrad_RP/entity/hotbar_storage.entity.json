@@ -1,0 +1,20 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "aincrad:hotbar_storage",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/hotbar_storage"
+      },
+      "geometry": {
+        "default": "geometry.hotbar_storage"
+      },
+      "render_controllers": [
+        "controller.render.hotbar_storage"
+      ]
+    }
+  }
+}
