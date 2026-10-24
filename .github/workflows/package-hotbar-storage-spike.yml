@@ -1,10 +1,11 @@
-name: Package hotbar storage test
+name: Package hotbar storage fidelity test
 
 on:
   push:
     branches:
       - prototype/hotbar-storage-spike
       - prototype/hotbar-storage-test
+      - prototype/hotbar-storage-fidelity
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
@@ -18,7 +19,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out hotbar storage test branch
+      - name: Check out hotbar storage fidelity branch
         uses: actions/checkout@v4
       - name: Validate JSON and package behavior/resource packs
         shell: bash
@@ -36,18 +37,19 @@ jobs:
                   json.load(handle)
           print(f"Validated JSON syntax in {len(files)} files.")
           PY
+          node --check Aincrad_BP/scripts/main.js
           mkdir -p dist
           (cd Aincrad_BP && zip -qr ../dist/Aincrad_BP.mcpack .)
           (cd Aincrad_RP && zip -qr ../dist/Aincrad_RP.mcpack .)
           cp dist/Aincrad_BP.mcpack dist/Aincrad_RP.mcpack .
-          zip -q dist/Aincrad-Hotbar-Storage-Test.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+          zip -q dist/Aincrad-Hotbar-Storage-Fidelity.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
           rm Aincrad_BP.mcpack Aincrad_RP.mcpack
           unzip -t dist/Aincrad-Hotbar-Storage-Test.mcaddon
           ls -lh dist/
       - name: Upload installable add-on
         uses: actions/upload-artifact@v4
         with:
-          name: Aincrad-Hotbar-Storage-Test-mcaddon
+          name: Aincrad-Hotbar-Storage-Fidelity-mcaddon
           path: dist/Aincrad-Hotbar-Storage-Test.mcaddon
           if-no-files-found: error
           retention-days: 14
