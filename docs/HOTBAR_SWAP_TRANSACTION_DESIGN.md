@@ -1,8 +1,8 @@
 # Hotbar Swap Transaction Design
 
 **Status:** Design only. No player inventory mutation is implemented by this document.
-**Branch:** `prototype/hotbar-capture-mirror`
-**Current package baseline:** v0.5.14 read-only hotbar mirror
+**Branch:** `prototype/skill-persistence-probe` (branched from `prototype/hotbar-capture-mirror`)
+**Current package baseline:** v0.5.15 read-only hotbar mirror plus synthetic player-scoped skill persistence probe
 **Stable `main`:** untouched.
 
 ## 1. Evidence and scope
@@ -164,3 +164,13 @@ Therefore, there is currently no implemented logical skill loadout/progression s
 
 This gate is intentionally smaller than hotbar switching: it proves the storage mechanism for logical skill data first, without changing combat behaviour or player inventory.
 
+
+## 13. Skill persistence probe implementation status (2026-10-24)
+
+The isolated branch `prototype/skill-persistence-probe` now contains the diagnostic-only probe described above. It stores a synthetic versioned JSON fixture in a player-scoped dynamic property and immediately reads it back. Sneak + use Parry Token invokes the probe; ordinary Parry Token use without Sneak retains the existing parry fallback.
+
+The fixture deliberately uses `probe:` IDs and is not production skill data. The probe refuses to overwrite malformed JSON, unexpected types, unknown fixture/schema versions, or mismatched data. It does not mutate player inventory or the existing physical hotbar mirror record. The behavior and resource pack manifests are versioned v0.5.15.
+
+**Not yet verified:** the new probe has not been tested in Minecraft on the target iPhone, and no successful CI/package result is claimed here. The required device test is documented in [`docs/SKILL_PERSISTENCE_PROBE.md`](./SKILL_PERSISTENCE_PROBE.md). Run it in the same world, leave/reopen after the first seed, and report the exact result before moving on to a real skill registry.
+
+The official `@minecraft/server` API documents entity/player dynamic-property read/write methods; that establishes API availability, not successful persistence on this specific device/world. See [Microsoft Learn: Entity](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable) and [Microsoft Learn: @minecraft/server module](https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/minecraft-server?view=minecraft-bedrock-stable).
