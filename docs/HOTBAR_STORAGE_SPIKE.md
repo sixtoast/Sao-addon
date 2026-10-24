@@ -264,3 +264,18 @@ For this build, the user must see a message beginning `[AINCRAD STORAGE FIDELITY
 - Artifact ID: `12553748390`, `Aincrad-Hotbar-Storage-Fidelity-mcaddon`.
 - Both outer artifact ZIP and inner `.mcaddon` passed archive integrity checks; both manifests report v0.5.13.
 - Packaged `.mcaddon` SHA-256: `c04c7e9a12b202378027e1766e5ebd84915d86581e9c205eaa5f8911006786e9`.
+
+
+## v0.5.13 target-device result and next slice (2026-10-24)
+
+The user tested v0.5.13, then left and rejoined the same world and reran the Skill Crystal test. The unique `[AINCRAD STORAGE FIDELITY v3] PASS` message appeared after rejoining. This is the target-device confirmation that the synthetic nine-slot entity inventory retained the tested item matrix across that save/reopen cycle. It does not yet prove that every arbitrary custom item component is preserved or that real inventory can safely be replaced/restored.
+
+## v0.5.14 read-only hotbar capture mirror
+
+Branch: `prototype/hotbar-capture-mirror`.
+
+Added a separate, opt-in test mode: **Sneak + use Skill Crystal**. It reads the player's nine hotbar slots and clones them into a separate tagged storage entity, then verifies the saved clone against the live slots. The normal Skill Crystal action still runs the synthetic test. The mirror is diagnostic-only: it never writes, clears or transfers from the player container, and it does not equip a combat loadout.
+
+The mirror uses a different owner-tag namespace from the synthetic test. It refuses to overwrite an existing seeded snapshot or retry a record marked incomplete. After capture, the user can leave/reopen the world without changing their hotbar and repeat Sneak + Skill Crystal to compare the live hotbar against the persistent snapshot. This intentionally leaves a hidden duplicate snapshot in the test world.
+
+Acceptance gate: target-device capture pass, hotbar visibly unchanged, then persistence pass after leaving/reopening with the hotbar unchanged. A comparison difference is expected if the user changes any slot; it does not modify either the current hotbar or saved snapshot. Real hotbar swapping/restoration remains unimplemented until this gate passes.
