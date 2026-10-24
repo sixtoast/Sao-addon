@@ -256,3 +256,11 @@ v0.5.13 therefore:
 - bumps BP/RP versions to 0.5.13 to make pack replacement unambiguous.
 
 For this build, the user must see a message beginning `[AINCRAD STORAGE FIDELITY v3]`. Any message beginning `[AINCRAD STORAGE TEST]` indicates that the old script is still running. The real player hotbar remains deliberately untested and untouched.
+
+
+### v0.5.13 package validation
+
+- GitHub Actions run [40077891954](https://github.com/sixtoast/Sao-addon/actions/runs/40077891954) completed successfully.
+- Artifact ID: `12553748390`, `Aincrad-Hotbar-Storage-Fidelity-mcaddon`.
+- Both outer artifact ZIP and inner `.mcaddon` passed archive integrity checks; both manifests report v0.5.13.
+- Packaged `.mcaddon` SHA-256: `c04c7e9a12b202378027e1766e5ebd84915d86581e9c205eaa5f8911006786e9`.
