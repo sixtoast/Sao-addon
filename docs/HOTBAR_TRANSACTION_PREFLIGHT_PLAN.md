@@ -33,8 +33,11 @@ Microsoft Learn documents `Entity.id` as a unique entity identifier intended to 
 
 **Target-device result (v0.5.18, 2026-10-24):** the user reported `persistentId property-not-exposed` on both the current and previous run, so its value could not be compared. `player.id` was `available-string` on both runs and its value matched across the tested world leave/reopen. This is evidence only for that lifecycle; it does not establish identity safety across multiplayer, copied worlds, or duplicate records. Neither candidate is approved, and hotbar writes remain disabled. Details are in [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
 
+API-surface research has found a likely explanation: the branch manifest declares stable `@minecraft/server` `2.10.0`, while Microsoft's generated `Player.md` source places `persistentId` under the `=minecraft-bedrock-experimental` moniker ([source lines](https://github.com/MicrosoftDocs/minecraft-creator/blob/main/creator/ScriptAPI/minecraft/server/Player.md#L447-L463)). Therefore `property-not-exposed` is consistent with the declared stable module surface. This remains a documented-source finding, not proof that the user's runtime is defective or that upgrading is safe.
+
 Next actions:
-- Inspect the exact branch manifest and script imports/API version, then compare them with official Microsoft documentation, relevant Bedrock changelogs, and community-maintained Script API references to determine whether `Player.persistentId` should exist on the target runtime surface.
+- Confirm the exact installed Bedrock build and supported API module versions before considering any preview dependency.
+- Do not upgrade the module just to expose one property until compatibility with the rest of the add-on is checked; enabling Beta APIs in world settings does not itself change the manifest dependency.
 - Do not add undocumented reflection or assume a type cast can make a runtime property exist.
 - Review the documented scope of `Entity.id`; do not assume matching IDs prove a durable player owner key.
 - If no documented owner identifier is reliable, design explicit registration plus collision detection and fail-closed recovery. Do not fall back silently to display names.
