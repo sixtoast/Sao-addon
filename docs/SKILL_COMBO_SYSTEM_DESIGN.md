@@ -338,3 +338,10 @@ Added to `Aincrad_BP/scripts/main.js` on `prototype/hotbar-storage-spike` only. 
 It does not activate skills or mutate/move items. Because it auto-returns after selecting any non-first slot, do not enable it in a world where you need to use ordinary hotbar selection. Test the command source/permissions, selection response, return reliability, visual flicker, and repeated same-slot selection (which should become a fresh slot change only after return has completed). If the command cannot be executed from the player context or the API property cannot be set, capture the Content Log and stop; do not add workarounds that alter player inventory.
 
 This implementation is not yet runtime-tested. The packaging workflow must pass before installing it, and it must remain isolated from stable `main`.
+
+
+### Auto-return probe compatibility fix (2026-10-24)
+
+The target runtime reported `TypeError: cannot read property 'subscribe' of undefined` for the optional `world.afterEvents.scriptEventReceive` listener. The probe no longer depends on that event. On this isolated branch, using the existing Skill Crystal toggles auto-return ON/OFF through the already-used `itemUse` event. It is still selection-only: it neither activates skills nor moves/replaces items. Tap the Skill Crystal to turn it on, switch to another slot to test return-to-slot-1, then tap the Skill Crystal again to turn it off. This requires the Skill Crystal to be available to use; do not use the probe in a normal world where automatic slot return is unwanted.
+
+This change is not yet runtime-verified. Wait for the packaging workflow to pass before reinstalling the updated add-on. The prior build's command-based instructions are obsolete.
