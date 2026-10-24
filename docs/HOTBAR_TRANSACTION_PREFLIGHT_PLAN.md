@@ -23,11 +23,15 @@ Before writing any item to player slots 0–8, build and test a read-only transa
 - Verify both the ordered IDs as displayed and the selected skill indicator.
 - Do not use the hotbar HUD selection outline as evidence of inventory contents; a known visual-selection bug remains documented.
 
-### Gate B — investigate a reliable owner key
+### Gate B — owner-key API audit (initial finding)
 
-- Inspect the supported `@minecraft/server` API available to the target Bedrock runtime for a stable player identifier.
-- Do not approve display name as a destructive-transaction owner key.
-- If no suitable stable key exists in the target API, document the limitation and design an explicit safe alternative before any inventory write.
+Microsoft Learn currently documents `Entity.id` as a unique entity identifier intended to remain consistent across loads of a world instance. The Player API also exposes `persistentId`, explicitly described as identifying a player across sessions, but it is marked **pre-release** and may change or be removed. References: [Entity.id](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable) and [Player.persistentId](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable).
+
+Implementation decision is still pending:
+- Inspect the repository's declared `@minecraft/server` dependency and the target Bedrock 26.52 runtime before relying on `persistentId`.
+- Prefer a documented stable identifier available in the exact target runtime; do not parse or transform its internal structure.
+- Run a non-destructive diagnostic that prints whether the candidate identifier is available and whether it matches after a complete world leave/reopen.
+- Keep display-name tags diagnostic-only. If the candidate is unavailable or unstable, block transaction implementation until a safe owner strategy is designed.
 
 ### Gate C — design a separate transaction record
 
@@ -57,7 +61,8 @@ Until the preflight and recovery gates have been designed and tested:
 ## Documentation references
 
 - Microsoft Learn, `@minecraft/server` module: https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/minecraft-server?view=minecraft-bedrock-stable
-- Microsoft Learn, Entity API (including dynamic properties): https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable
+- Microsoft Learn, Entity API: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable
+- Microsoft Learn, Player API: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable
 - Community-maintained Bedrock Script API reference: https://jaylydev.github.io/scriptapi-docs/latest/classes/_minecraft_server.Entity.html
 - Existing transaction safety design: [`docs/HOTBAR_SWAP_TRANSACTION_DESIGN.md`](./HOTBAR_SWAP_TRANSACTION_DESIGN.md)
 - Loadout registry details: [`docs/SKILL_LOADOUT_REGISTRY.md`](./SKILL_LOADOUT_REGISTRY.md)
