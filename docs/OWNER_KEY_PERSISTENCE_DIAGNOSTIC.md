@@ -109,3 +109,12 @@ Interpretation:
 - Even if it matches, multiplayer isolation, copied-world behaviour, and duplicate-record handling remain separate gates.
 
 **No owner key is approved yet. Hotbar writes and automatic switching remain disabled.**
+
+
+## v0.5.19 diagnostic baseline fix (2026-10-24)
+
+Review of the reported repeat output exposed a diagnostic logic flaw: when the saved record contained `persistentValue: null` from an earlier run where `persistentId` was not exposed, later runs kept comparing against that null record forever. The diagnostic now promotes the first valid non-empty `persistentId` into a baseline, verifies the dynamic-property readback, and reports **BASELINE RECORDED**. This is not a persistence match; it simply creates the first comparable value.
+
+After receiving **BASELINE RECORDED**, leave and reopen the same world without changing the add-on version, then run **Owner Key Access Detail** once more. A `value match=yes` result would be evidence for this specific world leave/reopen lifecycle only. A mismatch or unavailable value must remain a no-go. The diagnostic does not print raw identifiers and does not change inventory.
+
+The implementation is on `prototype/hotbar-transaction-preflight` only. It does not alter the older `aincrad:owner_key_probe_v1` record, enable hotbar writes, or enable automatic hotbar switching.
