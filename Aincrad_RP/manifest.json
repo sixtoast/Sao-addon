@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat RP v0.5.14",
-    "description": "Aincrad Combat v0.5.14 | Synthetic fidelity test plus read-only real hotbar mirror diagnostic.",
+    "name": "Aincrad Combat RP v0.5.15",
+    "description": "Aincrad Combat v0.5.15 | Synthetic fidelity test plus read-only real hotbar mirror diagnostic.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
     "version": [
       0,
       5,
-      14
+      15
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
       0,
       5,
-      14
+      15
     ]
     }
   ]
