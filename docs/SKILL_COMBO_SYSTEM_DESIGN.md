@@ -349,3 +349,12 @@ This change is not yet runtime-verified. Wait for the packaging workflow to pass
 ### Test build version correction (2026-10-24)
 
 The first compatibility-fix package retained behavior/resource pack manifest version `0.5.5`. Minecraft may therefore keep the already-imported pack version rather than load the changed script, which is consistent with the old Skill Crystal menu still appearing. Both BP and RP manifest header/module/dependency versions have now been bumped to `0.5.6` on `prototype/hotbar-storage-spike` to force a distinct imported build. Re-test only with the newly packaged artifact and confirm the displayed pack version is `0.5.6`. This is a packaging/cache hypothesis, not yet confirmed by a device test.
+
+
+### Rapid-tap auto-return hardening (2026-10-24)
+
+The v0.5.6 target-device test showed that the delayed, event-triggered return could be overwhelmed by repeatedly tapping the same non-first slot; selecting a different slot then caused recovery. This confirms the previous probe is not spam-proof.
+
+On `prototype/hotbar-storage-spike`, the next isolated test build replaces per-event delayed return requests with a single one-tick enforcement loop. While the opt-in probe is ON, it checks the player's selected slot each tick and reasserts API slot index 0 whenever the selected slot differs. This avoids a queue of competing timeout callbacks and also catches rapid same-slot taps that do not emit another slot-change event. The slot-change listener remains for diagnostics. Pack versions are bumped to 0.5.7.
+
+This is a mitigation to test, not a proven fix: repeated touch input, UI flicker, event timing, and CPU/runtime behaviour must be checked on the target iPhone. It remains selection-only and does not activate skills or move items. Do not connect it to gameplay until the rapid-tap test passes. Stable `main` remains untouched.
