@@ -3,7 +3,7 @@
 **Date:** 2026-10-24  
 **Branch:** `prototype/hotbar-transaction-preflight`  
 **Base:** `prototype/skill-loadout-registry`  
-**Package baseline:** v0.5.18  
+**Package baseline:** v0.5.19 (beta-module exposure test; pending device test)  
 **Status:** read-only owner-key investigation; v0.5.18 device result recorded; no player inventory mutation is authorised or implemented.  
 **Stable `main`:** untouched.
 
@@ -35,9 +35,11 @@ Microsoft Learn documents `Entity.id` as a unique entity identifier intended to 
 
 API-surface research has found a likely explanation: the branch manifest declares stable `@minecraft/server` `2.10.0`, while Microsoft's generated `Player.md` source places `persistentId` under the `=minecraft-bedrock-experimental` moniker ([source lines](https://github.com/MicrosoftDocs/minecraft-creator/blob/main/creator/ScriptAPI/minecraft/server/Player.md#L447-L463)). Therefore `property-not-exposed` is consistent with the declared stable module surface. This remains a documented-source finding, not proof that the user's runtime is defective or that upgrading is safe.
 
+Microsoft's Bedrock 26.50 changelog records stable `@minecraft/server` `2.10.0` and the addition of `2.11.0-beta` ([official changelog](https://www.minecraft.net/en-us/article/minecraft--bedrock-edition-26-50-changelog)). Given the target Bedrock 26.52 runtime and Beta APIs enabled, a narrowly scoped v0.5.19 test package now declares `2.11.0-beta` to test whether the experimental property becomes available. The diagnostic code remains read-only. This is not a blanket API upgrade approval; watch for pack-load/script errors and revert if compatibility problems appear.
+
 Next actions:
-- Confirm the exact installed Bedrock build and supported API module versions before considering any preview dependency.
-- Do not upgrade the module just to expose one property until compatibility with the rest of the add-on is checked; enabling Beta APIs in world settings does not itself change the manifest dependency.
+- Run the v0.5.19 package in the target world and verify that the pack loads without script errors before opening **Owner Key Access Detail**.
+- Report the complete status line, especially the `persistentId` access category. Do not enable hotbar writes.
 - Do not add undocumented reflection or assume a type cast can make a runtime property exist.
 - Review the documented scope of `Entity.id`; do not assume matching IDs prove a durable player owner key.
 - If no documented owner identifier is reliable, design explicit registration plus collision detection and fail-closed recovery. Do not fall back silently to display names.
@@ -81,4 +83,4 @@ Until the preflight and recovery gates have been designed and tested:
 
 The original read-only **Owner Key Diagnostic** remains unchanged and its record `aincrad:owner_key_probe_v1` is preserved. A separate **Owner Key Access Detail** entry was added to the Skill Crystal menu. It uses the independent `aincrad:owner_key_access_v1` record and reads `player.persistentId` at most once per run, reporting access categories without printing raw identifiers. It distinguishes property-not-exposed, property-check failure, getter exceptions, empty/unexpected values, and a non-empty string. It also compares the entity-ID candidate across runs.
 
-The v0.5.18 access-detail diagnostic is additive and does not alter inventory. Device test result: `persistentId` was `property-not-exposed` on both runs; `player.id` was available and matched across the tested world leave/reopen. Neither candidate is approved for a transaction. The next task is API-surface/version research and owner/recovery design, not hotbar writes. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
+The v0.5.18 access-detail diagnostic is additive and does not alter inventory. A v0.5.19 package now changes only the declared `@minecraft/server` dependency to `2.11.0-beta` and bumps pack versions; it is a read-only API exposure test. Device test result: `persistentId` was `property-not-exposed` on both runs; `player.id` was available and matched across the tested world leave/reopen. Neither candidate is approved for a transaction. The next task is API-surface/version research and owner/recovery design, not hotbar writes. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
