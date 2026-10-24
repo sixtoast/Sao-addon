@@ -364,8 +364,6 @@ function requestChargedHeavy(player, snapshotTargetId, damageMultiplier) {
 function beginHeavyCharge(event) {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
-  // The hotbar diagnostic must not activate any combat lifecycle.
-  if (hotbarAutoReturnProbePlayers?.has(player.id)) return;
   if (event.itemStack?.typeId !== HEAVY_ITEM || heavyChargeStates.has(player.id)) return;
   const targetCandidates = getTargetCandidates(player, { ...MOVES.heavy, range: MOVES.heavy.range * 1.15, minDot: Math.max(0, MOVES.heavy.minDot - 0.1) });
   heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, slotIndex: player.selectedSlotIndex, readyCued: false });
@@ -376,11 +374,6 @@ function beginHeavyCharge(event) {
 function releaseHeavyCharge(event) {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
-  if (hotbarAutoReturnProbePlayers?.has(player.id)) {
-    heavyChargeStates.delete(player.id);
-    try { if (player.isValid) player.onScreenDisplay.setActionBar(""); } catch (_) {}
-    return;
-  }
   const charge = heavyChargeStates.get(player.id);
   if (!charge) return;
   heavyChargeStates.delete(player.id);
@@ -814,21 +807,132 @@ function processCombatTick() {
 
 const intents = [];
 
+// Synthetic storage test only. This deliberately never reads or mutates the
+// player's inventory. The test record is tagged by player name so it can be
+// found again after a world save/reopen and the player's runtime entity ID changes.
+const HOTBAR_STORAGE_ENTITY = "aincrad:hotbar_storage";
+const STORAGE_TEST_TAG_PREFIX = "aincrad_storage_test_owner_";
+const STORAGE_TEST_SEEDED_TAG = "aincrad_storage_test_seeded";
+
+function getStorageTestOwnerTag(player) {
+  const safeName = String(player.name || "player")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_")
+    .slice(0, 80);
+  return STORAGE_TEST_TAG_PREFIX + safeName;
+}
+
+function findStorageTestRecord(ownerTag) {
+  for (const dimensionId of ["overworld", "nether", "the_end"]) {
+    try {
+      const dimension = world.getDimension(dimensionId);
+      const matches = dimension.getEntities({
+        type: HOTBAR_STORAGE_ENTITY,
+        tags: [ownerTag]
+      });
+      if (matches.length > 0) return matches[0];
+    } catch (_) {
+      // A dimension may not be available in a particular runtime context.
+    }
+  }
+  return undefined;
+}
+
+function buildSyntheticHotbarMatrix() {
+  const matrix = new Array(9);
+  matrix[1] = new ItemStack("minecraft:diamond", 3);
+  matrix[2] = new ItemStack("minecraft:apple", 7);
+  const labelledStick = new ItemStack("minecraft:stick", 1);
+  labelledStick.nameTag = "AINCRAD Storage Test";
+  labelledStick.setLore(["Synthetic item only", "Must survive storage"]);
+  matrix[3] = labelledStick;
+  matrix[4] = new ItemStack(MENU_ITEM, 1);
+  matrix[5] = new ItemStack("minecraft:iron_ingot", 12);
+  matrix[6] = new ItemStack("minecraft:bread", 2);
+  matrix[7] = new ItemStack("minecraft:gold_ingot", 5);
+  // Slots 0 and 8 intentionally remain empty to test empty-slot preservation.
+  return matrix;
+}
+
+function describeSyntheticItem(item) {
+  if (!item) return "empty";
+  let lore = [];
+  try { lore = item.getLore(); } catch (_) {}
+  return [
+    item.typeId,
+    item.amount,
+    item.nameTag || "",
+    lore.join("|")
+  ].join("::");
+}
+
+function runHotbarStorageSyntheticTest(player) {
+  if (!player || !player.isValid) return;
+  try {
+    const ownerTag = getStorageTestOwnerTag(player);
+    let record = findStorageTestRecord(ownerTag);
+    let created = false;
+
+    if (!record) {
+      record = player.dimension.spawnEntity(HOTBAR_STORAGE_ENTITY, {
+        x: player.location.x,
+        y: player.location.y + 1,
+        z: player.location.z
+      });
+      record.addTag(ownerTag);
+      created = true;
+    }
+
+    const storage = record.getComponent("minecraft:inventory")?.container;
+    if (!storage || !storage.isValid || storage.size !== 9) {
+      safeMessage(player, "§c[AINCRAD STORAGE TEST] FAIL: storage entity inventory is missing, invalid, or not nine slots. No player items were touched.");
+      return;
+    }
+
+    const expected = buildSyntheticHotbarMatrix();
+    const alreadySeeded = record.hasTag(STORAGE_TEST_SEEDED_TAG);
+
+    // Seed only a fresh/uncommitted synthetic record. Once seeded, never rewrite
+    // it during verification; this allows a later run to test saved contents.
+    if (!alreadySeeded) {
+      for (let slot = 0; slot < 9; slot++) {
+        storage.setItem(slot, expected[slot]?.clone());
+      }
+    }
+
+    const failures = [];
+    for (let slot = 0; slot < 9; slot++) {
+      const actual = storage.getItem(slot);
+      if (describeSyntheticItem(actual) !== describeSyntheticItem(expected[slot])) {
+        failures.push("slot " + (slot + 1) + " expected [" +
+          describeSyntheticItem(expected[slot]) + "] got [" +
+          describeSyntheticItem(actual) + "]");
+      }
+    }
+
+    if (failures.length > 0) {
+      safeMessage(player, "§c[AINCRAD STORAGE TEST] FAIL: " + failures.slice(0, 3).join("; ") +
+        (failures.length > 3 ? "; +" + (failures.length - 3) + " more." : ".") +
+        " Test record retained for inspection; player inventory untouched.");
+      return;
+    }
+
+    if (!alreadySeeded) {
+      record.addTag(STORAGE_TEST_SEEDED_TAG);
+      safeMessage(player, "§a[AINCRAD STORAGE TEST] PASS: synthetic 9-slot matrix written and read back. Leave and reopen the world, then use the Skill Crystal again to test persistence. No player items were touched.");
+    } else {
+      safeMessage(player, "§a[AINCRAD STORAGE TEST] PASS: existing synthetic 9-slot matrix still matches. If the world was reopened since seeding, entity/container persistence survived. Test record retained; player inventory untouched.");
+    }
+  } catch (error) {
+    safeMessage(player, "§c[AINCRAD STORAGE TEST] ERROR: " + String(error) + ". No player inventory operation is performed by this test.");
+  }
+}
+
 // Heavy Strike uses the chargeable-item lifecycle. The item opts into start_using: "on_attack", so Attack begins charging and release resolves it.
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
   if (!event.itemStack) return;
-
-  // Diagnostic-only: while the selection probe is active, note whether using
-  // any item is observed and which slot is selected at that moment.
-  if (hotbarAutoReturnProbePlayers.has(player.id)) {
-    safeMessage(player,
-      "§d[AINCRAD INPUT DIAG] itemUse observed: " + event.itemStack.typeId +
-      " | selected slot " + (player.selectedSlotIndex + 1) + ".");
-    // Keep the probe isolated: only the Skill Crystal may be used to toggle it.
-    if (event.itemStack.typeId !== MENU_ITEM) return;
-  }
 
   if (event.itemStack.typeId === GUARD_ITEM) {
     // Sneak state is authoritative. Never let the compatibility item cancel a
@@ -868,16 +972,8 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === MENU_ITEM) {
-    // On this isolated test branch, using the existing Skill Crystal toggles
-    // the selection-only auto-return probe. Avoid relying on scriptEventReceive,
-    // which is unavailable on some target runtimes. No inventory is moved.
-    if (hotbarAutoReturnProbePlayers.has(player.id)) {
-      hotbarAutoReturnProbePlayers.delete(player.id);
-      safeMessage(player, "§7[AINCRAD INPUT TEST] Auto-return probe OFF. Tap the Skill Crystal again to enable it.");
-    } else {
-      hotbarAutoReturnProbePlayers.add(player.id);
-      safeMessage(player, "§e[AINCRAD INPUT TEST] Auto-return probe ON. Select a different slot to test auto-return. Tap the Skill Crystal again to turn it OFF. No skills activate and no items move.");
-    }
+    runHotbarStorageSyntheticTest(player);
+    return;
   }
 });
 
@@ -937,91 +1033,6 @@ world.afterEvents.playerSpawn.subscribe((event) => {
     }
   }, 1);
 });
-
-// Selection-only auto-return probe state. It is toggled by using the existing
-// Skill Crystal through itemUse, avoiding scriptEventReceive compatibility.
-const hotbarAutoReturnProbePlayers = new Set();
-const hotbarAutoReturnFailureReported = new Set();
-const hotbarAutoReturnLastSlotDiagTick = new Map();
-
-// One enforcement loop avoids a pile of competing delayed returns during rapid
-// touch input. While the opt-in probe is enabled, slot 1 is reasserted each tick.
-// Unlike the previous build, assignment failures and assignments that do not
-// stick are now visible in chat, once per failure episode (not every tick).
-system.runInterval(() => {
-  for (const playerId of hotbarAutoReturnProbePlayers) {
-    try {
-      const player = world.getAllPlayers().find((candidate) => candidate.id === playerId);
-      if (!player || !player.isValid) {
-        hotbarAutoReturnProbePlayers.delete(playerId);
-        hotbarAutoReturnFailureReported.delete(playerId);
-        continue;
-      }
-      const beforeSlot = player.selectedSlotIndex;
-      // Reassert even when the server-side property already says slot 1. Under
-      // rapid touch input, the client can visibly remain on slot 2 while the
-      // server property reads 0; skipping in that case leaves the UI stuck.
-      player.selectedSlotIndex = 0;
-      const afterSlot = player.selectedSlotIndex;
-      if (afterSlot === 0) hotbarAutoReturnFailureReported.delete(playerId);
-      if (afterSlot !== 0) {
-        throw new Error("assignment did not stick (before=" + (beforeSlot + 1) +
-          ", after=" + (afterSlot + 1) + ")");
-      }
-    } catch (error) {
-      if (!hotbarAutoReturnFailureReported.has(playerId)) {
-        hotbarAutoReturnFailureReported.add(playerId);
-        const player = world.getAllPlayers().find((candidate) => candidate.id === playerId);
-        if (player && player.isValid) {
-          safeMessage(player,
-            "§c[AINCRAD INPUT DIAG] Auto-return assignment failed: " + String(error) +
-            ". Current slot=" + (player.selectedSlotIndex + 1) + ".");
-        }
-      }
-    }
-  }
-}, 1);
-
-// ISOLATED INPUT PROBE: reports hotbar slot changes so the target-device
-// interaction can be verified before any slots are repurposed for skills.
-// This listener is only on prototype/skill-input-probe; stable combat branches
-// are unchanged. Slot indices in the API are zero-based, so display 1-9 to players.
-try {
-  const hotbarSignal = world.afterEvents.playerHotbarSelectedSlotChange;
-  if (hotbarSignal && typeof hotbarSignal.subscribe === "function") {
-    hotbarSignal.subscribe((event) => {
-      const player = event.player;
-      if (!player || !player.isValid) return;
-      const itemName = event.itemStack?.typeId ?? "empty";
-      if (!hotbarAutoReturnProbePlayers.has(player.id)) return;
-      // Rapid touch spam can flood chat and itself create visible lag. Keep one
-      // diagnostic line per player every five ticks while the probe is active.
-      const lastLogTick = hotbarAutoReturnLastSlotDiagTick.get(player.id) ?? -1000;
-      if (system.currentTick - lastLogTick < 5) return;
-      hotbarAutoReturnLastSlotDiagTick.set(player.id, system.currentTick);
-      safeMessage(
-        player,
-        "§e[AINCRAD INPUT TEST] Slot " + (event.previousSlotSelected + 1) +
-          " → " + (event.newSlotSelected + 1) + " | " + itemName +
-          (event.newSlotSelected === 0 ? "." : ". Auto-return enforcing slot 1.")
-      );
-    });
-  } else {
-    world.afterEvents.playerSpawn.subscribe((event) => {
-      if (event.initialSpawn) {
-        system.runTimeout(() => safeMessage(event.player,
-          "§c[AINCRAD INPUT TEST] playerHotbarSelectedSlotChange is unavailable in this runtime."), 2);
-      }
-    });
-  }
-} catch (error) {
-  world.afterEvents.playerSpawn.subscribe((event) => {
-    if (event.initialSpawn) {
-      system.runTimeout(() => safeMessage(event.player,
-        "§c[AINCRAD INPUT TEST] Could not register slot-change listener: " + String(error)), 2);
-    }
-  });
-}
 
 system.runInterval(processCombatTick, 1);
 
