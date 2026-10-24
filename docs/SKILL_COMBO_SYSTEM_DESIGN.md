@@ -305,3 +305,8 @@ Sources:
 - Microsoft, [EntityInventoryComponent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entityinventorycomponent?view=minecraft-bedrock-stable)
 
 **Next implementation decision:** prototype a private, non-interactive, persistent storage entity in a separate branch, with an inventory large enough for a player's original hotbar and a stable owner key. Test that it saves/restores cloned ItemStacks with enchantments, durability, lore, names, custom item data and stack amounts after unload/reload. Do not connect it to combat mode until those tests pass. If the entity cannot be reliably found after rejoin/reload, reject this route rather than falling back to memory-only storage.
+
+
+### Storage spike branch started (2026-10-24)
+
+Created isolated branch `prototype/hotbar-storage-spike` from `prototype/skill-input-probe` and added [HOTBAR_STORAGE_SPIKE.md](HOTBAR_STORAGE_SPIKE.md). The spike specification captures the official API findings, the missing entity-pack structure, a synthetic-item preservation matrix, lifecycle tests, and fail-closed rules. No player inventory or combat code has been changed. This is documentation/specification progress only; the entity and runtime persistence are not yet implemented or validated.
