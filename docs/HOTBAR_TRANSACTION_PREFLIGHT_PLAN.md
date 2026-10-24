@@ -113,3 +113,10 @@ Next, work on design and read-only validation, in this order:
 5. **Only after review:** propose a separate, tightly scoped test that can validate recovery behaviour without risking the player's real inventory. Keep all production hotbar mutation disabled until this gate is explicitly passed.
 
 Do not repeat the completed baseline test, change the existing storage mirror/synthetic diagnostic, merge to `main`, or enable hotbar writes or automatic switching.
+
+
+## Recovery protocol design checkpoint (2026-10-24)
+
+A standalone, design-only [HOTBAR_TRANSACTION_RECOVERY_PROTOCOL.md](./HOTBAR_TRANSACTION_RECOVERY_PROTOCOL.md) now defines fail-closed transaction states, preflight checks, an interrupted-operation decision table, and explicit restoration rules. This advances the design work without waiting for the two-player test and without changing gameplay code.
+
+The protocol is not implementation approval. Its owner-key and world-copy assumptions remain provisional until the documented API review and multiplayer/copy-world tests pass. Production hotbar mutation and automatic switching remain disabled.
