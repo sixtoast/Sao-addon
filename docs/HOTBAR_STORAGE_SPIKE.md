@@ -244,3 +244,15 @@ Static/package checks do not establish that item fidelity or entity persistence 
 - JavaScript syntax and JSON validation passed in the workflow.
 
 These checks establish package integrity only; the new damaged/enchantment item cases still need to pass in-game.
+
+
+### Fidelity test identification fix: v0.5.13
+
+The user reported receiving the generic v0.5.11-style success wording while changing the real hotbar did not affect the result. That is expected for a synthetic-only test, because the harness intentionally never reads or changes the player's inventory. However, the previous wording did not clearly identify whether the expanded fidelity matrix had run.
+
+v0.5.13 therefore:
+- emits the explicit prefix `[AINCRAD STORAGE FIDELITY v3]` on PASS, FAIL, and ERROR;
+- uses a new `aincrad_storage_fidelity_v3_owner_...` owner tag and `aincrad_storage_fidelity_seeded_v3` marker, forcing a fresh synthetic record;
+- bumps BP/RP versions to 0.5.13 to make pack replacement unambiguous.
+
+For this build, the user must see a message beginning `[AINCRAD STORAGE FIDELITY v3]`. Any message beginning `[AINCRAD STORAGE TEST]` indicates that the old script is still running. The real player hotbar remains deliberately untested and untouched.
