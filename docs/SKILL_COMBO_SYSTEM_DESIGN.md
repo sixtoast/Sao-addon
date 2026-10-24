@@ -329,15 +329,14 @@ No gameplay code was changed as a result of this test. Storage entity persistenc
 ### Opt-in auto-return input probe implementation (2026-10-24)
 
 Added to `Aincrad_BP/scripts/main.js` on `prototype/hotbar-storage-spike` only. This probe is selection-only and is **off by default**:
-- In a separate test world, run `/scriptevent aincrad:hotbar_probe_start` as the player to enable it.
+- In a separate test world, use the existing Skill Crystal to toggle the probe ON/OFF.
 - Select any hotbar slot other than slot 1. The script logs the selected slot/item and requests a return to slot 1 (API index 0).
 - The return event for slot 1 is ignored, avoiding recursive return requests.
 - Repeated requests in the same tick are suppressed.
-- Run `/scriptevent aincrad:hotbar_probe_stop` to disable it.
 
-It does not activate skills or mutate/move items. Because it auto-returns after selecting any non-first slot, do not enable it in a world where you need to use ordinary hotbar selection. Test the command source/permissions, selection response, return reliability, visual flicker, and repeated same-slot selection (which should become a fresh slot change only after return has completed). If the command cannot be executed from the player context or the API property cannot be set, capture the Content Log and stop; do not add workarounds that alter player inventory.
+It does not activate skills or mutate/move items. Because it auto-returns after selecting any non-first slot, do not enable it in a world where you need ordinary hotbar selection. Test the item-use response, selection response, return reliability, visual flicker, and repeated same-slot selection (which should become a fresh slot change only after return has completed). If item use opens the old combat menu instead of displaying the probe ON/OFF message, the runtime is likely still loading an older pack build; verify pack versions and reimport before changing code.
 
-This implementation is not yet runtime-tested. The packaging workflow must pass before installing it, and it must remain isolated from stable `main`.
+This implementation is not yet runtime-verified. The packaging workflow must pass before installing it, and it must remain isolated from stable `main`.
 
 
 ### Auto-return probe compatibility fix (2026-10-24)
@@ -345,3 +344,8 @@ This implementation is not yet runtime-tested. The packaging workflow must pass 
 The target runtime reported `TypeError: cannot read property 'subscribe' of undefined` for the optional `world.afterEvents.scriptEventReceive` listener. The probe no longer depends on that event. On this isolated branch, using the existing Skill Crystal toggles auto-return ON/OFF through the already-used `itemUse` event. It is still selection-only: it neither activates skills nor moves/replaces items. Tap the Skill Crystal to turn it on, switch to another slot to test return-to-slot-1, then tap the Skill Crystal again to turn it off. This requires the Skill Crystal to be available to use; do not use the probe in a normal world where automatic slot return is unwanted.
 
 This change is not yet runtime-verified. Wait for the packaging workflow to pass before reinstalling the updated add-on. The prior build's command-based instructions are obsolete.
+
+
+### Test build version correction (2026-10-24)
+
+The first compatibility-fix package retained behavior/resource pack manifest version `0.5.5`. Minecraft may therefore keep the already-imported pack version rather than load the changed script, which is consistent with the old Skill Crystal menu still appearing. Both BP and RP manifest header/module/dependency versions have now been bumped to `0.5.6` on `prototype/hotbar-storage-spike` to force a distinct imported build. Re-test only with the newly packaged artifact and confirm the displayed pack version is `0.5.6`. This is a packaging/cache hypothesis, not yet confirmed by a device test.
