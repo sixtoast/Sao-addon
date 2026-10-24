@@ -168,3 +168,21 @@ The storage entity definitions are present, but there is not yet a script-driven
 6. Then test persistence across save/leave/reopen and reconnect. Entity persistence and inventory survival must be observed in-game on the target runtime; JSON validation alone is not enough.
 
 Do not implement combat/non-combat hotbar swapping in this slice. After the synthetic persistence test passes, design a fail-closed transaction for capturing the original nine slots, verifying the recovery record, installing the combat loadout, restoring the originals, and verifying restoration before deleting any recovery data. If exact item fidelity or lifecycle recovery fails, stop and choose another storage architecture rather than risking player items.
+
+
+## Synthetic storage test harness: v0.5.11 (2026-10-24)
+
+A new isolated branch, `prototype/hotbar-storage-test`, starts the next feature slice without rewriting the earlier input-probe branch. Using the Skill Crystal now runs a storage-only synthetic test instead of the old selection auto-return probe.
+
+The harness:
+- Finds or creates one `aincrad:hotbar_storage` entity tagged for the player's sanitised name, searching the Overworld, Nether and End.
+- Checks that the entity exposes a valid nine-slot inventory.
+- Writes only synthetic stacks to that entity: empty slots, stack counts, a named item with lore, and the add-on Skill Crystal.
+- Reads all nine slots back and compares item type, count, name and lore.
+- Marks the record as seeded only after successful verification. Later runs verify the existing contents without reseeding, so the test can be repeated after saving, leaving and reopening the world.
+- Retains the record for inspection and does not automatically delete it.
+- Does not read, clear, transfer or write any player inventory slots.
+
+**Limits of this first pass:** this verifies basic item metadata and container readback, not enchantment/durability fidelity or a complete combat/non-combat swap. A same-session pass proves immediate container readback only. To test persistence, run once, leave and reopen the world, then use the Skill Crystal again and confirm that the existing record passes without reseeding. If the record is missing or a slot mismatches, report the exact chat result and do not proceed to real inventory transfer.
+
+The package workflow must validate the entity JSON and build the v0.5.11 add-on for target-device testing. The custom entity schema and persistent inventory behaviour still require in-game validation on the target Bedrock/iPhone runtime.
