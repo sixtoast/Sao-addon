@@ -233,3 +233,14 @@ Test procedure on the target device:
 The Microsoft Script API supports the required durability component properties and enchantment component methods; the implementation uses `ItemStack.getComponent("minecraft:durability")`, `ItemStack.getComponent("minecraft:enchantable")`, and `EnchantmentTypes.get`. References: [ItemStack](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemstack?view=minecraft-bedrock-stable), [ItemDurabilityComponent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemdurabilitycomponent?view=minecraft-bedrock-stable), [ItemEnchantableComponent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemenchantablecomponent?view=minecraft-bedrock-stable), [EnchantmentTypes](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/enchantmenttypes?view=minecraft-bedrock-stable).
 
 Static/package checks do not establish that item fidelity or entity persistence works in-game; that still requires the target-device test above.
+
+
+### v0.5.12 package validation
+
+- GitHub Actions run [40076922999](https://github.com/sixtoast/Sao-addon/actions/runs/40076922999) completed successfully.
+- Artifact: `Aincrad-Hotbar-Storage-Fidelity-mcaddon`, artifact ID `12553667409`.
+- Downloaded artifact ZIP and inner `.mcaddon` both passed archive integrity checks.
+- Packaged `.mcaddon` SHA-256: `f4b621a15f7c98eb3f80baf98b62368ab8a6d6c12889975a40cbd6febb8721cb`.
+- JavaScript syntax and JSON validation passed in the workflow.
+
+These checks establish package integrity only; the new damaged/enchantment item cases still need to pass in-game.
