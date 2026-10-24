@@ -813,6 +813,14 @@ world.afterEvents.itemUse.subscribe((event) => {
   if (!player || player.typeId !== "minecraft:player") return;
   if (!event.itemStack) return;
 
+  // Diagnostic-only: while the selection probe is active, note whether using
+  // any item is observed and which slot is selected at that moment.
+  if (hotbarAutoReturnProbePlayers.has(player.id)) {
+    safeMessage(player,
+      "§d[AINCRAD INPUT DIAG] itemUse observed: " + event.itemStack.typeId +
+      " | selected slot " + (player.selectedSlotIndex + 1) + ".");
+  }
+
   if (event.itemStack.typeId === GUARD_ITEM) {
     // Sneak state is authoritative. Never let the compatibility item cancel a
     // stance while the player is sneaking in either hold or toggle mode.
@@ -925,20 +933,43 @@ world.afterEvents.playerSpawn.subscribe((event) => {
 // Selection-only auto-return probe state. It is toggled by using the existing
 // Skill Crystal through itemUse, avoiding scriptEventReceive compatibility.
 const hotbarAutoReturnProbePlayers = new Set();
+const hotbarAutoReturnFailureReported = new Set();
 
 // One enforcement loop avoids a pile of competing delayed returns during rapid
 // touch input. While the opt-in probe is enabled, slot 1 is reasserted each tick.
+// Unlike the previous build, assignment failures and assignments that do not
+// stick are now visible in chat, once per failure episode (not every tick).
 system.runInterval(() => {
   for (const playerId of hotbarAutoReturnProbePlayers) {
     try {
       const player = world.getAllPlayers().find((candidate) => candidate.id === playerId);
       if (!player || !player.isValid) {
         hotbarAutoReturnProbePlayers.delete(playerId);
+        hotbarAutoReturnFailureReported.delete(playerId);
         continue;
       }
-      if (player.selectedSlotIndex !== 0) player.selectedSlotIndex = 0;
+      if (player.selectedSlotIndex === 0) {
+        hotbarAutoReturnFailureReported.delete(playerId);
+        continue;
+      }
+
+      const beforeSlot = player.selectedSlotIndex;
+      player.selectedSlotIndex = 0;
+      const afterSlot = player.selectedSlotIndex;
+      if (afterSlot !== 0) {
+        throw new Error("assignment did not stick (before=" + (beforeSlot + 1) +
+          ", after=" + (afterSlot + 1) + ")");
+      }
     } catch (error) {
-      // Keep the probe alive; the slot-change listener reports relevant failures.
+      if (!hotbarAutoReturnFailureReported.has(playerId)) {
+        hotbarAutoReturnFailureReported.add(playerId);
+        const player = world.getAllPlayers().find((candidate) => candidate.id === playerId);
+        if (player && player.isValid) {
+          safeMessage(player,
+            "§c[AINCRAD INPUT DIAG] Auto-return assignment failed: " + String(error) +
+            ". Current slot=" + (player.selectedSlotIndex + 1) + ".");
+        }
+      }
     }
   }
 }, 1);
