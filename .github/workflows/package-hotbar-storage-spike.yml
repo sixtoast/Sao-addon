@@ -1,0 +1,52 @@
+name: Package hotbar storage spike
+
+on:
+  push:
+    branches:
+      - prototype/hotbar-storage-spike
+    paths:
+      - 'Aincrad_BP/**'
+      - 'Aincrad_RP/**'
+      - '.github/workflows/package-hotbar-storage-spike.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out storage spike branch
+        uses: actions/checkout@v4
+      - name: Validate JSON and package behavior/resource packs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Aincrad_BP/manifest.json
+          test -f Aincrad_RP/manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = list(Path("Aincrad_BP").rglob("*.json")) + list(Path("Aincrad_RP").rglob("*.json"))
+          for path in files:
+              with path.open(encoding="utf-8") as handle:
+                  json.load(handle)
+          print(f"Validated JSON syntax in {len(files)} files.")
+          PY
+          mkdir -p dist
+          (cd Aincrad_BP && zip -qr ../dist/Aincrad_BP.mcpack .)
+          (cd Aincrad_RP && zip -qr ../dist/Aincrad_RP.mcpack .)
+          cp dist/Aincrad_BP.mcpack dist/Aincrad_RP.mcpack .
+          zip -q dist/Aincrad-Hotbar-Storage-Spike.mcaddon Aincrad_BP.mcpack Aincrad_RP.mcpack
+          rm Aincrad_BP.mcpack Aincrad_RP.mcpack
+          unzip -t dist/Aincrad-Hotbar-Storage-Spike.mcaddon
+          ls -lh dist/
+      - name: Upload installable add-on
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aincrad-Hotbar-Storage-Spike-mcaddon
+          path: dist/Aincrad-Hotbar-Storage-Spike.mcaddon
+          if-no-files-found: error
+          retention-days: 14
