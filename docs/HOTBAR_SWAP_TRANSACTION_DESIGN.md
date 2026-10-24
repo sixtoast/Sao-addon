@@ -189,7 +189,7 @@ After the user reported two synthetic-fixture `PERSISTENCE CHECK PASS` messages,
 
 Each save is immediately read back and checked. Malformed JSON, unknown schema versions, invalid IDs, and duplicate skill IDs block the menu rather than being silently replaced. A starter record is created only if this property's value is absent.
 
-The v0.5.16 GitHub Actions package workflow completed successfully (run [40081521941](https://github.com/sixtoast/Sao-addon/actions/runs/40081521941)); this validates the repository's JSON/JavaScript syntax checks and packaging, not runtime behaviour.
+The v0.5.16 GitHub Actions package workflow completed successfully (run [40081642772](https://github.com/sixtoast/Sao-addon/actions/runs/40081642772)); this validates the repository's JSON/JavaScript syntax checks and packaging, not runtime behaviour.
 
 **Still not implemented:** physical hotbar switching, invoking actions from selected hotbar slots, skill unlock progression, mastery progression, or transaction recovery for player inventory writes. The new registry is a separate logical save layer. It does not mutate player inventory and does not reuse the synthetic probe property as production data. Follow the device test in [`docs/SKILL_LOADOUT_REGISTRY.md`](./SKILL_LOADOUT_REGISTRY.md) before proceeding to the next gate.
 
