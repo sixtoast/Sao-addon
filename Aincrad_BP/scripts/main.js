@@ -913,6 +913,41 @@ world.afterEvents.playerSpawn.subscribe((event) => {
   }, 1);
 });
 
+// OPT-IN HOTBAR AUTO-RETURN PROBE. This is deliberately selection-only:
+// it does not activate moves or move/replace inventory items. Enable in a TEST
+// WORLD with /scriptevent aincrad:hotbar_probe_start; disable with
+// /scriptevent aincrad:hotbar_probe_stop. Only opted-in players are affected.
+const hotbarAutoReturnProbePlayers = new Set();
+const hotbarAutoReturnLastRequestTick = new Map();
+
+try {
+  world.afterEvents.scriptEventReceive.subscribe((event) => {
+    const player = event.sourceEntity;
+    if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
+
+    if (event.id === "aincrad:hotbar_probe_start") {
+      hotbarAutoReturnProbePlayers.add(player.id);
+      safeMessage(player, "§e[AINCRAD INPUT TEST] Auto-return probe ON. Selecting any slot except slot 1 will request a return to slot 1. No skills activate and no items move. Stop with /scriptevent aincrad:hotbar_probe_stop.");
+      return;
+    }
+
+    if (event.id === "aincrad:hotbar_probe_stop") {
+      hotbarAutoReturnProbePlayers.delete(player.id);
+      hotbarAutoReturnLastRequestTick.delete(player.id);
+      safeMessage(player, "§7[AINCRAD INPUT TEST] Auto-return probe OFF.");
+    }
+  });
+} catch (error) {
+  // Keep the existing combat prototype loadable if this optional probe event
+  // is not available on the current runtime.
+  world.afterEvents.playerSpawn.subscribe((event) => {
+    if (event.initialSpawn) {
+      system.runTimeout(() => safeMessage(event.player,
+        "§c[AINCRAD INPUT TEST] Auto-return probe unavailable: " + String(error)), 2);
+    }
+  });
+}
+
 // ISOLATED INPUT PROBE: reports hotbar slot changes so the target-device
 // interaction can be verified before any slots are repurposed for skills.
 // This listener is only on prototype/skill-input-probe; stable combat branches
@@ -924,6 +959,26 @@ try {
       const player = event.player;
       if (!player || !player.isValid) return;
       const itemName = event.itemStack?.typeId ?? "empty";
+      if (hotbarAutoReturnProbePlayers.has(player.id) && event.newSlotSelected !== 0) {
+        // Avoid duplicate return requests if multiple selection events arrive
+        // during the same tick. Slot 0 is deliberately ignored, preventing a
+        // return-event loop.
+        if (hotbarAutoReturnLastRequestTick.get(player.id) !== system.currentTick) {
+          hotbarAutoReturnLastRequestTick.set(player.id, system.currentTick);
+          safeMessage(player,
+            "§e[AINCRAD INPUT TEST] Slot " + (event.newSlotSelected + 1) +
+              " selected (" + itemName + "). Requesting return to slot 1.");
+          system.runTimeout(() => {
+            try {
+              if (player.isValid && hotbarAutoReturnProbePlayers.has(player.id)) {
+                player.selectedSlotIndex = 0;
+              }
+            } catch (error) {
+              safeMessage(player, "§c[AINCRAD INPUT TEST] Could not return to slot 1: " + String(error));
+            }
+          }, 1);
+        }
+      }
       safeMessage(
         player,
         "§e[AINCRAD INPUT TEST] Slot " + (event.previousSlotSelected + 1) +
