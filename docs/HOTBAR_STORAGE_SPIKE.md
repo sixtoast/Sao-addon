@@ -113,3 +113,16 @@ Target-device test:
 5. Turn the probe OFF with the Skill Crystal.
 
 This test narrows the cause; it does not yet establish that the interaction is reliable enough for skill activation.
+
+
+## Target-device result: v0.5.8 diagnostic failure and v0.5.9 fix (2026-10-24)
+
+The v0.5.8 iPhone test exposed a script defect: `hotbarAutoReturnLastRequestTick` was referenced when turning the probe off but was never declared. This raised a `ReferenceError` and made the probe unreliable. The chat log also showed Heavy Strike activating during the probe, so the diagnostic was not isolated from combat input. Rapid slot-event messages could flood chat and contribute to perceived lag.
+
+The v0.5.9 fix on this branch:
+- Removes the undefined variable reference.
+- While the probe is active, only the Skill Crystal is allowed to run its toggle handler; other item-use events are logged and stopped before combat handlers run.
+- Slot-change diagnostics are probe-only and throttled to at most one line per player every five ticks to reduce chat spam.
+- Keeps the per-tick selected-slot enforcement and failure diagnostic; inventory is still never moved.
+
+Retest on the iPhone: import v0.5.9, enable the probe, rapidly select another slot for a short burst, confirm Heavy Strike does not activate, then turn the probe off with the Skill Crystal. Report whether auto-return stops and whether `Auto-return assignment failed` appears. This fixes a confirmed script bug but does not yet prove the selected-slot setter is reliable under all touch conditions.
