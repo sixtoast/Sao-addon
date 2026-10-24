@@ -2,7 +2,7 @@
 
 **Branch:** `prototype/hotbar-transaction-preflight`  
 **Package:** v0.5.18  
-**Status:** first owner-key probe tested; detailed access diagnostic added and awaiting target-device test.  
+**Status:** v0.5.18 device result recorded; owner key still not approved.  
 **Inventory writes:** none.  
 **Stable `main`:** untouched.
 
@@ -49,14 +49,24 @@ The new diagnostic:
 
 For an `available-string` result, the candidate value is stored only in the separate player-scoped diagnostic record to permit equality comparison. It is not shown in chat. This is diagnostic data, not transaction approval.
 
-## Device test for v0.5.18
+## v0.5.18 device result (2026-10-24)
 
-1. Install the v0.5.18 artifact from the successful GitHub Actions run for this branch.
-2. In the existing test world, use the Skill Crystal and choose **Owner Key Access Detail**.
-3. Note the reported `persistentId` access category and entity-ID availability category. Do not copy or expose any raw ID; the menu should not display them.
-4. Completely leave the world and reopen the same world.
-5. Run **Owner Key Access Detail** again and report the full status message. The second run compares categories and values against the new record.
-6. Do not reset either diagnostic property manually.
+The user ran **Owner Key Access Detail** and reported:
+
+- `persistentId`: `property-not-exposed`; previous run was also `property-not-exposed`. Value comparison was not possible.
+- `player.id`: `available-string`; previous run was also `available-string`, and the value matched across the tested world leave/reopen.
+- The diagnostic's safety message continued to state that this is evidence only and hotbar writes remain disabled.
+
+Interpretation:
+- The target runtime did not expose `persistentId` on the player object in either observed run. This is different from observing a getter exception: the diagnostic did not find the property to read.
+- `player.id` was available and matched across this tested lifecycle, but this only establishes repeatability in this specific test. It does not prove player identity safety across multiplayer sessions, copied worlds, duplicate records, or other lifecycle boundaries.
+- No owner key is approved. Do not enable hotbar mutation based on this result.
+
+## Next investigation
+
+Before another package or any inventory mutation, check the exact branch manifest and script API version against the target Bedrock runtime and official/community references. Determine whether the runtime is expected to expose `Player.persistentId` at all, and whether its absence is a version/preview-surface issue or an API-contract limitation. Do not try to force access through undocumented reflection or assume that a cast makes the runtime property exist.
+
+In parallel, review `Entity.id`'s documented scope and design a fail-closed ownership approach for transaction records that does not assume an entity ID is a durable player identity. If no suitable documented owner key is available, design explicit registration plus collision detection and recovery rather than silently falling back to display names.
 
 ## Safety gate
 
