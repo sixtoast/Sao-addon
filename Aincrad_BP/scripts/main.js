@@ -851,8 +851,17 @@ world.afterEvents.itemUse.subscribe((event) => {
   }
 
   if (event.itemStack.typeId === MENU_ITEM) {
-    restoreMenuItem(player);
-    showCombatMenu(player);
+    // On this isolated test branch, using the existing Skill Crystal toggles
+    // the selection-only auto-return probe. Avoid relying on scriptEventReceive,
+    // which is unavailable on some target runtimes. No inventory is moved.
+    if (hotbarAutoReturnProbePlayers.has(player.id)) {
+      hotbarAutoReturnProbePlayers.delete(player.id);
+      hotbarAutoReturnLastRequestTick.delete(player.id);
+      safeMessage(player, "§7[AINCRAD INPUT TEST] Auto-return probe OFF. Tap the Skill Crystal again to enable it.");
+    } else {
+      hotbarAutoReturnProbePlayers.add(player.id);
+      safeMessage(player, "§e[AINCRAD INPUT TEST] Auto-return probe ON. Select a different slot to test auto-return. Tap the Skill Crystal again to turn it OFF. No skills activate and no items move.");
+    }
   }
 });
 
@@ -913,40 +922,10 @@ world.afterEvents.playerSpawn.subscribe((event) => {
   }, 1);
 });
 
-// OPT-IN HOTBAR AUTO-RETURN PROBE. This is deliberately selection-only:
-// it does not activate moves or move/replace inventory items. Enable in a TEST
-// WORLD with /scriptevent aincrad:hotbar_probe_start; disable with
-// /scriptevent aincrad:hotbar_probe_stop. Only opted-in players are affected.
+// Selection-only auto-return probe state. It is toggled by using the existing
+// Skill Crystal through itemUse, avoiding scriptEventReceive compatibility.
 const hotbarAutoReturnProbePlayers = new Set();
 const hotbarAutoReturnLastRequestTick = new Map();
-
-try {
-  world.afterEvents.scriptEventReceive.subscribe((event) => {
-    const player = event.sourceEntity;
-    if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
-
-    if (event.id === "aincrad:hotbar_probe_start") {
-      hotbarAutoReturnProbePlayers.add(player.id);
-      safeMessage(player, "§e[AINCRAD INPUT TEST] Auto-return probe ON. Selecting any slot except slot 1 will request a return to slot 1. No skills activate and no items move. Stop with /scriptevent aincrad:hotbar_probe_stop.");
-      return;
-    }
-
-    if (event.id === "aincrad:hotbar_probe_stop") {
-      hotbarAutoReturnProbePlayers.delete(player.id);
-      hotbarAutoReturnLastRequestTick.delete(player.id);
-      safeMessage(player, "§7[AINCRAD INPUT TEST] Auto-return probe OFF.");
-    }
-  });
-} catch (error) {
-  // Keep the existing combat prototype loadable if this optional probe event
-  // is not available on the current runtime.
-  world.afterEvents.playerSpawn.subscribe((event) => {
-    if (event.initialSpawn) {
-      system.runTimeout(() => safeMessage(event.player,
-        "§c[AINCRAD INPUT TEST] Auto-return probe unavailable: " + String(error)), 2);
-    }
-  });
-}
 
 // ISOLATED INPUT PROBE: reports hotbar slot changes so the target-device
 // interaction can be verified before any slots are repurposed for skills.
