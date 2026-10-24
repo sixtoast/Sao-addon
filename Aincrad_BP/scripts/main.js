@@ -268,6 +268,105 @@ const OWNER_KEY_PROBE_PROPERTY = "aincrad:owner_key_probe_v1";
 // identifiers in a dedicated player-scoped property so they can be compared
 // after a full world leave/reopen. It does not approve either identifier for
 // destructive transactions; that requires device persistence evidence first.
+const OWNER_KEY_ACCESS_PROPERTY = "aincrad:owner_key_access_v1";
+
+// Additive diagnostic: uses a new property so the v0.5.17 probe record remains
+// untouched. Reads persistentId at most once per run and never prints raw IDs.
+function runOwnerKeyAccessDiagnostic(player) {
+  if (!player || !player.isValid) return;
+
+  let persistentStatus = "property-check-threw";
+  let persistentValue = null;
+  try {
+    if (!("persistentId" in player)) {
+      persistentStatus = "property-not-exposed";
+    } else {
+      try {
+        const value = player.persistentId; // single getter read
+        if (typeof value !== "string") persistentStatus = "unexpected-type";
+        else if (value.length === 0) persistentStatus = "empty-string";
+        else {
+          persistentStatus = "available-string";
+          persistentValue = value;
+        }
+      } catch (error) {
+        let errorName = "";
+        try { errorName = typeof error?.name === "string" ? error.name : ""; } catch (_) {}
+        persistentStatus = errorName === "InvalidEntityError" ? "getter-threw-invalid-entity" :
+          errorName === "EngineError" ? "getter-threw-engine" : "getter-threw-other";
+      }
+    }
+  } catch (_) {
+    persistentStatus = "property-check-threw";
+  }
+
+  let entityId = null;
+  let entityStatus = "unavailable";
+  try {
+    const value = player.id;
+    if (typeof value === "string" && value.length > 0) {
+      entityId = value;
+      entityStatus = "available-string";
+    } else entityStatus = typeof value === "string" ? "empty-string" : "unexpected-type";
+  } catch (_) {
+    entityStatus = "getter-threw";
+  }
+
+  try {
+    const raw = player.getDynamicProperty(OWNER_KEY_ACCESS_PROPERTY);
+    const current = {
+      kind: "aincrad:owner_key_access",
+      schemaVersion: 1,
+      persistentStatus,
+      persistentValue,
+      entityStatus,
+      entityId
+    };
+
+    if (raw === undefined) {
+      const encoded = JSON.stringify(current);
+      player.setDynamicProperty(OWNER_KEY_ACCESS_PROPERTY, encoded);
+      if (player.getDynamicProperty(OWNER_KEY_ACCESS_PROPERTY) !== encoded) {
+        safeMessage(player, "§c[AINCRAD OWNER KEY DETAIL] FAIL: record readback mismatch. Inventory unchanged.");
+        return;
+      }
+      safeMessage(player, "§e[AINCRAD OWNER KEY DETAIL] SEEDED: persistentId access=" + persistentStatus +
+        ", entity id=" + entityStatus + ". Leave and reopen the world, then run this detail check again. No owner key approved; hotbar writes remain disabled.");
+      return;
+    }
+
+    if (typeof raw !== "string") {
+      safeMessage(player, "§c[AINCRAD OWNER KEY DETAIL] BLOCKED: saved record has unexpected type; not overwritten. Inventory unchanged.");
+      return;
+    }
+    let saved;
+    try { saved = JSON.parse(raw); } catch (_) {
+      safeMessage(player, "§c[AINCRAD OWNER KEY DETAIL] BLOCKED: saved record is malformed; not overwritten. Inventory unchanged.");
+      return;
+    }
+    if (!saved || saved.kind !== "aincrad:owner_key_access" || saved.schemaVersion !== 1 ||
+        typeof saved.persistentStatus !== "string" ||
+        !(saved.persistentValue === null || typeof saved.persistentValue === "string") ||
+        typeof saved.entityStatus !== "string" ||
+        !(saved.entityId === null || typeof saved.entityId === "string")) {
+      safeMessage(player, "§c[AINCRAD OWNER KEY DETAIL] BLOCKED: invalid/unknown schema; not overwritten. Inventory unchanged.");
+      return;
+    }
+
+    const persistentValueMatches = saved.persistentValue !== null &&
+      persistentValue !== null && saved.persistentValue === persistentValue;
+    const entityValueMatches = saved.entityId !== null && entityId !== null && saved.entityId === entityId;
+    safeMessage(player, "§e[AINCRAD OWNER KEY DETAIL] persistentId=" + persistentStatus +
+      " (previous=" + saved.persistentStatus + ", value match=" +
+      (persistentValueMatches ? "yes" : "no/not comparable") + "); entity id=" + entityStatus +
+      " (previous=" + saved.entityStatus + ", value match=" +
+      (entityValueMatches ? "yes" : "no/not comparable") +
+      "). Evidence only; hotbar writes remain disabled.");
+  } catch (_) {
+    safeMessage(player, "§c[AINCRAD OWNER KEY DETAIL] ERROR: could not read/write diagnostic record. Existing record retained where possible; inventory unchanged.");
+  }
+}
+
 function runOwnerKeyDiagnostic(player) {
   if (!player || !player.isValid) return;
   try {
@@ -361,6 +460,7 @@ function showCombatMenu(player) {
   form.button("Diagnostics: Toggle ON/OFF");
   form.button("Diagnostics: Guard Status");
   form.button("Owner Key Diagnostic\n§7Read-only identifier persistence check");
+  form.button("Owner Key Access Detail\n§7Read-only API availability check");
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
@@ -381,6 +481,7 @@ function showCombatMenu(player) {
       }
     } else if (response.selection === 6) reportGuardStatus(player);
     else if (response.selection === 7) runOwnerKeyDiagnostic(player);
+    else if (response.selection === 8) runOwnerKeyAccessDiagnostic(player);
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
