@@ -23,15 +23,18 @@ Before writing any item to player slots 0–8, build and test a read-only transa
 - Verify both the ordered IDs as displayed and the selected skill indicator.
 - Do not use the hotbar HUD selection outline as evidence of inventory contents; a known visual-selection bug remains documented.
 
-### Gate B — owner-key API audit (initial finding)
+### Gate B — owner-key API audit
 
-Microsoft Learn currently documents `Entity.id` as a unique entity identifier intended to remain consistent across loads of a world instance. The Player API also exposes `persistentId`, explicitly described as identifying a player across sessions, but it is marked **pre-release** and may change or be removed. References: [Entity.id](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable) and [Player.persistentId](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable).
+Microsoft Learn documents `Entity.id` as a unique entity identifier intended to remain consistent across loads of a world instance. The Player API documents `persistentId` as an identifier intended to identify a player across sessions, but it is marked **pre-release** and may change or be removed. References: [Entity.id](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable) and [Player.persistentId](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable).
 
-Implementation decision is still pending:
-- Repository manifest declares `@minecraft/server` 2.10.0. The new v0.5.17 **Owner Key Diagnostic** checks `player.persistentId` and `player.id` without changing inventory.
-- Prefer a documented stable identifier available in the exact target runtime; do not parse or transform its internal structure.
-- Run the diagnostic once, completely leave/reopen the same world, then run it again. Follow the test in [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
-- Keep display-name tags diagnostic-only. If the candidate is unavailable or unstable, block transaction implementation until a safe owner strategy is designed.
+**Target-device result (v0.5.17, 2026-10-24):** `ENTITY ID MATCH ONLY`. The user reported that `persistentId` was unavailable on at least one run. `player.id` matched in the tested lifecycle, but this does not prove that it is a safe cross-session player owner key. Neither candidate is approved for transaction ownership, and hotbar writes remain disabled. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
+
+Next actions:
+- Audit the exact `@minecraft/server` 2.10.0 type declarations, Microsoft documentation/changelogs, and community-maintained references for `Player.persistentId`, including preview/experimental requirements and runtime availability.
+- Inspect the diagnostic to determine whether unavailability means the property is absent, its getter throws, or its value is empty/invalid. Do not expose raw IDs in chat or logs.
+- Do not overwrite or reset the first diagnostic record. If another read-only probe is justified by the API audit, make it additive and schema-versioned.
+- If no documented owner identifier is reliably available, design an explicit registration/record ownership strategy with collision detection and fail-closed behaviour. Do not fall back to display names or assume `Entity.id` proves player identity across sessions.
+- Before any destructive transaction, separately review multiplayer isolation, duplicate-record handling, and copied-world behaviour.
 
 ### Gate C — design a separate transaction record
 
@@ -67,9 +70,6 @@ Until the preflight and recovery gates have been designed and tested:
 - Existing transaction safety design: [`docs/HOTBAR_SWAP_TRANSACTION_DESIGN.md`](./HOTBAR_SWAP_TRANSACTION_DESIGN.md)
 - Loadout registry details: [`docs/SKILL_LOADOUT_REGISTRY.md`](./SKILL_LOADOUT_REGISTRY.md)
 
+## v0.5.17 diagnostic implementation status
 
-## v0.5.17 owner-key diagnostic status
-
-Added the menu-only read-only inventory diagnostic in `Aincrad_BP/scripts/main.js`. It records candidate identifier values in `aincrad:owner_key_probe_v1`, verifies the initial dynamic-property write, and compares the candidates on a later run. It refuses malformed/unknown saved data and does not overwrite it. The diagnostic does not approve either ID for a transaction; target iPhone testing after a full world leave/reopen is still required.
-
-Microsoft Learn currently marks `Player.persistentId` as pre-release, so the code feature-detects it and also records `player.id` as a separate candidate. The raw identifiers are not printed to chat. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
+The Skill Crystal menu includes a read-only Owner Key Diagnostic in `Aincrad_BP/scripts/main.js`. It stores candidate identifier values in `aincrad:owner_key_probe_v1`, verifies the initial dynamic-property write, and compares candidates on a later run. It refuses malformed/unknown saved data and does not overwrite it. The raw identifiers are not printed. The diagnostic does not approve either candidate for a transaction.
