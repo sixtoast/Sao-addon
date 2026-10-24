@@ -811,8 +811,8 @@ const intents = [];
 // player's inventory. The test record is tagged by player name so it can be
 // found again after a world save/reopen and the player's runtime entity ID changes.
 const HOTBAR_STORAGE_ENTITY = "aincrad:hotbar_storage";
-const STORAGE_TEST_TAG_PREFIX = "aincrad_storage_fidelity_owner_";
-const STORAGE_TEST_SEEDED_TAG = "aincrad_storage_fidelity_seeded_v2";
+const STORAGE_TEST_TAG_PREFIX = "aincrad_storage_fidelity_v3_owner_";
+const STORAGE_TEST_SEEDED_TAG = "aincrad_storage_fidelity_seeded_v3";
 
 function getStorageTestOwnerTag(player) {
   const safeName = String(player.name || "player")
@@ -924,7 +924,7 @@ function runHotbarStorageSyntheticTest(player) {
 
     const storage = record.getComponent("minecraft:inventory")?.container;
     if (!storage || !storage.isValid || storage.size !== 9) {
-      safeMessage(player, "§c[AINCRAD STORAGE TEST] FAIL: storage entity inventory is missing, invalid, or not nine slots. No player items were touched.");
+      safeMessage(player, "§c[AINCRAD STORAGE FIDELITY v3] FAIL: storage entity inventory is missing, invalid, or not nine slots. No player items were touched.");
       return;
     }
 
@@ -958,12 +958,12 @@ function runHotbarStorageSyntheticTest(player) {
 
     if (!alreadySeeded) {
       record.addTag(STORAGE_TEST_SEEDED_TAG);
-      safeMessage(player, "§a[AINCRAD STORAGE TEST] PASS: synthetic 9-slot matrix written and read back. Leave and reopen the world, then use the Skill Crystal again to test persistence. No player items were touched.");
+      safeMessage(player, "§a[AINCRAD STORAGE FIDELITY v3] PASS: damaged durability, enchantments, metadata, stacks and empty slots match on initial storage readback. Leave and reopen the world, then use the Skill Crystal again to test persistence. No player items were touched.");
     } else {
-      safeMessage(player, "§a[AINCRAD STORAGE TEST] PASS: existing synthetic 9-slot matrix still matches. If the world was reopened since seeding, entity/container persistence survived. Test record retained; player inventory untouched.");
+      safeMessage(player, "§a[AINCRAD STORAGE FIDELITY v3] PASS: damaged durability, enchantments, metadata, stacks and empty slots still match. If the world was reopened since seeding, entity/container persistence survived. Test record retained; player inventory untouched.");
     }
   } catch (error) {
-    safeMessage(player, "§c[AINCRAD STORAGE TEST] ERROR: " + String(error) + ". No player inventory operation is performed by this test.");
+    safeMessage(player, "§c[AINCRAD STORAGE FIDELITY v3] ERROR: " + String(error) + ". No player inventory operation is performed by this test.");
   }
 }
 
