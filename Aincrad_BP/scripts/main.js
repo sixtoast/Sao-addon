@@ -364,6 +364,8 @@ function requestChargedHeavy(player, snapshotTargetId, damageMultiplier) {
 function beginHeavyCharge(event) {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
+  // The hotbar diagnostic must not activate any combat lifecycle.
+  if (hotbarAutoReturnProbePlayers?.has(player.id)) return;
   if (event.itemStack?.typeId !== HEAVY_ITEM || heavyChargeStates.has(player.id)) return;
   const targetCandidates = getTargetCandidates(player, { ...MOVES.heavy, range: MOVES.heavy.range * 1.15, minDot: Math.max(0, MOVES.heavy.minDot - 0.1) });
   heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, slotIndex: player.selectedSlotIndex, readyCued: false });
@@ -374,6 +376,11 @@ function beginHeavyCharge(event) {
 function releaseHeavyCharge(event) {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
+  if (hotbarAutoReturnProbePlayers?.has(player.id)) {
+    heavyChargeStates.delete(player.id);
+    try { if (player.isValid) player.onScreenDisplay.setActionBar(""); } catch (_) {}
+    return;
+  }
   const charge = heavyChargeStates.get(player.id);
   if (!charge) return;
   heavyChargeStates.delete(player.id);
@@ -950,14 +957,13 @@ system.runInterval(() => {
         hotbarAutoReturnFailureReported.delete(playerId);
         continue;
       }
-      if (player.selectedSlotIndex === 0) {
-        hotbarAutoReturnFailureReported.delete(playerId);
-        continue;
-      }
-
       const beforeSlot = player.selectedSlotIndex;
+      // Reassert even when the server-side property already says slot 1. Under
+      // rapid touch input, the client can visibly remain on slot 2 while the
+      // server property reads 0; skipping in that case leaves the UI stuck.
       player.selectedSlotIndex = 0;
       const afterSlot = player.selectedSlotIndex;
+      if (afterSlot === 0) hotbarAutoReturnFailureReported.delete(playerId);
       if (afterSlot !== 0) {
         throw new Error("assignment did not stick (before=" + (beforeSlot + 1) +
           ", after=" + (afterSlot + 1) + ")");
