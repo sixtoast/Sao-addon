@@ -871,8 +871,6 @@ function runHotbarStorageSyntheticTest(player) {
   try {
     const ownerTag = getStorageTestOwnerTag(player);
     let record = findStorageTestRecord(ownerTag);
-    let created = false;
-
     if (!record) {
       record = player.dimension.spawnEntity(HOTBAR_STORAGE_ENTITY, {
         x: player.location.x,
@@ -880,7 +878,6 @@ function runHotbarStorageSyntheticTest(player) {
         z: player.location.z
       });
       record.addTag(ownerTag);
-      created = true;
     }
 
     const storage = record.getComponent("minecraft:inventory")?.container;
