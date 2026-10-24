@@ -8,6 +8,7 @@ on:
       - prototype/hotbar-storage-fidelity
       - prototype/hotbar-capture-mirror
       - prototype/skill-persistence-probe
+      - prototype/skill-loadout-registry
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
