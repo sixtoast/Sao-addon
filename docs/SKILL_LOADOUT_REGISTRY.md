@@ -36,14 +36,14 @@ Existing data is not overwritten if its JSON is malformed, its type/schema is un
 ## Target-device test
 
 1. Install the v0.5.16 artifact from the GitHub Actions run for this branch.
-2. Enter the same world and open the existing Skill Crystal combat menu.
+2. Enter the same world and use the Skill Crystal normally to open the combat menu. Sneak + Skill Crystal still runs the read-only hotbar mirror.
 3. Choose **Skill Loadout**. On first use, expect a message that the starter skill order was saved and verified.
 4. Confirm the displayed order is Quick Slash, Heavy Strike, Parry.
 5. Select slot 2, then move the selected skill left. Confirm the order changes and the saved message appears.
-6. Close and reopen the world. Open Skill Loadout again; the reordered order and selected skill should remain.
+6. Close and reopen the world. Use the Skill Crystal normally, then open Skill Loadout again; the reordered order and selected skill should remain.
 7. Change the order again and repeat one leave/reopen cycle. Report the exact visible order and any error message.
 
-This test confirms logical loadout persistence and reordering only. It does not test item movement, hotbar restoration, skill unlocks, or mastery.
+The **Storage Diagnostic** menu entry runs the existing synthetic container test that was previously triggered by normal Skill Crystal use. This preserves access to that test while making the loadout menu reachable. Sneak + Skill Crystal remains the read-only mirror path.\n\nThis test confirms logical loadout persistence and reordering only. It does not test item movement, hotbar restoration, skill unlocks, or mastery.
 
 ## API references
 
