@@ -280,8 +280,8 @@ function showCombatMenu(player) {
     )
     .button("Quick Slash\n§7Fast • 7 damage")
     .button("Heavy Strike\n§7Committed • 12 damage")
-    .button("Parry\\n§7Short timing window")
-    .button("Skill Loadout\\n§7View and reorder saved skills");
+    .button("Parry\n§7Short timing window")
+    .button("Skill Loadout\n§7View and reorder saved skills");
 
   form.button("Diagnostics: Toggle ON/OFF");
   form.button("Diagnostics: Guard Status");
@@ -946,7 +946,7 @@ function saveSkillLoadout(player, loadout) {
 function formatSkillLoadout(loadout) {
   return loadout.equippedSkillIds.map((id, index) =>
     "Slot " + (index + 1) + ": " + SKILL_REGISTRY[id].name + (index === loadout.selectedSkillIndex ? "  < SELECTED" : "")
-  ).join("\\n");
+  ).join("\n");
 }
 
 function showSkillLoadoutMenu(player) {
@@ -961,8 +961,8 @@ function showSkillLoadoutMenu(player) {
   menuOpen.add(player.id);
   const form = new ActionFormData()
     .title("AINCRAD • Skill Loadout")
-    .body("Saved skill order (slot 0 reserved for sword in future combat mode):\\n\\n" +
-      formatSkillLoadout(loadout) + "\\n\\nSelect a slot, or move the selected skill left/right.")
+    .body("Saved skill order (slot 0 reserved for sword in future combat mode):\n\n" +
+      formatSkillLoadout(loadout) + "\n\nSelect a slot, or move the selected skill left/right.")
     .button("Select slot 1")
     .button("Select slot 2")
     .button("Select slot 3")
