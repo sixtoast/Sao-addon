@@ -192,3 +192,8 @@ Each save is immediately read back and checked. Malformed JSON, unknown schema v
 The v0.5.16 GitHub Actions package workflow completed successfully (run [40081521941](https://github.com/sixtoast/Sao-addon/actions/runs/40081521941)); this validates the repository's JSON/JavaScript syntax checks and packaging, not runtime behaviour.
 
 **Still not implemented:** physical hotbar switching, invoking actions from selected hotbar slots, skill unlock progression, mastery progression, or transaction recovery for player inventory writes. The new registry is a separate logical save layer. It does not mutate player inventory and does not reuse the synthetic probe property as production data. Follow the device test in [`docs/SKILL_LOADOUT_REGISTRY.md`](./SKILL_LOADOUT_REGISTRY.md) before proceeding to the next gate.
+
+
+### Menu access correction
+
+The skill-loadout menu is exposed from the normal Skill Crystal combat menu. Normal Skill Crystal use now opens the combat menu; the existing synthetic storage test is still available as the menu's **Storage Diagnostic** option. Sneak + Skill Crystal continues to run the read-only hotbar mirror. This is routing only and does not change the player's hotbar.
