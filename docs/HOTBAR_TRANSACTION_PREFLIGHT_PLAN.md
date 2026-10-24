@@ -4,7 +4,7 @@
 **Branch:** `prototype/hotbar-transaction-preflight`  
 **Base:** `prototype/skill-loadout-registry`  
 **Package baseline:** v0.5.18  
-**Status:** planning/read-only investigation; no player inventory mutation is authorised or implemented.  
+**Status:** read-only owner-key investigation; v0.5.18 device result recorded; no player inventory mutation is authorised or implemented.  
 **Stable `main`:** untouched.
 
 ## Latest device feedback
@@ -29,13 +29,15 @@ Microsoft Learn documents `Entity.id` as a unique entity identifier intended to 
 
 **Target-device result (v0.5.17, 2026-10-24):** `ENTITY ID MATCH ONLY`. The user reported that `persistentId` was unavailable on at least one run. `player.id` matched in the tested lifecycle, but this does not prove it is a safe cross-session player owner key. Neither candidate is approved for transaction ownership, and hotbar writes remain disabled. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
 
-**Code audit finding:** the current diagnostic catches all exceptions from `persistentId` access and represents them as `null`. It also accesses the getter more than once while checking the type and value. Therefore the observed status cannot distinguish a property that is absent from a getter exception or an empty/invalid return value. This diagnostic limitation is now documented; the next implementation step is a safer read-only probe that reads the getter once and records only the outcome category, never the raw identifier.
+**Code audit finding:** the original diagnostic caught all exceptions from `persistentId` access and represented them as `null`, and accessed the getter more than once. The v0.5.18 diagnostic corrected this by checking property exposure and reading the getter at most once.
+
+**Target-device result (v0.5.18, 2026-10-24):** the user reported `persistentId property-not-exposed` on both the current and previous run, so its value could not be compared. `player.id` was `available-string` on both runs and its value matched across the tested world leave/reopen. This is evidence only for that lifecycle; it does not establish identity safety across multiplayer, copied worlds, or duplicate records. Neither candidate is approved, and hotbar writes remain disabled. Details are in [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
 
 Next actions:
-- Audit the exact `@minecraft/server` 2.10.0 declarations, target Bedrock runtime documentation/changelogs, and community-maintained references for `Player.persistentId`, including preview/experimental availability requirements.
-- Add an improved diagnostic using a new schema/property or a separate additive entry. Distinguish property unavailable, getter exception, non-empty string, and empty/unexpected value. Do not expose the raw ID.
-- Preserve the existing probe record; do not overwrite or reset it.
-- If no documented owner identifier is reliably available, design an explicit registration/record ownership strategy with collision detection and fail-closed behaviour. Do not fall back to display names or assume `Entity.id` proves player identity across sessions.
+- Inspect the exact branch manifest and script imports/API version, then compare them with official Microsoft documentation, relevant Bedrock changelogs, and community-maintained Script API references to determine whether `Player.persistentId` should exist on the target runtime surface.
+- Do not add undocumented reflection or assume a type cast can make a runtime property exist.
+- Review the documented scope of `Entity.id`; do not assume matching IDs prove a durable player owner key.
+- If no documented owner identifier is reliable, design explicit registration plus collision detection and fail-closed recovery. Do not fall back silently to display names.
 - Before any destructive transaction, separately review multiplayer isolation, duplicate-record handling, and copied-world behaviour.
 
 ### Gate C — design a separate transaction record
@@ -76,4 +78,4 @@ Until the preflight and recovery gates have been designed and tested:
 
 The original read-only **Owner Key Diagnostic** remains unchanged and its record `aincrad:owner_key_probe_v1` is preserved. A separate **Owner Key Access Detail** entry was added to the Skill Crystal menu. It uses the independent `aincrad:owner_key_access_v1` record and reads `player.persistentId` at most once per run, reporting access categories without printing raw identifiers. It distinguishes property-not-exposed, property-check failure, getter exceptions, empty/unexpected values, and a non-empty string. It also compares the entity-ID candidate across runs.
 
-The v0.5.18 access-detail diagnostic is additive and does not alter inventory. Its device test is pending. It does not approve either candidate for a transaction. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
+The v0.5.18 access-detail diagnostic is additive and does not alter inventory. Device test result: `persistentId` was `property-not-exposed` on both runs; `player.id` was available and matched across the tested world leave/reopen. Neither candidate is approved for a transaction. The next task is API-surface/version research and owner/recovery design, not hotbar writes. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
