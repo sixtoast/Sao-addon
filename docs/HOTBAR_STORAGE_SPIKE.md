@@ -126,3 +126,15 @@ The v0.5.9 fix on this branch:
 - Keeps the per-tick selected-slot enforcement and failure diagnostic; inventory is still never moved.
 
 Retest on the iPhone: import v0.5.9, enable the probe, rapidly select another slot for a short burst, confirm Heavy Strike does not activate, then turn the probe off with the Skill Crystal. Report whether auto-return stops and whether `Auto-return assignment failed` appears. This fixes a confirmed script bug but does not yet prove the selected-slot setter is reliable under all touch conditions.
+
+
+## Target-device result: v0.5.9 and follow-up fix (2026-10-24)
+
+The user reports that under rapid slot spam the client can remain visibly on slot 2 even though item-use diagnostics report `selected slot 1`. Heavy Strike also still activates while the probe is ON. This identifies two gaps in v0.5.9: the enforcement loop skipped assignments whenever the server-side property already read slot 1, and the probe isolation guarded `itemUse` but not the separate `itemStartUse`/`itemReleaseUse` charge lifecycle.
+
+The v0.5.10 follow-up:
+- Reasserts `player.selectedSlotIndex = 0` every enforcement tick even when the server-side property already reads zero, to test whether this repairs a client/server hotbar visual desync.
+- Guards both Heavy Strike charge-start and charge-release handlers while the probe is enabled, so diagnostic slot tapping cannot activate Heavy Strike through the separate use lifecycle.
+- Does not change inventory contents and does not activate skills while the probe is enabled.
+
+Retest briefly on the iPhone. Confirm the hotbar visibly returns to slot 1 during rapid spam and that no Heavy Strike messages appear while the probe is ON. If the UI still stays on slot 2 despite continuous assignment, the Script API property is not sufficient to force the client UI under this input pattern and we should stop treating this route as proven rather than adding more competing loops.
