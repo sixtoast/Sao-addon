@@ -3,7 +3,7 @@
 **Date:** 2026-10-24  
 **Branch:** `prototype/hotbar-transaction-preflight`  
 **Base:** `prototype/skill-loadout-registry`  
-**Package baseline:** v0.5.16  
+**Package baseline:** v0.5.17  
 **Status:** planning/read-only investigation; no player inventory mutation is authorised or implemented.  
 **Stable `main`:** untouched.
 
@@ -28,9 +28,9 @@ Before writing any item to player slots 0–8, build and test a read-only transa
 Microsoft Learn currently documents `Entity.id` as a unique entity identifier intended to remain consistent across loads of a world instance. The Player API also exposes `persistentId`, explicitly described as identifying a player across sessions, but it is marked **pre-release** and may change or be removed. References: [Entity.id](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/entity?view=minecraft-bedrock-stable) and [Player.persistentId](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable).
 
 Implementation decision is still pending:
-- Inspect the repository's declared `@minecraft/server` dependency and the target Bedrock 26.52 runtime before relying on `persistentId`.
+- Repository manifest declares `@minecraft/server` 2.10.0. The new v0.5.17 **Owner Key Diagnostic** checks `player.persistentId` and `player.id` without changing inventory.
 - Prefer a documented stable identifier available in the exact target runtime; do not parse or transform its internal structure.
-- Run a non-destructive diagnostic that prints whether the candidate identifier is available and whether it matches after a complete world leave/reopen.
+- Run the diagnostic once, completely leave/reopen the same world, then run it again. Follow the test in [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
 - Keep display-name tags diagnostic-only. If the candidate is unavailable or unstable, block transaction implementation until a safe owner strategy is designed.
 
 ### Gate C — design a separate transaction record
@@ -66,3 +66,10 @@ Until the preflight and recovery gates have been designed and tested:
 - Community-maintained Bedrock Script API reference: https://jaylydev.github.io/scriptapi-docs/latest/classes/_minecraft_server.Entity.html
 - Existing transaction safety design: [`docs/HOTBAR_SWAP_TRANSACTION_DESIGN.md`](./HOTBAR_SWAP_TRANSACTION_DESIGN.md)
 - Loadout registry details: [`docs/SKILL_LOADOUT_REGISTRY.md`](./SKILL_LOADOUT_REGISTRY.md)
+
+
+## v0.5.17 owner-key diagnostic status
+
+Added the menu-only read-only inventory diagnostic in `Aincrad_BP/scripts/main.js`. It records candidate identifier values in `aincrad:owner_key_probe_v1`, verifies the initial dynamic-property write, and compares the candidates on a later run. It refuses malformed/unknown saved data and does not overwrite it. The diagnostic does not approve either ID for a transaction; target iPhone testing after a full world leave/reopen is still required.
+
+Microsoft Learn currently marks `Player.persistentId` as pre-release, so the code feature-detects it and also records `player.id` as a separate candidate. The raw identifiers are not printed to chat. See [`OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md`](./OWNER_KEY_PERSISTENCE_DIAGNOSTIC.md).
