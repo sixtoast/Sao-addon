@@ -1,4 +1,4 @@
-import { world, system, EntityDamageCause, ItemStack } from "@minecraft/server";
+import { world, system, EntityDamageCause, ItemStack, EnchantmentTypes } from "@minecraft/server";
 import { ActionFormData } from "@minecraft/server-ui";
 
 const MENU_ITEM = "aincrad:skill_crystal";
@@ -811,8 +811,8 @@ const intents = [];
 // player's inventory. The test record is tagged by player name so it can be
 // found again after a world save/reopen and the player's runtime entity ID changes.
 const HOTBAR_STORAGE_ENTITY = "aincrad:hotbar_storage";
-const STORAGE_TEST_TAG_PREFIX = "aincrad_storage_test_owner_";
-const STORAGE_TEST_SEEDED_TAG = "aincrad_storage_test_seeded";
+const STORAGE_TEST_TAG_PREFIX = "aincrad_storage_fidelity_owner_";
+const STORAGE_TEST_SEEDED_TAG = "aincrad_storage_fidelity_seeded_v2";
 
 function getStorageTestOwnerTag(player) {
   const safeName = String(player.name || "player")
@@ -840,6 +840,14 @@ function findStorageTestRecord(ownerTag) {
 
 function buildSyntheticHotbarMatrix() {
   const matrix = new Array(9);
+
+  // Slot 1: damaged durable item. This must keep its exact damage value.
+  const damagedSword = new ItemStack("minecraft:diamond_sword", 1);
+  const durability = damagedSword.getComponent("minecraft:durability");
+  if (!durability) throw new Error("Synthetic diamond sword has no durability component");
+  durability.damage = 37;
+  matrix[0] = damagedSword;
+
   matrix[1] = new ItemStack("minecraft:diamond", 3);
   matrix[2] = new ItemStack("minecraft:apple", 7);
   const labelledStick = new ItemStack("minecraft:stick", 1);
@@ -849,8 +857,19 @@ function buildSyntheticHotbarMatrix() {
   matrix[4] = new ItemStack(MENU_ITEM, 1);
   matrix[5] = new ItemStack("minecraft:iron_ingot", 12);
   matrix[6] = new ItemStack("minecraft:bread", 2);
-  matrix[7] = new ItemStack("minecraft:gold_ingot", 5);
-  // Slots 0 and 8 intentionally remain empty to test empty-slot preservation.
+
+  // Slot 8: enchanted durable item with two enchantments.
+  const enchantedSword = new ItemStack("minecraft:iron_sword", 1);
+  const enchantable = enchantedSword.getComponent("minecraft:enchantable");
+  if (!enchantable) throw new Error("Synthetic iron sword has no enchantable component");
+  const sharpness = EnchantmentTypes.get("minecraft:sharpness");
+  const unbreaking = EnchantmentTypes.get("minecraft:unbreaking");
+  if (!sharpness || !unbreaking) throw new Error("Required synthetic enchantment types are unavailable");
+  enchantable.addEnchantment({ type: sharpness, level: 2 });
+  enchantable.addEnchantment({ type: unbreaking, level: 1 });
+  matrix[7] = enchantedSword;
+
+  // Slot 9 remains empty to continue checking empty-slot preservation.
   return matrix;
 }
 
@@ -858,11 +877,34 @@ function describeSyntheticItem(item) {
   if (!item) return "empty";
   let lore = [];
   try { lore = item.getLore(); } catch (_) {}
+
+  let durabilityState = "no-durability-component";
+  try {
+    const durability = item.getComponent("minecraft:durability");
+    if (durability) durabilityState = durability.damage + "/" + durability.maxDurability;
+  } catch (error) {
+    durabilityState = "durability-read-error:" + String(error);
+  }
+
+  let enchantments = [];
+  try {
+    const enchantable = item.getComponent("minecraft:enchantable");
+    if (enchantable) {
+      enchantments = enchantable.getEnchantments()
+        .map(enchantment => enchantment.type.id + ":" + enchantment.level)
+        .sort();
+    }
+  } catch (error) {
+    enchantments = ["enchantment-read-error:" + String(error)];
+  }
+
   return [
     item.typeId,
     item.amount,
     item.nameTag || "",
-    lore.join("|")
+    lore.join("|"),
+    durabilityState,
+    enchantments.join(",")
   ].join("::");
 }
 
