@@ -2,7 +2,7 @@
 
 **Branch:** `prototype/hotbar-transaction-preflight`  
 **Package:** v0.5.17  
-**Status:** code added; target-device test required.  
+**Status:** target-device test completed; no owner key approved.  
 **Inventory writes:** none.  
 **Stable `main`:** untouched.
 
@@ -17,27 +17,38 @@ References:
 
 ## What the diagnostic does
 
-The combat menu now has an **Owner Key Diagnostic** entry. It reads candidate values from `player.persistentId` and `player.id`, then stores those values in a dedicated player-scoped dynamic property, `aincrad:owner_key_probe_v1`. On subsequent runs it compares the current values with the stored values.
+The combat menu has an **Owner Key Diagnostic** entry. It reads candidate values from `player.persistentId` and `player.id`, then stores those values in a dedicated player-scoped dynamic property, `aincrad:owner_key_probe_v1`. On subsequent runs it compares the current values with the stored values.
 
 - First run seeds the probe and verifies immediate readback.
-- Run it again only after completely leaving and reopening the same world to test whether values persist across that lifecycle.
+- A later run after completely leaving and reopening the same world compares values across that lifecycle.
 - Malformed, unexpected-type, and unknown-schema records are not overwritten.
 - The output reports match/mismatch status, not the raw identifier strings.
 - It never writes to player inventory slots, and it does not modify the hotbar mirror or synthetic storage test record.
 
-## Device test
+## Target-device result (2026-10-24)
 
-1. Install the v0.5.17 artifact from the workflow run for this branch.
-2. Open the existing test world and use the Skill Crystal normally.
-3. Choose **Owner Key Diagnostic**. Expect `SEEDED`.
-4. Completely leave the world, reopen it, and choose the same menu entry again.
-5. Report the exact status prefix: `MATCH`, `PARTIAL MATCH`, `ENTITY ID MATCH ONLY`, `MISMATCH`, or `BLOCKED`.
+The user ran the diagnostic after the world lifecycle test and reported:
 
-Do not edit or reset the dynamic property manually. A mismatch should remain recorded and be investigated; the diagnostic deliberately does not overwrite the first observation.
+`ENTITY ID MATCH ONLY: persistentId was unavailable on at least one run. Not approved as a transaction owner key yet; hotbar writes remain disabled.`
 
-## Interpretation limits
+Interpretation:
+- `player.id` matched for the tested lifecycle.
+- `player.persistentId` was unavailable on at least one run, so cross-session availability/stability was not demonstrated.
+- Neither candidate is approved for transaction ownership. In particular, this result does not establish that `Entity.id` remains safe as an owner key across all relevant reconnect, multiplayer, or copied-world scenarios.
 
-Even a `MATCH` is evidence only for the tested player/runtime/world lifecycle. It does not independently prove multiplayer identity isolation, world-copy behaviour, or suitability for a destructive transaction. `persistentId` remains a pre-release API. No hotbar transaction may use either candidate until the target-device result and multi-player/duplicate-record design are reviewed.
+## Next investigation
+
+1. Audit the exact `@minecraft/server` 2.10.0 declarations and the target Bedrock runtime documentation/changelog for `Player.persistentId`, including its pre-release/experimental availability requirements and whether it can be absent at runtime.
+2. Inspect the diagnostic implementation to distinguish an absent property from a getter exception or an empty/invalid value, without printing the identifier itself.
+3. If the API can be exposed safely on the target runtime, add a separate read-only availability diagnostic only if necessary; do not silently reseed or overwrite the existing probe.
+4. If no suitable documented owner identifier is consistently available, redesign transaction ownership around an explicit, collision-resistant registration/record strategy with duplicate-owner detection and fail-closed behaviour. Do not substitute display names or assume `Entity.id` is a cross-session player identity.
+5. Reassess multi-player isolation and copied-world behaviour before any destructive inventory transaction is implemented.
+
+## Interpretation limits and safety gate
+
+Even a `MATCH` would be evidence only for the tested player/runtime/world lifecycle. It would not independently prove multiplayer identity isolation, world-copy behaviour, or suitability for a destructive transaction. `persistentId` remains a pre-release API.
+
+**No hotbar transaction may use either candidate until the target-device result and multi-player/duplicate-record design are reviewed.** Do not edit or reset the dynamic property manually. A mismatch should remain recorded and be investigated; the diagnostic deliberately does not overwrite the first observation.
 
 ## Related design
 
