@@ -1,8 +1,8 @@
 # Hotbar Swap Transaction Design
 
 **Status:** Design only. No player inventory mutation is implemented by this document.
-**Branch:** `prototype/skill-persistence-probe` (branched from `prototype/hotbar-capture-mirror`)
-**Current package baseline:** v0.5.15 read-only hotbar mirror plus synthetic player-scoped skill persistence probe
+**Branch:** `prototype/skill-loadout-registry` (branched from `prototype/skill-persistence-probe`)
+**Current package baseline:** v0.5.16 read-only hotbar mirror plus persistent logical skill-loadout registry
 **Stable `main`:** untouched.
 
 ## 1. Evidence and scope
@@ -181,3 +181,14 @@ The official `@minecraft/server` API documents entity/player dynamic-property re
 The user reported two `PERSISTENCE CHECK PASS` outputs from the v0.5.15 synthetic fixture on the target iPhone. The stored fixture matched expected values. Record this as a **conditional pass** because the message cannot independently establish that a full world leave/reopen occurred after the initial seed. If the user did complete that lifecycle, player-scoped dynamic-property persistence is accepted for the tested fixture and runtime. This does not validate malformed/unknown-version injection, production skill data, or inventory writes.
 
 The next development gate is a real skill registry/loadout data feature with versioned player-scoped persistence. It remains separate from hotbar mutation. The existing mirror test and its storage entity must remain untouched.
+
+
+## 15. Real skill-loadout registry implementation (2026-10-24)
+
+After the user reported two synthetic-fixture `PERSISTENCE CHECK PASS` messages, the next isolated branch `prototype/skill-loadout-registry` adds a real versioned logical loadout at `aincrad:skill_loadout_v1`. It currently registers the implemented combat actions `quick_slash`, `heavy_strike`, and `parry`, stores their ordered IDs plus `selectedSkillIndex`, and provides a menu to select a slot and reorder the list. The default order is Quick Slash, Heavy Strike, Parry. Slot 0 is reserved conceptually for the sword; skill positions are numbered from slot 1.
+
+Each save is immediately read back and checked. Malformed JSON, unknown schema versions, invalid IDs, and duplicate skill IDs block the menu rather than being silently replaced. A starter record is created only if this property's value is absent.
+
+The v0.5.16 GitHub Actions package workflow completed successfully (run [40081521941](https://github.com/sixtoast/Sao-addon/actions/runs/40081521941)); this validates the repository's JSON/JavaScript syntax checks and packaging, not runtime behaviour.
+
+**Still not implemented:** physical hotbar switching, invoking actions from selected hotbar slots, skill unlock progression, mastery progression, or transaction recovery for player inventory writes. The new registry is a separate logical save layer. It does not mutate player inventory and does not reuse the synthetic probe property as production data. Follow the device test in [`docs/SKILL_LOADOUT_REGISTRY.md`](./SKILL_LOADOUT_REGISTRY.md) before proceeding to the next gate.
