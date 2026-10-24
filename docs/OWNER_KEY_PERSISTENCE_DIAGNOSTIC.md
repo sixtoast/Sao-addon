@@ -1,8 +1,8 @@
 # Owner Key Persistence Diagnostic v0.5.18
 
 **Branch:** `prototype/hotbar-transaction-preflight`  
-**Package:** v0.5.18  
-**Status:** v0.5.18 device result recorded; owner key still not approved.  
+**Package:** v0.5.19  
+**Status:** v0.5.18 device result recorded; v0.5.19 beta-module exposure check prepared; owner key still not approved.  
 **Inventory writes:** none.  
 **Stable `main`:** untouched.
 
@@ -71,13 +71,17 @@ References:
 - [Microsoft Learn: `@minecraft/server` module versions](https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/minecraft-server?view=minecraft-bedrock-stable)
 - [Microsoft Learn: Player class](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/player?view=minecraft-bedrock-stable)
 
-Do not simply change the dependency to a preview version: first verify the exact Bedrock build/API version supported by the user's installed runtime and check all other APIs for compatibility. The fact that the user enabled Beta APIs does not by itself change the manifest's declared module version.
+Microsoft's Bedrock 26.50 changelog states that `@minecraft/server` `2.11.0-beta` was added, while `2.10.0` was released as stable ([26.50 changelog](https://www.minecraft.net/en-us/article/minecraft--bedrock-edition-26-50-changelog)). Since the target is Bedrock 26.52 with Beta APIs enabled, v0.5.19 now uses `2.11.0-beta` as a narrowly scoped, read-only exposure check. This is an isolated compatibility test, not a claim that all add-on runtime behaviour remains unchanged. If the pack fails to load or unrelated APIs break, revert this test branch to `2.10.0` and investigate compatibility rather than enabling any inventory writes.
 
 ## Next investigation
 
 Before another package or any inventory mutation, confirm the target runtime's exact Bedrock/API version and whether it supports an appropriate preview module version. If a compatible version is documented, an isolated test branch/package could verify `persistentId` exposure only; it must remain read-only and must not enable inventory mutation. Do not try to force access through undocumented reflection or assume that a cast makes the runtime property exist.
 
 In parallel, review `Entity.id`'s documented scope and design a fail-closed ownership approach for transaction records that does not assume an entity ID is a durable player identity. If no suitable documented owner key is available, design explicit registration plus collision detection and recovery rather than silently falling back to display names.
+
+## v0.5.19 beta-module test
+
+The behavior-pack manifest dependency was changed from `@minecraft/server` `2.10.0` to `2.11.0-beta`; both pack manifests were versioned to v0.5.19. The JavaScript diagnostic itself remains read-only and unchanged. This package is intended only to test whether the target Bedrock 26.52 runtime exposes `persistentId` through the beta API surface. Do not test on a world that lacks a backup, and do not infer success from packaging alone. After install, confirm the pack loads without script errors, then run **Owner Key Access Detail** and report the status. Hotbar writes remain disabled.
 
 ## Safety gate
 
