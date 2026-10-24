@@ -281,7 +281,8 @@ function showCombatMenu(player) {
     .button("Quick Slash\n§7Fast • 7 damage")
     .button("Heavy Strike\n§7Committed • 12 damage")
     .button("Parry\n§7Short timing window")
-    .button("Skill Loadout\n§7View and reorder saved skills");
+    .button("Skill Loadout\n§7View and reorder saved skills")
+    .button("Storage Diagnostic\n§7Run synthetic container test");
 
   form.button("Diagnostics: Toggle ON/OFF");
   form.button("Diagnostics: Guard Status");
@@ -293,7 +294,8 @@ function showCombatMenu(player) {
     else if (response.selection === 1) beginAttack(player, MOVES.heavy);
     else if (response.selection === 2) beginParry(player);
     else if (response.selection === 3) showSkillLoadoutMenu(player);
-    else if (response.selection === 4) {
+    else if (response.selection === 4) runHotbarStorageSyntheticTest(player);
+    else if (response.selection === 5) {
       if (diagnosticsEnabled.has(player.id)) {
         diagnosticsEnabled.delete(player.id);
         safeMessage(player, "§7[AINCRAD DIAG] Diagnostics OFF.");
@@ -302,7 +304,7 @@ function showCombatMenu(player) {
         safeMessage(player, "§a[AINCRAD DIAG] Diagnostics ON. Damage, guard strain/breaks, target selection and clashes will be reported.");
         reportGuardStatus(player);
       }
-    } else if (response.selection === 5) reportGuardStatus(player);
+    } else if (response.selection === 6) reportGuardStatus(player);
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
@@ -1311,7 +1313,7 @@ world.afterEvents.itemUse.subscribe((event) => {
     if (sneaking) {
       runHotbarMirrorTest(player);
     } else {
-      runHotbarStorageSyntheticTest(player);
+      showCombatMenu(player);
     }
     return;
   }
