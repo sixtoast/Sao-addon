@@ -197,3 +197,17 @@ The package workflow must validate the entity JSON and build the v0.5.11 add-on 
 - JavaScript syntax check passed locally with Node.js, and the workflow validated JSON syntax before packaging.
 
 These are static/package checks only. The custom entity and synthetic storage behaviour still need in-game testing on the target iPhone.
+
+
+## Target-device result: v0.5.11 synthetic persistence test passed (2026-10-24)
+
+The user reports that the v0.5.11 storage test passed. Record this as a successful synthetic-storage test on the target device. The test is still not proof of exact fidelity for enchanted or damaged items, nor does it prove the real-player swap/restore transaction.
+
+Next step is an expanded synthetic-only fidelity test:
+- Include a damaged durable item and an enchanted item in the storage test matrix.
+- Compare durable-item damage and enchantment IDs/levels before and after storage readback.
+- Keep all test data inside the tagged synthetic storage entity; do not inspect or alter the player's hotbar.
+- Verify the expanded matrix both immediately and after leaving/reopening the world.
+- If the current Bedrock API does not support a reliable way to create/read these properties, document that limitation rather than weakening the test.
+
+Only after this expanded test passes should the project implement a separate capture/restore transaction prototype, still with explicit recovery checks and no stable-branch merge.
