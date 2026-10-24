@@ -186,3 +186,14 @@ The harness:
 **Limits of this first pass:** this verifies basic item metadata and container readback, not enchantment/durability fidelity or a complete combat/non-combat swap. A same-session pass proves immediate container readback only. To test persistence, run once, leave and reopen the world, then use the Skill Crystal again and confirm that the existing record passes without reseeding. If the record is missing or a slot mismatches, report the exact chat result and do not proceed to real inventory transfer.
 
 The package workflow must validate the entity JSON and build the v0.5.11 add-on for target-device testing. The custom entity schema and persistent inventory behaviour still require in-game validation on the target Bedrock/iPhone runtime.
+
+
+## v0.5.11 package validation (2026-10-24)
+
+- GitHub Actions run: [40076212529](https://github.com/sixtoast/Sao-addon/actions/runs/40076212529) — **success**.
+- Artifact: `Aincrad-Hotbar-Storage-Test-mcaddon`, artifact ID `12552952624`.
+- Package SHA-256: `8551a707bbbb27af9863c8db938489013c6e652df0803813a9eddc52ff673e18`.
+- The artifact ZIP contains `Aincrad-Hotbar-Storage-Test.mcaddon`; the inner add-on archive passed `unzip -t`.
+- JavaScript syntax check passed locally with Node.js, and the workflow validated JSON syntax before packaging.
+
+These are static/package checks only. The custom entity and synthetic storage behaviour still need in-game testing on the target iPhone.
