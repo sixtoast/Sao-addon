@@ -201,9 +201,8 @@ try {
       const player = event.player;
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
 
-      // Defer Quick Slash by one tick so itemUse can claim a Heavy Attack
-      // activation first. On touch/controller input, the generic swing event can
-      // arrive before itemUse even though the Heavy Attack item is selected.
+      // Defer Quick Slash by one tick so an Interact-triggered sword charge can
+      // claim the input first on runtimes that emit overlapping item/swing events.
       system.runTimeout(() => {
         if (!player.isValid) return;
         // A held Attack input belongs to the charge lifecycle, not Quick Slash.
@@ -582,8 +581,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "With Heavy Attack selected: tap Interact for Heavy Strike; hold Interact and release for a stronger charged Heavy Strike. Normal Attack with another item = Quick Slash. Sneak defence remains separate."
-        : "Direct Quick Slash input is unavailable in this runtime; use this menu for Quick Slash. With Heavy Attack selected, tap Interact for Heavy Strike or hold and release for a stronger charged Heavy Strike.") +
+        ? "With the Aincrad Sword selected: Attack = Quick Slash; tap Interact = Heavy Strike; hold Interact and release = Charged Heavy Strike. Sneak defence remains separate."
+        : "Direct Attack input is unavailable in this runtime; use this menu for Quick Slash. With the Aincrad Sword selected, tap Interact for Heavy Strike or hold and release for a stronger charged Heavy Strike.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
