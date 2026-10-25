@@ -821,6 +821,33 @@ function getTargetCandidates(player, move) {
       (dy / distance) * forward.y +
       (dz / distance) * forward.z;
     if (dot < move.minDot) continue;
+
+    // Require a clear block ray from the player's eye to the target's body
+    // centre. Only a confirmed nearer block rejects the target; if the raycast
+    // API throws (for example at an unloaded boundary), preserve legacy combat
+    // targeting rather than making attacks silently stop working.
+    try {
+      const rayDirection = { x: dx / distance, y: dy / distance, z: dz / distance };
+      const manhattanDistance = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
+      const blockHit = player.dimension.getBlockFromRay(origin, rayDirection, {
+        maxDistance: manhattanDistance + 0.05
+      });
+      if (blockHit?.block && blockHit.faceLocation) {
+        const hitPoint = {
+          x: blockHit.block.location.x + blockHit.faceLocation.x,
+          y: blockHit.block.location.y + blockHit.faceLocation.y,
+          z: blockHit.block.location.z + blockHit.faceLocation.z
+        };
+        const hitX = hitPoint.x - origin.x;
+        const hitY = hitPoint.y - origin.y;
+        const hitZ = hitPoint.z - origin.z;
+        const blockDistance = Math.sqrt(hitX * hitX + hitY * hitY + hitZ * hitZ);
+        if (blockDistance < distance - 0.25) continue;
+      }
+    } catch (_) {
+      // Fail open on a raycast API/runtime error to preserve the existing move.
+    }
+
     candidates.push({ target, dot, distance });
   }
 
