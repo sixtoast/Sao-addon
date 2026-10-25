@@ -27,3 +27,10 @@ These controls are implemented on the feature branch but still require in-game v
 The `prototype/combat-line-of-sight` branch contains an experimental block-ray check for Quick Slash and Heavy Strike. It keeps the existing 3D aim and target priority, but rejects targets when a nearer solid-block hit is confirmed. The v0.5.23 candidate passed the repository's JavaScript syntax check, pack JSON validation, and packaging workflow; iPhone runtime testing is still required. See [the combat line-of-sight test plan](docs/COMBAT_LINE_OF_SIGHT.md).
 
 This branch is not merged into `main`. Hotbar writes and automatic slot switching remain disabled while owner-key isolation is unresolved.
+
+
+## Current isolated combat experiment — Quick Slash combo buffer
+
+Branch `prototype/quick-attack-buffer` builds on the line-of-sight prototype and adds a single Quick Slash follow-up input buffer during the last 6 ticks of recovery. It does not remove wind-up or recovery commitment, and repeated taps cannot build a long queue. See [the Quick Slash buffer test plan](docs/QUICK_SLASH_BUFFER.md). Runtime testing on iPhone is required before treating this as complete.
+
+Hotbar writes and automatic slot switching remain disabled while owner-key isolation is unresolved. Neither prototype is merged into `main`.
