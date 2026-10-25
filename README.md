@@ -20,3 +20,10 @@ Preview 0.2 adds an ActionFormData skill menu with Quick Slash, Heavy Strike, an
 The Heavy Attack item is a dedicated hotbar control, **not** a custom always-visible HUD button. Current public Bedrock add-on APIs do not provide a verified route for a persistent custom HUD button to invoke combat script input. See [the investigation](https://github.com/sixtoast/Sao-addon/blob/feature/heavy-attack-button-v0.5/docs/HEAVY_ATTACK_BUTTON_RESEARCH.md).
 
 These controls are implemented on the feature branch but still require in-game verification on the target Bedrock version and touchscreen device.
+
+
+## Current isolated combat experiment
+
+The `prototype/combat-line-of-sight` branch contains an experimental block-ray check for Quick Slash and Heavy Strike. It keeps the existing 3D aim and target priority, but rejects targets when a nearer solid-block hit is confirmed. The v0.5.23 candidate passed the repository's JavaScript syntax check, pack JSON validation, and packaging workflow; iPhone runtime testing is still required. See [the combat line-of-sight test plan](docs/COMBAT_LINE_OF_SIGHT.md).
+
+This branch is not merged into `main`. Hotbar writes and automatic slot switching remain disabled while owner-key isolation is unresolved.
