@@ -392,6 +392,123 @@ function runOwnerKeyAccessDiagnostic(player) {
   }
 }
 
+// Read-only multiplayer owner-key check. It records a separate per-player
+// baseline and compares the current candidate against other players online.
+// No raw identifier is printed, no shared world registry is written, and no
+// inventory/hotbar data is touched.
+const OWNER_KEY_MULTIPLAYER_PROPERTY = "aincrad:owner_key_multi_v1";
+
+function readPersistentIdSafely(player) {
+  try {
+    if (!("persistentId" in player)) return { status: "property-not-exposed", value: null };
+    const value = player.persistentId;
+    if (typeof value !== "string") return { status: "unexpected-type", value: null };
+    if (value.length === 0) return { status: "empty-string", value: null };
+    return { status: "available-string", value };
+  } catch (error) {
+    let errorName = "";
+    try { errorName = typeof error?.name === "string" ? error.name : ""; } catch (_) {}
+    return {
+      status: errorName === "InvalidEntityError" ? "getter-threw-invalid-entity" :
+        errorName === "EngineError" ? "getter-threw-engine" : "getter-threw-other",
+      value: null
+    };
+  }
+}
+
+function runOwnerKeyMultiplayerCheck(player) {
+  if (!player || !player.isValid) return;
+
+  const currentKey = readPersistentIdSafely(player);
+  let distinctStatus = "not-checkable";
+  let otherCount = 0;
+  let duplicateFound = false;
+  let unreadableOther = false;
+
+  try {
+    const players = world.getAllPlayers();
+    for (const other of players) {
+      if (!other || !other.isValid || other.id === player.id) continue;
+      otherCount += 1;
+      const otherKey = readPersistentIdSafely(other);
+      if (currentKey.value === null || otherKey.value === null) {
+        unreadableOther = true;
+      } else if (currentKey.value === otherKey.value) {
+        duplicateFound = true;
+      }
+    }
+    distinctStatus = otherCount === 0 ? "need-second-player-online" :
+      duplicateFound ? "DUPLICATE" : unreadableOther ? "not-checkable" : "distinct";
+  } catch (_) {
+    distinctStatus = "online-player-scan-failed";
+  }
+
+  try {
+    const raw = player.getDynamicProperty(OWNER_KEY_MULTIPLAYER_PROPERTY);
+    const current = {
+      kind: "aincrad:owner_key_multi",
+      schemaVersion: 1,
+      persistentStatus: currentKey.status,
+      persistentValue: currentKey.value
+    };
+
+    if (raw === undefined) {
+      const encoded = JSON.stringify(current);
+      player.setDynamicProperty(OWNER_KEY_MULTIPLAYER_PROPERTY, encoded);
+      if (player.getDynamicProperty(OWNER_KEY_MULTIPLAYER_PROPERTY) !== encoded) {
+        safeMessage(player, "§c[AINCRAD OWNER MULTI] FAIL: per-player baseline readback mismatch. Inventory unchanged.");
+        return;
+      }
+      safeMessage(player, "§e[AINCRAD OWNER MULTI] BASELINE RECORDED for this player; persistentId=" +
+        currentKey.status + "; online other players=" + otherCount + "; key separation=" + distinctStatus +
+        ". Run this check for both players while both are online, then leave/reopen the world and repeat. Evidence only; hotbar writes remain disabled.");
+      return;
+    }
+
+    if (typeof raw !== "string") {
+      safeMessage(player, "§c[AINCRAD OWNER MULTI] BLOCKED: saved record type is invalid; not overwritten. Inventory unchanged.");
+      return;
+    }
+    let saved;
+    try { saved = JSON.parse(raw); } catch (_) {
+      safeMessage(player, "§c[AINCRAD OWNER MULTI] BLOCKED: saved record is malformed; not overwritten. Inventory unchanged.");
+      return;
+    }
+    if (!saved || saved.kind !== "aincrad:owner_key_multi" || saved.schemaVersion !== 1 ||
+        typeof saved.persistentStatus !== "string" ||
+        !(saved.persistentValue === null || typeof saved.persistentValue === "string")) {
+      safeMessage(player, "§c[AINCRAD OWNER MULTI] BLOCKED: invalid/unknown schema; not overwritten. Inventory unchanged.");
+      return;
+    }
+
+    if (saved.persistentValue === null && currentKey.value !== null) {
+      const promoted = JSON.stringify({
+        kind: saved.kind,
+        schemaVersion: saved.schemaVersion,
+        persistentStatus: currentKey.status,
+        persistentValue: currentKey.value
+      });
+      player.setDynamicProperty(OWNER_KEY_MULTIPLAYER_PROPERTY, promoted);
+      if (player.getDynamicProperty(OWNER_KEY_MULTIPLAYER_PROPERTY) !== promoted) {
+        safeMessage(player, "§c[AINCRAD OWNER MULTI] FAIL: baseline readback mismatch. Inventory unchanged.");
+        return;
+      }
+      safeMessage(player, "§e[AINCRAD OWNER MULTI] BASELINE RECORDED for this player; persistentId now available; online other players=" +
+        otherCount + "; key separation=" + distinctStatus + ". Repeat with both players online. Evidence only; hotbar writes remain disabled.");
+      return;
+    }
+
+    const match = saved.persistentValue !== null && currentKey.value !== null &&
+      saved.persistentValue === currentKey.value;
+    safeMessage(player, "§e[AINCRAD OWNER MULTI] this-player persistentId=" + currentKey.status +
+      "; own baseline match=" + (match ? "yes" : "no/not-comparable") +
+      "; online other players=" + otherCount + "; key separation=" + distinctStatus +
+      ". Run for each player, then repeat after world leave/reopen. Evidence only; hotbar writes remain disabled.");
+  } catch (_) {
+    safeMessage(player, "§c[AINCRAD OWNER MULTI] ERROR: diagnostic record could not be read/written. Existing record retained where possible; inventory unchanged.");
+  }
+}
+
 function runOwnerKeyDiagnostic(player) {
   if (!player || !player.isValid) return;
   try {
@@ -507,6 +624,7 @@ function showCombatMenu(player) {
     } else if (response.selection === 6) reportGuardStatus(player);
     else if (response.selection === 7) runOwnerKeyDiagnostic(player);
     else if (response.selection === 8) runOwnerKeyAccessDiagnostic(player);
+    else if (response.selection === 9) runOwnerKeyMultiplayerCheck(player);
   }).catch(() => {
     menuOpen.delete(player.id);
     safeMessage(player, "§c[AINCRAD] Could not open the combat menu. Check the Content Log.");
