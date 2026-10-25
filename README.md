@@ -39,3 +39,11 @@ Hotbar writes and automatic slot switching remain disabled while owner-key isola
 ## Current isolated combat experiment — single-sword controls
 
 Branch `prototype/single-sword-heavy-input` presents the control item as **Aincrad Sword**: Attack triggers Quick Slash, while Interact triggers normal or charged Heavy Strike. The contextual touch button is labelled `Heavy Attack`. The existing quick-buffer and line-of-sight changes are included. See [the implementation and iPhone test checklist](docs/SINGLE_SWORD_INPUT.md). Build validation passed in GitHub Actions; iPhone runtime testing is still required before this feature is considered complete.
+
+
+### Current mobile combat input prototype
+
+- Branch: [`prototype/mobile-direct-heavy-input`](https://github.com/sixtoast/Sao-addon/tree/prototype/mobile-direct-heavy-input)
+- Input plan: [Direct mobile Heavy Strike test plan](https://github.com/sixtoast/Sao-addon/blob/prototype/mobile-direct-heavy-input/docs/SINGLE_SWORD_INPUT.md)
+- **Attack = Quick Slash; Interact = normal Heavy Strike.** Charged attacks are temporarily disabled until hold-and-release is dependable on mobile.
+- This is an isolated prototype pending build and iPhone runtime validation; stable `main` is unchanged.
