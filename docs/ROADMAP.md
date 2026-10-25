@@ -106,3 +106,17 @@ Branch: `prototype/quick-attack-buffer`, based on `prototype/combat-line-of-sigh
 - [ ] Confirm no duplicate damage, projectile residue, slot overwrite or regression to Quick Slash buffer/LOS.
 
 Branch: `prototype/single-sword-heavy-input`, based on `prototype/quick-attack-buffer`. Stable `main` remains untouched; owner-key isolation remains unresolved.
+
+
+## Combat core v1.2 — direct mobile Interact Heavy Strike (prototype, 2026-10-25)
+
+- [x] Remove the unverified charge-and-release dependency from the sword input path.
+- [x] Route contextual entity interaction to a normal Heavy Strike when the Aincrad Sword is selected.
+- [x] Route ordinary item use to a normal Heavy Strike and deduplicate overlapping input events.
+- [x] Remove the placeholder throwable/projectile, charge meter, and charge callbacks.
+- [x] Update the single-sword input test plan and keep the change on an isolated branch.
+- [ ] Run JavaScript/JSON/package validation in GitHub Actions.
+- [ ] Verify Interact on passive and hostile mobs on iPhone, including no duplicate hits or vanilla melee.
+- [ ] Re-test Attack/Quick Slash, buffer, line of sight, and Sneak defence.
+
+Branch: `prototype/mobile-direct-heavy-input`, based on `prototype/single-sword-heavy-input`. Charged attacks remain temporarily disabled until a dependable mobile hold-and-release input is demonstrated. Stable `main` remains untouched.
