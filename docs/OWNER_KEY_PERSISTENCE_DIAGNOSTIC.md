@@ -153,3 +153,16 @@ References reviewed:
 The documented `Entity.id` wording says it is intended to remain consistent across loads of a world instance, but does not promise a globally unique player identity across copied worlds or all server migration cases. Do not parse either identifier or derive meaning from its structure.
 
 **Implementation rule:** treat `persistentId` as a candidate player key only behind a guarded read, strict non-empty-string validation, explicit schema/module compatibility, and fail-closed handling for errors or changed values. Do not use `player.id` as an unreviewed automatic fallback for a destructive transaction. The next test should verify per-player isolation with two actual players; it must be read-only and must not display raw identifiers.
+
+
+## v0.5.21 two-player diagnostic (2026-10-25)
+
+A separate **Owner Key Multiplayer Check** was added on `prototype/hotbar-transaction-preflight`. It uses a new player-scoped property, `aincrad:owner_key_multi_v1`; it does not modify the existing owner-key diagnostic record, the legacy probe, any inventory, or the hotbar. It stores the candidate identifier only in that player's own dynamic property, reads the identifiers of currently online players in memory to compare them, and never prints raw identifiers or writes a shared world-level identifier registry.
+
+The menu reports:
+- whether this player's `persistentId` is readable;
+- whether this player's saved baseline matches on later runs;
+- how many other players are online;
+- whether the current `persistentId` is distinct from the online players' values, duplicated, or not checkable.
+
+This is a diagnostic, not an owner-key approval. A single-player run cannot establish multiplayer separation. Both players must run it while online together; then both should leave/reopen the same world and run it again. Any duplicate, unavailable key, malformed/unknown record, or readback failure is a no-go. No hotbar writes are enabled.
