@@ -46,4 +46,4 @@ Branch `prototype/single-sword-heavy-input` presents the control item as **Aincr
 - Branch: [`prototype/mobile-direct-heavy-input`](https://github.com/sixtoast/Sao-addon/tree/prototype/mobile-direct-heavy-input)
 - Input plan: [Direct mobile Heavy Strike test plan](https://github.com/sixtoast/Sao-addon/blob/prototype/mobile-direct-heavy-input/docs/SINGLE_SWORD_INPUT.md)
 - **Attack = Quick Slash; Interact = normal Heavy Strike.** Charged attacks are temporarily disabled until hold-and-release is dependable on mobile.
-- This is an isolated prototype pending build and iPhone runtime validation; stable `main` is unchanged.
+- Pack candidate v0.5.26 passed GitHub Actions syntax/JSON/package validation; iPhone runtime validation is still required. Stable `main` is unchanged.
