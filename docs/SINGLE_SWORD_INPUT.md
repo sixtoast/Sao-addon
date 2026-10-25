@@ -3,7 +3,7 @@
 **Branch:** `prototype/single-sword-heavy-input`  
 **Pack version:** `0.5.25`  
 **Base:** `prototype/quick-attack-buffer`  
-**Status:** Implemented; package and iPhone runtime tests pending.  
+**Status:** Implemented; JavaScript/JSON/package validation passed in GitHub Actions; iPhone runtime tests pending.  
 **Stable `main`:** untouched.
 
 ## Requested control scheme
