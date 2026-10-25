@@ -101,7 +101,7 @@ Branch: `prototype/quick-attack-buffer`, based on `prototype/combat-line-of-sigh
 - [x] Route Interact use/release to normal, charged and full-charge Heavy Strike.
 - [x] Label the contextual touch interaction button `Heavy Attack`.
 - [x] Document expected behaviour and iPhone test matrix in `docs/SINGLE_SWORD_INPUT.md`.
-- [ ] Validate JavaScript syntax, item JSON and pack build for v0.5.25.
+- [x] Validate JavaScript syntax, item JSON and pack build for v0.5.25 (GitHub Actions run 40214055552 passed).
 - [ ] Test Attack, short Interact tap, 7-tick charge and 9-tick full charge on iPhone.
 - [ ] Confirm no duplicate damage, projectile residue, slot overwrite or regression to Quick Slash buffer/LOS.
 
