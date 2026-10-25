@@ -120,3 +120,19 @@ Do not repeat the completed baseline test, change the existing storage mirror/sy
 A standalone, design-only [HOTBAR_TRANSACTION_RECOVERY_PROTOCOL.md](./HOTBAR_TRANSACTION_RECOVERY_PROTOCOL.md) now defines fail-closed transaction states, preflight checks, an interrupted-operation decision table, and explicit restoration rules. This advances the design work without waiting for the two-player test and without changing gameplay code.
 
 The protocol is not implementation approval. Its owner-key and world-copy assumptions remain provisional until the documented API review and multiplayer/copy-world tests pass. Production hotbar mutation and automatic switching remain disabled.
+
+
+## v0.5.21 two-player isolation test
+
+A read-only **Owner Key Multiplayer Check** was added to the combat menu. It uses a new player-scoped dynamic property and does not touch inventory/hotbar contents or alter the existing owner-key records. The check compares candidate `persistentId` values for currently online players without printing the values or storing a shared world-level identifier registry.
+
+Test using a backup of the world:
+
+1. Install the v0.5.21 package from the Actions artifact for this branch, and have both players join the **same world** at the same time.
+2. Player A opens the Skill Crystal combat menu and runs **Owner Key Multiplayer Check**. Record the message exactly.
+3. Player B runs the same check while A remains online. Record the message exactly.
+4. Each player runs the check a second time while both are still online. For each player, look for `own baseline match=yes` and `key separation=distinct`.
+5. Both players leave the world. Reopen the same world with the same pack version and have both join again. Run the check for each player once more.
+6. Report all four players' messages (A and B before leave/reopen, then A and B after reopen). Do not send screenshots or logs containing any raw identifier; this diagnostic should never display them.
+
+Interpretation: `key separation=distinct` is a positive observation only for the online players visible during that run. A one-player result of `need-second-player-online` is expected and proves nothing about multiplayer. Any `DUPLICATE`, `not-checkable`, unexpected schema, readback failure, or baseline mismatch blocks further progress. Even successful results do not approve inventory mutation; copied-world and interrupted-transaction recovery gates remain.
