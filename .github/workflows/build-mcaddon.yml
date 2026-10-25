@@ -11,6 +11,7 @@ on:
       - prototype/combat-line-of-sight
       - prototype/quick-attack-buffer
       - prototype/single-sword-heavy-input
+      - prototype/mobile-direct-heavy-input
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
