@@ -34,3 +34,8 @@ This branch is not merged into `main`. Hotbar writes and automatic slot switchin
 Branch `prototype/quick-attack-buffer` builds on the line-of-sight prototype and adds a single Quick Slash follow-up input buffer during the last 6 ticks of recovery. It does not remove wind-up or recovery commitment, and repeated taps cannot build a long queue. See [the Quick Slash buffer test plan](docs/QUICK_SLASH_BUFFER.md). Runtime testing on iPhone is required before treating this as complete.
 
 Hotbar writes and automatic slot switching remain disabled while owner-key isolation is unresolved. Neither prototype is merged into `main`.
+
+
+## Current isolated combat experiment — single-sword controls
+
+Branch `prototype/single-sword-heavy-input` presents the control item as **Aincrad Sword**: Attack triggers Quick Slash, while Interact triggers normal or charged Heavy Strike. The contextual touch button is labelled `Heavy Attack`. The existing quick-buffer and line-of-sight changes are included. See [the implementation and iPhone test checklist](docs/SINGLE_SWORD_INPUT.md). Build validation and device testing are required before this feature is considered complete.
