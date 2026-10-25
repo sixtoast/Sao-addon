@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat BP v0.5.25",
-    "description": "Aincrad Combat v0.5.25 | Single Aincrad Sword: Attack=Quick Slash, Interact=Heavy/Charged Heavy; hotbar writes disabled.",
+    "name": "Aincrad Combat BP v0.5.26",
+    "description": "Aincrad Combat v0.5.26 | Attack=Quick Slash, Interact=normal Heavy Strike; charged attacks disabled pending reliable mobile input; hotbar writes disabled.",
     "uuid": "f3987966-7806-4140-9d3e-1bb223912d96",
     "version": [
       0,
       5,
-      25
+      26
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         0,
         5,
-        25
+        26
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         0,
         5,
-        25
+        26
       ],
       "entry": "scripts/main.js"
     }
@@ -43,7 +43,7 @@
       "version": [
         0,
         5,
-        25
+        26
       ]
     },
     {
