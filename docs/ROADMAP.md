@@ -92,3 +92,17 @@ Branch: `prototype/combat-line-of-sight`. This is an experimental combat change;
 - [ ] Re-test charged Heavy Strike buffering and target/line-of-sight behaviour.
 
 Branch: `prototype/quick-attack-buffer`, based on `prototype/combat-line-of-sight`. Hotbar writes remain disabled and `main` remains untouched.
+
+
+## Combat core v1.1 — single-sword Attack/Interact routing (prototype, 2026-10-25)
+
+- [x] Present the existing control item as one held Aincrad Sword while retaining its identifier for old-world compatibility.
+- [x] Route Attack to Quick Slash only while the sword is selected.
+- [x] Route Interact use/release to normal, charged and full-charge Heavy Strike.
+- [x] Label the contextual touch interaction button `Heavy Attack`.
+- [x] Document expected behaviour and iPhone test matrix in `docs/SINGLE_SWORD_INPUT.md`.
+- [ ] Validate JavaScript syntax, item JSON and pack build for v0.5.25.
+- [ ] Test Attack, short Interact tap, 7-tick charge and 9-tick full charge on iPhone.
+- [ ] Confirm no duplicate damage, projectile residue, slot overwrite or regression to Quick Slash buffer/LOS.
+
+Branch: `prototype/single-sword-heavy-input`, based on `prototype/quick-attack-buffer`. Stable `main` remains untouched; owner-key isolation remains unresolved.
