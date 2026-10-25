@@ -2,7 +2,7 @@ import { world, system, EntityDamageCause, ItemStack, EnchantmentTypes } from "@
 import { ActionFormData } from "@minecraft/server-ui";
 
 const MENU_ITEM = "aincrad:skill_crystal";
-const HEAVY_ITEM = "aincrad:heavy_attack_token";
+const SWORD_ITEM = "aincrad:heavy_attack_token";
 const PARRY_ITEM = "aincrad:parry_token";
 const GUARD_ITEM = "aincrad:guard_token";
 const menuOpen = new Set();
@@ -215,20 +215,15 @@ try {
         }
         if ((suppressQuickUntil.get(player.id) ?? 0) > system.currentTick) return;
 
-        // Device test found that on_attack did not start the charge lifecycle:
-        // the generic swing listener therefore incorrectly routed Heavy Attack
-        // to Quick Slash. If the selected token did not start charging, fall
-        // back to a direct Heavy Strike instead of silently doing the wrong move.
+        // Quick Slash is only routed from the Attack input while the Aincrad
+        // Sword is selected. Interact starts the sword's separate use/charge
+        // lifecycle and resolves Heavy Strike on release.
         let selectedItemType = "";
         try {
           const inventory = player.getComponent("minecraft:inventory")?.container;
           selectedItemType = inventory?.getItem(player.selectedSlotIndex)?.typeId ?? "";
         } catch (_) {}
-        if (selectedItemType === HEAVY_ITEM) {
-          safeMessage(player, "§e[AINCRAD] Charge input was not detected; using Heavy Strike fallback.");
-          beginAttack(player, MOVES.heavy);
-          return;
-        }
+        if (selectedItemType !== SWORD_ITEM) return;
 
         requestQuickAttack(player);
       }, 1);
@@ -715,7 +710,7 @@ function requestChargedHeavy(player, snapshotTargetId, damageMultiplier) {
 function beginHeavyCharge(event) {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
-  if (event.itemStack?.typeId !== HEAVY_ITEM || heavyChargeStates.has(player.id)) return;
+  if (event.itemStack?.typeId !== SWORD_ITEM || heavyChargeStates.has(player.id)) return;
   const targetCandidates = getTargetCandidates(player, { ...MOVES.heavy, range: MOVES.heavy.range * 1.15, minDot: Math.max(0, MOVES.heavy.minDot - 0.1) });
   heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, slotIndex: player.selectedSlotIndex, readyCued: false });
   try { player.playSound("random.click"); } catch (_) {}
@@ -740,7 +735,7 @@ function releaseHeavyCharge(event) {
       if (!player.isValid) return;
       const inventory = player.getComponent("minecraft:inventory")?.container;
       if (inventory && !inventory.getItem(charge.slotIndex)) {
-        inventory.setItem(charge.slotIndex, new ItemStack(HEAVY_ITEM, 1));
+        inventory.setItem(charge.slotIndex, new ItemStack(SWORD_ITEM, 1));
       }
     } catch (_) {}
   }, 1);
@@ -1631,7 +1626,7 @@ function runHotbarStorageSyntheticTest(player) {
   }
 }
 
-// Heavy Strike uses the chargeable-item lifecycle. The item opts into start_using: "on_attack", so Attack begins charging and release resolves it.
+// The Aincrad Sword uses its chargeable-item lifecycle on Interact; release resolves Heavy Strike.
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
@@ -1731,10 +1726,10 @@ world.afterEvents.playerSpawn.subscribe((event) => {
         return false;
       };
       if (!hasItem(MENU_ITEM)) inventory.addItem(new ItemStack(MENU_ITEM, 1));
-      if (!hasItem(HEAVY_ITEM)) inventory.addItem(new ItemStack(HEAVY_ITEM, 1));
+      if (!hasItem(SWORD_ITEM)) inventory.addItem(new ItemStack(SWORD_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fCombat controls ready: tap Interact with Heavy Attack for Heavy Strike; hold Interact and release for a stronger charged Heavy Strike. Normal Attack with another item = Quick Slash. Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§b[AINCRAD] §fAincrad Sword ready: Attack = Quick Slash; tap Interact = Heavy Strike; hold Interact and release = Charged Heavy Strike. Sneak = Spot Dodge → Parry → Guard.");
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
@@ -1746,7 +1741,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
         safeMessage(player, "§c[AINCRAD] Guard/dodge/parry hurt hook failed to register. Check the Content Log and Minecraft version.");
       }
     } catch (_) {
-      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token, /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
+      safeMessage(player, "§e[AINCRAD] Could not provide combat controls. Use /give @s aincrad:heavy_attack_token (Aincrad Sword), /give @s aincrad:parry_token, /give @s aincrad:guard_token and /give @s aincrad:skill_crystal.");
     }
   }, 1);
 });
