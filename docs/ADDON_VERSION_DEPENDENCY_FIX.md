@@ -30,3 +30,14 @@ UUIDs were preserved. The script API dependency remains `@minecraft/server` `2.1
 4. Confirm the in-game version labels show v0.5.21. Packaging success alone does not establish runtime compatibility.
 
 Do not install this branch package over a valuable world until the new artifact is available and inspected. Do not merge to `main`, and do not enable hotbar writes as part of this fix.
+
+
+## Follow-up: v0.5.22 multiplayer diagnostic detail
+
+**Date:** 2026-10-25
+
+The user tested v0.5.21 with two players online. Both reported `persistentId=available-string`, `own baseline match=yes`, and one other online player, but `key separation=not-checkable`. This does not mean duplicate identifiers were found; the prior diagnostic collapsed an unreadable other-player identifier into the same generic status.
+
+v0.5.22 adds `other persistentId read status` to the read-only multiplayer diagnostic so the next run can report the access category (for example, `available-string`, `property-not-exposed`, or a guarded getter error) without printing raw identifiers. Behavior Pack and Resource Pack manifest/header/module/dependency versions are aligned to `[0, 5, 22]`; the `@minecraft/server` dependency remains `2.11.0-beta`. No inventory/hotbar mutation is added or enabled.
+
+Next test: install only the successful v0.5.22 Actions artifact into a backup world, bring both players online simultaneously, and run **Owner Key Multiplayer Check** once for each. Report both complete diagnostic messages. If the other-player status is readable and separation is `distinct`, repeat after both players leave and rejoin. Any `DUPLICATE`, unreadable key, or baseline mismatch remains a no-go. Build success is not runtime validation; stable `main` remains untouched.
