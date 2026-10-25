@@ -10,6 +10,7 @@ on:
       - feature/hold-attack-charge-v0.5.1
       - prototype/combat-line-of-sight
       - prototype/quick-attack-buffer
+      - prototype/single-sword-heavy-input
     paths:
       - 'Aincrad_BP/**'
       - 'Aincrad_RP/**'
