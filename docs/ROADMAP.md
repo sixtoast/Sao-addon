@@ -106,3 +106,15 @@ Branch: `prototype/quick-attack-buffer`, based on `prototype/combat-line-of-sigh
 - [ ] Confirm no duplicate damage, projectile residue, slot overwrite or regression to Quick Slash buffer/LOS.
 
 Branch: `prototype/single-sword-heavy-input`, based on `prototype/quick-attack-buffer`. Stable `main` remains untouched; owner-key isolation remains unresolved.
+
+
+## Research — Heavy input while targeting entities (2026-10-25)
+
+- [x] Compare the contextual `minecraft:interact_button` with the documented item-use and entity-interaction events.
+- [x] Check whether documented `InputButton` values provide an Interact/Use Item press-and-release route.
+- [x] Record a non-destructive experiment plan for a chargeable shooter component.
+- [ ] Add diagnostic-only event logging in an isolated test branch.
+- [ ] Test a chargeable shooter variant while aiming at empty space and mobs on iPhone.
+- [ ] Confirm press/release events, one custom Heavy Strike, no projectile residue and no vanilla melee damage before selecting an implementation.
+
+Research branch: `research/heavy-entity-input`, based on `prototype/single-sword-heavy-input`. This branch contains documentation only; no gameplay code, item components, pack version, or stable `main` has been changed. See `docs/HEAVY_ENTITY_INPUT_RESEARCH.md`.
