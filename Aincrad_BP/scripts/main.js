@@ -671,7 +671,20 @@ function requestHeavyAttack(player, snapshotTargetId = null) {
   if (!player || !player.isValid) return;
   const now = system.currentTick;
   // Entity interaction and item-use can overlap on touch. Treat them as one press.
-  if (lastHeavyInputTick.get(player.id) === now) return;
+  if (lastHeavyInputTick.get(player.id) === now) {
+    // If itemUse fired first without a target, enrich that same-tick request with
+    // the entity-interaction target rather than dropping the more precise route.
+    if (snapshotTargetId) {
+      const current = actions.get(player.id);
+      if (current?.move?.id === "heavy" && current.phase === "windup" &&
+          current.elapsed === 0 && !current.hitResolved) {
+        current.snapshotTargetId = snapshotTargetId;
+      }
+      const queued = queuedAttacks.get(player.id);
+      if (queued?.move?.id === "heavy") queued.snapshotTargetId = snapshotTargetId;
+    }
+    return;
+  }
   lastHeavyInputTick.set(player.id, now);
 
   const current = actions.get(player.id);
