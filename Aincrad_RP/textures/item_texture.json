@@ -5,14 +5,14 @@
     "aincrad_skill_crystal": {
       "textures": "textures/items/book_normal"
     },
-    "aincrad_heavy_attack_token": {
-      "textures": "textures/items/diamond_sword"
-    },
     "aincrad_parry_token": {
       "textures": "textures/items/shield"
     },
     "aincrad_guard_token": {
       "textures": "textures/items/shield"
+    },
+    "aincrad_sword": {
+      "textures": "textures/items/diamond_sword"
     }
   }
 }
