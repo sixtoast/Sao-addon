@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat RP v0.5.22",
-    "description": "Aincrad Combat v0.5.22 | Read-only multiplayer owner-key diagnostics; hotbar writes disabled.",
+    "name": "Aincrad Combat RP v0.5.23",
+    "description": "Aincrad Combat v0.5.23 | Experimental sword line-of-sight targeting; hotbar writes disabled.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
     "version": [
       0,
       5,
-      22
+      23
     ],
     "min_engine_version": [
       1,
@@ -20,10 +20,10 @@
       "type": "resources",
       "uuid": "48bdf47b-b278-41b2-adb4-7ca0a55207d8",
       "version": [
-        0,
-        5,
-        22
-      ]
+      0,
+      5,
+      23
+    ]
     }
   ]
 }
