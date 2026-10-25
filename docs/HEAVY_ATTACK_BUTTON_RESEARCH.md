@@ -136,3 +136,13 @@ The next isolated candidate replaces the food-based use mechanism with the docum
 - A placeholder snowball is configured with zero launch power and removed by an owner-scoped entity-spawn cleanup while the charge is active. This is an experimental way to use native charge input without intentionally shipping a ranged attack. Item restoration is guarded so an occupied hotbar slot is not overwritten.
 
 This is still a hypothesis, not a confirmed fix. Validate JSON, JavaScript syntax, and pack versioning before testing. On iPhone, hold the native Use action with Heavy Attack selected, watch for the charge message/meter, then release and confirm one melee Heavy Strike. Also check that no arrow remains visible, the Heavy Attack item is not lost, normal Attack still behaves as intended, and the Skill Activation Book still works. If `itemStartUse` still does not fire, inspect the Content Log and actual touch input route before changing combat timing or adding fallback controls.
+
+
+## Update — one sword for both attacks (2026-10-25)
+
+The separate control-item presentation has been replaced in the `prototype/single-sword-heavy-input` branch by a single item displayed as **Aincrad Sword**. It reuses the old `aincrad:heavy_attack_token` identifier for world compatibility, but the item is now grouped and held like a sword and labels its contextual touch Interact button `Heavy Attack`.
+
+- Attack with the sword selected routes to Quick Slash.
+- Interact starts the existing Heavy Strike charge lifecycle; a short tap is normal Heavy Strike, a hold then release is charged/full-charge Heavy Strike.
+- This is a contextual item-use button, not a custom persistent HUD overlay. The unsupported custom-HUD route remains out of scope.
+- Runtime testing on iPhone is still required. See [single-sword test plan](SINGLE_SWORD_INPUT.md).
