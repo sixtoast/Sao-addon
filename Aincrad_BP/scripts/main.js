@@ -199,8 +199,7 @@ try {
       system.runTimeout(() => {
         if (!player.isValid) return;
         // Quick Slash is only routed from the Attack input while the Aincrad
-        // Sword is selected. Interact starts the sword's separate use/charge
-        // lifecycle and resolves Heavy Strike on release.
+        // Sword is selected. Interact is routed independently to Heavy Strike.
         let selectedItemType = "";
         try {
           const inventory = player.getComponent("minecraft:inventory")?.container;
