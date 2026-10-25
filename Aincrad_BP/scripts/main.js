@@ -230,10 +230,7 @@ try {
           return;
         }
 
-        const current = actions.get(player.id);
-        if (current && current.move?.id === "heavy" &&
-            current.phase !== "recovery" && current.phase !== "idle") return;
-        beginAttack(player, MOVES.quick);
+        requestQuickAttack(player);
       }, 1);
     });
     swingInputAvailable = true;
@@ -612,7 +609,7 @@ function showCombatMenu(player) {
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
     if (response.canceled || response.selection === undefined) return;
-    if (response.selection === 0) beginAttack(player, MOVES.quick);
+    if (response.selection === 0) requestQuickAttack(player);
     else if (response.selection === 1) beginAttack(player, MOVES.heavy);
     else if (response.selection === 2) beginParry(player);
     else if (response.selection === 3) showSkillLoadoutMenu(player);
@@ -665,6 +662,31 @@ function beginAttack(player, move, options = {}) {
     snapshotTargetId: options.snapshotTargetId ?? null
   });
   safeMessage(player, "§b[AINCRAD] §f" + move.name + " §7— prepare");
+}
+
+// Quick Slash can be queued only near the end of recovery. This keeps the
+// committed wind-up/active phases intact while allowing a forgiving combo link.
+function requestQuickAttack(player) {
+  if (!player || !player.isValid) return;
+  const now = system.currentTick;
+  const current = actions.get(player.id);
+
+  if (!current || current.phase === "idle" ||
+      (current.phase === "recovery" && now >= current.recoveryUntil)) {
+    if (!queuedAttacks.has(player.id)) beginAttack(player, MOVES.quick);
+    return;
+  }
+
+  if (current.phase === "recovery" &&
+      current.recoveryUntil - now <= BUFFER_TICKS) {
+    // One follow-up only: repeated taps do not create an attack queue.
+    if (queuedAttacks.has(player.id)) return;
+    queuedAttacks.set(player.id, { move: MOVES.quick, snapshotTargetId: null });
+    safeMessage(player, "§7[AINCRAD] Quick Slash buffered.");
+    return;
+  }
+
+  // Inputs during wind-up/active frames or early recovery cannot bypass commitment.
 }
 
 function chargeBar(held) {
