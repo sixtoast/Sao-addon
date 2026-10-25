@@ -115,7 +115,7 @@ Branch: `prototype/single-sword-heavy-input`, based on `prototype/quick-attack-b
 - [x] Route ordinary item use to a normal Heavy Strike and deduplicate overlapping input events.
 - [x] Remove the placeholder throwable/projectile, charge meter, and charge callbacks.
 - [x] Update the single-sword input test plan and keep the change on an isolated branch.
-- [ ] Run JavaScript/JSON/package validation in GitHub Actions.
+- [x] Run JavaScript/JSON/package validation in GitHub Actions (run 40216401782 passed; artifact v0.5.26).
 - [ ] Verify Interact on passive and hostile mobs on iPhone, including no duplicate hits or vanilla melee.
 - [ ] Re-test Attack/Quick Slash, buffer, line of sight, and Sneak defence.
 
