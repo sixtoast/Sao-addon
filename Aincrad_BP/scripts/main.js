@@ -603,6 +603,7 @@ function showCombatMenu(player) {
   form.button("Diagnostics: Guard Status");
   form.button("Owner Key Diagnostic\n§7Read-only identifier persistence check");
   form.button("Owner Key Access Detail\n§7Read-only API availability check");
+  form.button("Owner Key Multiplayer Check\\n§7Read-only two-player separation test");
 
   form.show(player).then((response) => {
     menuOpen.delete(player.id);
