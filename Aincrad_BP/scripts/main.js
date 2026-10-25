@@ -13,15 +13,9 @@ const guardStrain = new Map();
 const customDamageTargets = new Set();
 const GUARD_BREAK_TICKS = 40;
 const GUARD_MAX_STRAIN = 10;
-const heavyChargeStates = new Map();
-const chargeProjectileCleanupUntil = new Map();
-const suppressQuickUntil = new Map();
+const lastHeavyInputTick = new Map();
 const queuedAttacks = new Map();
 const tickCounters = new Map();
-const HEAVY_FULL_TICKS = 9;
-const HEAVY_MIN_TICKS = 7;
-const CHARGED_DAMAGE_MULT = 1.25;
-const FULL_CHARGE_DAMAGE_MULT = 1.5;
 const BUFFER_TICKS = 6;
 // Per-player opt-in diagnostics, controlled from the Skill Menu.
 const diagnosticsEnabled = new Set();
@@ -201,19 +195,9 @@ try {
       const player = event.player;
       if (!player || !player.isValid || event.swingSource !== "Attack") return;
 
-      // Defer Quick Slash by one tick so an Interact-triggered sword charge can
-      // claim the input first on runtimes that emit overlapping item/swing events.
+      // Defer one tick so the sword's Interact route can resolve independently.
       system.runTimeout(() => {
         if (!player.isValid) return;
-        // A held Attack input belongs to the charge lifecycle, not Quick Slash.
-        const charge = heavyChargeStates.get(player.id);
-        if (charge) {
-          // The Interact charge owns this activation; Attack swings must not
-          // convert a short use into Quick Slash.
-          return;
-        }
-        if ((suppressQuickUntil.get(player.id) ?? 0) > system.currentTick) return;
-
         // Quick Slash is only routed from the Attack input while the Aincrad
         // Sword is selected. Interact starts the sword's separate use/charge
         // lifecycle and resolves Heavy Strike on release.
@@ -581,8 +565,8 @@ function showCombatMenu(player) {
     .body(
       "Choose an action. Attack timing and recovery are handled by the combat state machine.\n\n" +
       (swingInputAvailable
-        ? "With the Aincrad Sword selected: Attack = Quick Slash; tap Interact = Heavy Strike; hold Interact and release = Charged Heavy Strike. Sneak defence remains separate."
-        : "Direct Attack input is unavailable in this runtime; use this menu for Quick Slash. With the Aincrad Sword selected, tap Interact for Heavy Strike or hold and release for a stronger charged Heavy Strike.") +
+        ? "With the Aincrad Sword selected: Attack = Quick Slash; Interact = Heavy Strike. Sneak defence remains separate."
+        : "Direct Attack input is unavailable in this runtime; use this menu for Quick Slash. With the Aincrad Sword selected, Interact requests a normal Heavy Strike.") +
       "\n\n" +
       (nativeAttackCancellationAvailable
         ? "Vanilla attack cancellation event detected."
@@ -683,94 +667,44 @@ function requestQuickAttack(player) {
   // Inputs during wind-up/active frames or early recovery cannot bypass commitment.
 }
 
-function chargeBar(held) {
-  const fraction = Math.min(held / HEAVY_FULL_TICKS, 1);
-  const filled = Math.round(fraction * 10);
-  return "§7[" + (fraction >= 1 ? "§a" : "§e") + "|".repeat(filled) + "§8" + "|".repeat(10 - filled) + "§7]";
-}
-
-function requestChargedHeavy(player, snapshotTargetId, damageMultiplier) {
+function requestHeavyAttack(player, snapshotTargetId = null) {
   if (!player || !player.isValid) return;
-  const move = { ...MOVES.heavy, damage: Math.ceil(MOVES.heavy.damage * damageMultiplier), windup: 0 };
   const now = system.currentTick;
+  // Entity interaction and item-use can overlap on touch. Treat them as one press.
+  if (lastHeavyInputTick.get(player.id) === now) return;
+  lastHeavyInputTick.set(player.id, now);
+
   const current = actions.get(player.id);
-  if (!current || (current.phase === "recovery" && now >= current.recoveryUntil)) {
-    beginAttack(player, move, { snapshotTargetId });
+  if (!current || current.phase === "idle" ||
+      (current.phase === "recovery" && now >= current.recoveryUntil)) {
+    beginAttack(player, MOVES.heavy, { snapshotTargetId });
     return;
   }
-  if (current.phase === "recovery" && current.recoveryUntil - now <= BUFFER_TICKS) {
-    queuedAttacks.set(player.id, { move, snapshotTargetId });
-    safeMessage(player, "§7[AINCRAD] Heavy Strike buffered.");
+  if (current.phase === "recovery" &&
+      current.recoveryUntil - now <= BUFFER_TICKS) {
+    if (!queuedAttacks.has(player.id)) {
+      queuedAttacks.set(player.id, { move: MOVES.heavy, snapshotTargetId });
+      safeMessage(player, "§7[AINCRAD] Heavy Strike buffered.");
+    }
     return;
   }
   safeMessage(player, "§e[AINCRAD] You are committed to your current action.");
 }
 
-function beginHeavyCharge(event) {
-  const player = event.source;
-  if (!player || player.typeId !== "minecraft:player" || !player.isValid) return;
-  if (event.itemStack?.typeId !== SWORD_ITEM || heavyChargeStates.has(player.id)) return;
-  const targetCandidates = getTargetCandidates(player, { ...MOVES.heavy, range: MOVES.heavy.range * 1.15, minDot: Math.max(0, MOVES.heavy.minDot - 0.1) });
-  heavyChargeStates.set(player.id, { startedTick: system.currentTick, snapshotTargetId: targetCandidates[0]?.target.id ?? null, slotIndex: player.selectedSlotIndex, readyCued: false });
-  try { player.playSound("random.click"); } catch (_) {}
-  safeMessage(player, "§b[AINCRAD] Heavy Strike charging...");
-}
-
-function releaseHeavyCharge(event) {
-  const player = event.source;
-  if (!player || player.typeId !== "minecraft:player") return;
-  const charge = heavyChargeStates.get(player.id);
-  if (!charge) return;
-  heavyChargeStates.delete(player.id);
-  // A native throwable creates a projectile on release. Keep a short owner-scoped
-  // cleanup window so the placeholder snowball is removed whether spawn fires just
-  // before or just after itemReleaseUse. This preserves the intended melee move.
-  chargeProjectileCleanupUntil.set(player.id, system.currentTick + 4);
-  try { if (player.isValid) player.onScreenDisplay.setActionBar(""); } catch (_) {}
-  // Throwable items may consume one stack item on release. Restore the control
-  // token only if its original hotbar slot is empty; never overwrite another item.
-  system.runTimeout(() => {
-    try {
-      if (!player.isValid) return;
-      const inventory = player.getComponent("minecraft:inventory")?.container;
-      if (inventory && !inventory.getItem(charge.slotIndex)) {
-        inventory.setItem(charge.slotIndex, new ItemStack(SWORD_ITEM, 1));
-      }
-    } catch (_) {}
-  }, 1);
-  const heldTicks = system.currentTick - charge.startedTick;
-  if (heldTicks >= HEAVY_FULL_TICKS) {
-    suppressQuickUntil.set(player.id, system.currentTick + 3);
-    requestChargedHeavy(player, charge.snapshotTargetId, FULL_CHARGE_DAMAGE_MULT);
-    safeMessage(player, "§b[AINCRAD] FULL CHARGE — Powerful Heavy Strike!");
-  } else if (heldTicks >= HEAVY_MIN_TICKS) {
-    suppressQuickUntil.set(player.id, system.currentTick + 3);
-    requestChargedHeavy(player, charge.snapshotTargetId, CHARGED_DAMAGE_MULT);
-    safeMessage(player, "§e[AINCRAD] Charged Heavy Strike!");
-  } else {
-    // Short Interact use is always a Heavy Strike, never Quick Slash or a cancel.
-    suppressQuickUntil.set(player.id, system.currentTick + 3);
-    requestChargedHeavy(player, charge.snapshotTargetId, 1);
-    safeMessage(player, "§b[AINCRAD] Heavy Strike!");
-  }
-}
-
-world.afterEvents.itemStartUse.subscribe(beginHeavyCharge);
-world.afterEvents.itemReleaseUse.subscribe(releaseHeavyCharge);
-world.afterEvents.itemStopUse.subscribe(releaseHeavyCharge);
-
-// The throwable component needs a projectile definition to activate native
-// trident-style draw/release behaviour. The placeholder arrow is not the attack:
-// remove it immediately and let the existing melee combat state machine resolve.
-world.afterEvents.entitySpawn.subscribe((event) => {
-  const entity = event.entity;
-  if (!entity || entity.typeId !== "minecraft:snowball") return;
-  let owner;
-  try { owner = entity.getComponent("minecraft:projectile")?.owner; } catch (_) {}
-  if (!owner || owner.typeId !== "minecraft:player") return;
-  const cleanupUntil = chargeProjectileCleanupUntil.get(owner.id) ?? 0;
-  if (!heavyChargeStates.has(owner.id) && cleanupUntil < system.currentTick) return;
-  try { entity.remove(); } catch (_) {}
+// Contextual Interact while aiming at a mob can route through entity interaction
+// instead of the item's use/release lifecycle. Use that clicked living target.
+world.afterEvents.playerInteractWithEntity.subscribe((event) => {
+  const player = event.player;
+  const target = event.target;
+  if (!player || !player.isValid || !target || !target.isValid) return;
+  let selectedItemType = "";
+  try {
+    const inventory = player.getComponent("minecraft:inventory")?.container;
+    selectedItemType = inventory?.getItem(player.selectedSlotIndex)?.typeId ?? "";
+  } catch (_) {}
+  if (selectedItemType !== SWORD_ITEM) return;
+  try { if (!target.getComponent("minecraft:health")) return; } catch (_) { return; }
+  requestHeavyAttack(player, target.id);
 });
 
 function beginParry(player) {
@@ -1035,19 +969,6 @@ function resolveAttackIntent(intent, snapshot, intentByActor) {
 function processCombatTick() {
   const now = system.currentTick;
 
-  for (const player of world.getAllPlayers()) {
-    const cleanupUntil = chargeProjectileCleanupUntil.get(player.id) ?? 0;
-    if (cleanupUntil && cleanupUntil < now) chargeProjectileCleanupUntil.delete(player.id);
-    const charge = heavyChargeStates.get(player.id);
-    if (!charge || !player.isValid) continue;
-    const held = now - charge.startedTick;
-    if (held >= HEAVY_FULL_TICKS && !charge.readyCued) {
-      charge.readyCued = true;
-      try { player.playSound("random.orb"); } catch (_) {}
-    }
-    try { player.onScreenDisplay.setActionBar(chargeBar(held)); } catch (_) {}
-  }
-
   // Reconcile defence with the actual sneak state, not press/release events.
   // Toggle sneak remains active until the player toggles it off; hold mode ends
   // as soon as the player stops sneaking.
@@ -1168,11 +1089,7 @@ function processCombatTick() {
     if (player && player.isValid) beginAttack(player, queued.move, { snapshotTargetId: queued.snapshotTargetId });
   }
 
-  for (const [id, until] of suppressQuickUntil) {
-    if (now >= until) suppressQuickUntil.delete(id);
-  }
-
-  const currentIntents = intents.splice(0, intents.length);
+  const currentIntents  const currentIntents = intents.splice(0, intents.length);
   const intentByActor = new Map(currentIntents.map((intent) => [intent.actor.id, intent]));
   for (const intent of currentIntents) resolveAttackIntent(intent, snapshot, intentByActor);
 }
@@ -1625,11 +1542,17 @@ function runHotbarStorageSyntheticTest(player) {
   }
 }
 
-// The Aincrad Sword uses its chargeable-item lifecycle on Interact; release resolves Heavy Strike.
+// Interact in open space can arrive as itemUse; contextual entity interaction is
+// handled above. Both routes request a normal Heavy Strike without charge state.
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   if (!player || player.typeId !== "minecraft:player") return;
   if (!event.itemStack) return;
+
+  if (event.itemStack.typeId === SWORD_ITEM) {
+    requestHeavyAttack(player);
+    return;
+  }
 
   if (event.itemStack.typeId === GUARD_ITEM) {
     // Sneak state is authoritative. Never let the compatibility item cancel a
@@ -1694,9 +1617,7 @@ world.afterEvents.itemUse.subscribe((event) => {
 world.afterEvents.playerLeave.subscribe((event) => {
   const id = event.playerId;
   actions.delete(id);
-  heavyChargeStates.delete(id);
-  chargeProjectileCleanupUntil.delete(id);
-  suppressQuickUntil.delete(id);
+  lastHeavyInputTick.delete(id);
   queuedAttacks.delete(id);
   parryWindows.delete(id);
   guards.delete(id);
@@ -1728,7 +1649,7 @@ world.afterEvents.playerSpawn.subscribe((event) => {
       if (!hasItem(SWORD_ITEM)) inventory.addItem(new ItemStack(SWORD_ITEM, 1));
       if (!hasItem(PARRY_ITEM)) inventory.addItem(new ItemStack(PARRY_ITEM, 1));
       if (!hasItem(GUARD_ITEM)) inventory.addItem(new ItemStack(GUARD_ITEM, 1));
-      safeMessage(player, "§b[AINCRAD] §fAincrad Sword ready: Attack = Quick Slash; tap Interact = Heavy Strike; hold Interact and release = Charged Heavy Strike. Sneak = Spot Dodge → Parry → Guard.");
+      safeMessage(player, "§b[AINCRAD] §fAincrad Sword ready: Attack = Quick Slash; Interact = Heavy Strike. Sneak = Spot Dodge → Parry → Guard.");
       safeMessage(player, "§7[AINCRAD] Runtime checks: swing input " + (swingInputAvailable ? "available" : "UNAVAILABLE") +
         "; vanilla attack cancellation " + (nativeAttackCancellationAvailable ? "available" : "UNAVAILABLE") +
         "; hurt/Guard hook " + (mobDefenseInputAvailable ? "available" : "UNAVAILABLE") + ".");
