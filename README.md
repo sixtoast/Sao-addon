@@ -39,3 +39,9 @@ Hotbar writes and automatic slot switching remain disabled while owner-key isola
 ## Current isolated combat experiment — single-sword controls
 
 Branch `prototype/single-sword-heavy-input` presents the control item as **Aincrad Sword**: Attack triggers Quick Slash, while Interact triggers normal or charged Heavy Strike. The contextual touch button is labelled `Heavy Attack`. The existing quick-buffer and line-of-sight changes are included. See [the implementation and iPhone test checklist](docs/SINGLE_SWORD_INPUT.md). Build validation passed in GitHub Actions; iPhone runtime testing is still required before this feature is considered complete.
+
+### Current investigation — Interact while aiming at mobs
+
+The user reports that holding the contextual Interact button while aiming at a mob produces no charging message or meter. The isolated research branch `research/heavy-entity-input` records the API findings and a safe experiment plan. No gameplay code has been changed in that branch. See [the Heavy Entity Input research notes](docs/HEAVY_ENTITY_INPUT_RESEARCH.md).
+
+Do not treat charged Heavy Strike as working while targeting mobs until the input path is verified on iPhone. Stable `main` remains untouched.
