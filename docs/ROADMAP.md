@@ -65,3 +65,17 @@
 - [x] Use full 3D aim direction for Quick Slash and Heavy Strike, supporting upward, downward, and diagonal attacks (source-reviewed; in-game validation pending)
 - [ ] Verify upward, downward, diagonal, and left/right target selection in Minecraft on iPhone
 - [ ] Confirm aiming still prioritises the target closest to the attack line and does not select targets behind the player
+
+
+## Combat core v0.9 — block line-of-sight targeting (prototype, 2026-10-25)
+
+- [x] Add a block raycast to reject targets clearly occluded by a solid block.
+- [x] Preserve existing full 3D aim, range/cone filtering, and aim-line priority.
+- [x] Fail open on raycast errors to avoid silently disabling combat on an API/runtime edge case.
+- [x] Document the isolated implementation and iPhone test matrix in `docs/COMBAT_LINE_OF_SIGHT.md`.
+- [ ] Verify syntax/package workflow for v0.5.23.
+- [ ] Test Quick Slash and Heavy Strike through open space and behind solid blocks on iPhone.
+- [ ] Re-test upward/downward/diagonal and left/right aiming to ensure no regression.
+- [ ] Check Content Log and confirm vanilla melee cancellation is unchanged.
+
+Branch: `prototype/combat-line-of-sight`. This is an experimental combat change; hotbar writes remain disabled and stable `main` is untouched.
