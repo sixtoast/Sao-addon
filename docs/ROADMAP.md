@@ -79,3 +79,16 @@
 - [ ] Check Content Log and confirm vanilla melee cancellation is unchanged.
 
 Branch: `prototype/combat-line-of-sight`. This is an experimental combat change; hotbar writes remain disabled and stable `main` is untouched.
+
+
+## Combat core v1.0 — Quick Slash late-recovery buffer (prototype, 2026-10-25)
+
+- [x] Add one Quick Slash follow-up buffer for the final 6 ticks of recovery.
+- [x] Prevent buffering from bypassing wind-up, active frames, or early recovery.
+- [x] Reuse the buffer behaviour for the Skill Menu Quick Slash fallback.
+- [x] Document the test matrix in `docs/QUICK_SLASH_BUFFER.md`.
+- [ ] Verify JavaScript syntax and pack JSON/package workflow for v0.5.24.
+- [ ] Test one queued follow-up and rapid-tap limit on iPhone.
+- [ ] Re-test charged Heavy Strike buffering and target/line-of-sight behaviour.
+
+Branch: `prototype/quick-attack-buffer`, based on `prototype/combat-line-of-sight`. Hotbar writes remain disabled and `main` remains untouched.
