@@ -38,4 +38,4 @@ Hotbar writes and automatic slot switching remain disabled while owner-key isola
 
 ## Current isolated combat experiment — single-sword controls
 
-Branch `prototype/single-sword-heavy-input` presents the control item as **Aincrad Sword**: Attack triggers Quick Slash, while Interact triggers normal or charged Heavy Strike. The contextual touch button is labelled `Heavy Attack`. The existing quick-buffer and line-of-sight changes are included. See [the implementation and iPhone test checklist](docs/SINGLE_SWORD_INPUT.md). Build validation and device testing are required before this feature is considered complete.
+Branch `prototype/single-sword-heavy-input` presents the control item as **Aincrad Sword**: Attack triggers Quick Slash, while Interact triggers normal or charged Heavy Strike. The contextual touch button is labelled `Heavy Attack`. The existing quick-buffer and line-of-sight changes are included. See [the implementation and iPhone test checklist](docs/SINGLE_SWORD_INPUT.md). Build validation passed in GitHub Actions; iPhone runtime testing is still required before this feature is considered complete.
