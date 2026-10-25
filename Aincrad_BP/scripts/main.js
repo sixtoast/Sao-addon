@@ -1101,7 +1101,7 @@ function processCombatTick() {
     if (player && player.isValid) beginAttack(player, queued.move, { snapshotTargetId: queued.snapshotTargetId });
   }
 
-  const currentIntents  const currentIntents = intents.splice(0, intents.length);
+  const currentIntents = intents.splice(0, intents.length);
   const intentByActor = new Map(currentIntents.map((intent) => [intent.actor.id, intent]));
   for (const intent of currentIntents) resolveAttackIntent(intent, snapshot, intentByActor);
 }
