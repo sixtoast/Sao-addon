@@ -1,56 +1,59 @@
-# Single-sword attack input prototype
+# Single-sword mobile input — direct Heavy Strike
 
-**Branch:** `prototype/single-sword-heavy-input`  
-**Pack version:** `0.5.25`  
-**Base:** `prototype/quick-attack-buffer`  
-**Status:** Implemented; JavaScript/JSON/package validation passed in GitHub Actions; iPhone runtime tests pending.  
+**Branch:** `prototype/mobile-direct-heavy-input`  
+**Base:** `prototype/single-sword-heavy-input`  
+**Pack version:** pending build validation  
+**Status:** implementation candidate; iPhone runtime validation required.  
 **Stable `main`:** untouched.
 
-## Requested control scheme
+## Control contract
 
-- Equip one item: **Aincrad Sword**.
-- Press the normal **Attack** button with the sword selected: request Quick Slash.
-- Tap **Interact / Use Item**: request a normal Heavy Strike when released quickly.
-- Hold **Interact / Use Item**, then release: request a charged Heavy Strike. The existing thresholds are 7 ticks for charged (1.25x damage) and 9 ticks for full charge (1.5x damage).
-- Sneak defence remains independent.
-- The item sets `minecraft:interact_button` to `Heavy Attack`, so supported touch UI should label its contextual interaction button accordingly. This is not a custom always-visible HUD overlay.
+- **Attack:** Quick Slash.
+- **Interact:** one normal Heavy Strike, including when the crosshair is aimed at a living mob and the mobile UI changes Interact into a contextual entity button.
+- **Charged attacks:** temporarily removed. Do not reintroduce them until a dependable mobile hold-and-release route is proven.
+- Sneak defence, Quick Slash's late-recovery buffer, line-of-sight checks, and the existing combat state machine remain in place.
 
-## Implementation details
+## What changed
 
-- Reuses the existing item identifier `aincrad:heavy_attack_token` but changes its displayed name, icon key, and creative grouping to **Aincrad Sword**. Reusing the identifier avoids invalidating existing item stacks in worlds already using the prototype.
-- Sets `minecraft:hand_equipped` so the item is held like a sword.
-- The sword's normal Attack input is routed to Quick Slash only while this sword is selected.
-- The sword's item-use lifecycle still handles Heavy Strike charging; the projectile is a zero-power placeholder that the existing script removes.
-- The existing release recovery logic restores the consumed control item only when the original slot is empty; it does not overwrite a different item. This is inherited behaviour from the prior heavy-token prototype, not a new hotbar-switching feature.
-- No owner-key validation, storage transaction, automatic slot switching, or new inventory-management path was added.
-- The Skill Crystal remains the fallback utility menu.
+The prior prototype depended on `itemStartUse` followed by `itemReleaseUse`/`itemStopUse` to resolve Heavy Strike. On the user's iPhone, holding Interact while aiming at a mob did not start the charge or display feedback. That input path is therefore no longer treated as dependable.
+
+The new candidate:
+
+1. Routes `playerInteractWithEntity` to a normal Heavy Strike when the Aincrad Sword is selected and the clicked target has a health component.
+2. Routes `itemUse` to a normal Heavy Strike for Interact use outside the entity-context route.
+3. Deduplicates both routes when the runtime emits both during the same tick.
+4. Removes charge state, charge meter, charge thresholds, release callbacks, placeholder projectile cleanup, and the sword's throwable/use-animation components.
+5. Retains the same item identifier, icon, display name, hand-equipped presentation, and contextual `Heavy Attack` label.
+
+The target ID supplied by entity interaction is passed to the existing attack state machine; range, attack timing, damage, and line-of-sight validation remain owned by that system. The route is not considered confirmed until tested in-game.
 
 ## iPhone test checklist
 
-Use a backup world and confirm pack version v0.5.25.
+Use a backup world and install the build produced from this branch.
 
-- [ ] The control item displays as **Aincrad Sword** and looks/holds like a sword.
-- [ ] The touch Interact button is labelled **Heavy Attack** when the sword is selected.
-- [ ] Normal Attack with the sword triggers Quick Slash only.
-- [ ] Quick Slash still obeys its late-recovery buffer and does not also cause vanilla melee damage.
-- [ ] A quick tap on Interact produces exactly one normal Heavy Strike.
-- [ ] Holding Interact for at least 7 ticks and releasing produces one charged Heavy Strike.
-- [ ] Holding for at least 9 ticks and releasing produces one full-charge Heavy Strike.
-- [ ] Releasing below the charge threshold still produces a normal Heavy Strike, not Quick Slash.
-- [ ] Attack while a Heavy charge is active does not start Quick Slash.
-- [ ] Repeated itemReleaseUse/itemStopUse callbacks do not duplicate damage.
-- [ ] The sword remains available after Heavy Strike release, and no other item in the original slot is overwritten.
-- [ ] No placeholder snowball remains in the world.
-- [ ] The Content Log shows no item parse or script errors.
-- [ ] Parry, guard, sneak defence, line-of-sight and multiplayer remain unaffected.
+- [ ] Sword displays as **Aincrad Sword** and remains hand-equipped.
+- [ ] Attack produces one Quick Slash.
+- [ ] Interact while aiming at a passive mob produces one normal Heavy Strike.
+- [ ] Interact while aiming at a hostile mob produces one normal Heavy Strike.
+- [ ] Interact in open space produces one normal Heavy Strike if the runtime emits `itemUse`.
+- [ ] No duplicate Heavy Strike occurs if entity interaction and item use both fire.
+- [ ] No charge message or charge meter appears; no projectile or projectile residue is created.
+- [ ] Quick Slash buffer and attack commitment still behave as before.
+- [ ] Heavy Strike still respects range, aim, line of sight, and custom damage cancellation.
+- [ ] No unintended vanilla melee damage or mob knockback occurs.
+- [ ] Sneak dodge/parry/guard and the Skill Crystal menu still work.
+- [ ] Content Log has no item parse or Script API errors.
 
-## API references checked
+## Known limitation
 
-- Microsoft Learn, [Item use modifiers](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemcomponents/minecraft_use_modifiers?view=minecraft-bedrock-stable) — `start_using` and use duration.
-- Microsoft Learn, [Item use priority](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/itemreference/examples/itemusepriority?view=minecraft-bedrock-stable) — components that initiate item use.
-- Microsoft Learn, [Player swing start event](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerswingstartafterevent?view=minecraft-bedrock-experimental) — Attack input route (experimental).
-- Bedrock Wiki, [Custom weapons](https://wiki.bedrock.dev/items/custom-weapons) — `hand_equipped` and sword presentation.
+This is a source-level candidate, not proof of iPhone behaviour. If `playerInteractWithEntity` does not fire for the contextual touch button on the target Bedrock build, record the event behaviour and do not claim the issue is solved. Do not restore charged attacks as a workaround.
+
+## API references
+
+- Microsoft Learn, [WorldAfterEvents](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents?view=minecraft-bedrock-stable)
+- Microsoft Learn, [PlayerInteractWithEntityAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/playerinteractwithentityafterevent?view=minecraft-bedrock-stable)
+- Microsoft Learn, [ItemUseAfterEvent](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/itemuseafterevent?view=minecraft-bedrock-stable)
 
 ## Safety boundary
 
-The pack build does not prove the controls work on iPhone; runtime validation is required. The existing owner-key/multiplayer issue remains separate and unresolved. Do not merge this branch into `main` or enable automatic hotbar switching based on this change.
+This branch is isolated from `main`. No automatic hotbar switching or inventory transactions were introduced. The separate owner-key isolation issue remains unresolved.
