@@ -2,7 +2,7 @@
 
 **Branch:** `prototype/mobile-direct-heavy-input`  
 **Base:** `prototype/single-sword-heavy-input`  
-**Pack version:** pending build validation  
+**Pack version:** v0.5.26  
 **Status:** implementation candidate; iPhone runtime validation required.  
 **Stable `main`:** untouched.
 
