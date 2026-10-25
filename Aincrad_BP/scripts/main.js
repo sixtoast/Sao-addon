@@ -424,6 +424,7 @@ function runOwnerKeyMultiplayerCheck(player) {
   let otherCount = 0;
   let duplicateFound = false;
   let unreadableOther = false;
+  const otherKeyStatuses = [];
 
   try {
     const players = world.getAllPlayers();
@@ -431,6 +432,7 @@ function runOwnerKeyMultiplayerCheck(player) {
       if (!other || !other.isValid || other.id === player.id) continue;
       otherCount += 1;
       const otherKey = readPersistentIdSafely(other);
+      otherKeyStatuses.push(otherKey.status);
       if (currentKey.value === null || otherKey.value === null) {
         unreadableOther = true;
       } else if (currentKey.value === otherKey.value) {
@@ -502,7 +504,9 @@ function runOwnerKeyMultiplayerCheck(player) {
       saved.persistentValue === currentKey.value;
     safeMessage(player, "§e[AINCRAD OWNER MULTI] this-player persistentId=" + currentKey.status +
       "; own baseline match=" + (match ? "yes" : "no/not-comparable") +
-      "; online other players=" + otherCount + "; key separation=" + distinctStatus +
+      "; online other players=" + otherCount +
+      "; other persistentId read status=" + (otherKeyStatuses.length ? otherKeyStatuses.join("/") : "none") +
+      "; key separation=" + distinctStatus +
       ". Run for each player, then repeat after world leave/reopen. Evidence only; hotbar writes remain disabled.");
   } catch (_) {
     safeMessage(player, "§c[AINCRAD OWNER MULTI] ERROR: diagnostic record could not be read/written. Existing record retained where possible; inventory unchanged.");
