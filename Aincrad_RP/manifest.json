@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Aincrad Combat RP v0.5.24",
-    "description": "Aincrad Combat v0.5.24 | Experimental sword line-of-sight and Quick Slash combo buffer; hotbar writes disabled.",
+    "name": "Aincrad Combat RP v0.5.25",
+    "description": "Aincrad Combat v0.5.25 | Single Aincrad Sword: Attack=Quick Slash, Interact=Heavy/Charged Heavy; hotbar writes disabled.",
     "uuid": "6728b771-49e6-49be-90ba-4351ab547469",
     "version": [
       0,
       5,
-      24
+      25
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         0,
         5,
-        24
+        25
       ]
     }
   ]
