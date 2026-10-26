@@ -116,7 +116,7 @@ Branch: `prototype/single-sword-heavy-input`, based on `prototype/quick-attack-b
 - [x] Remove the placeholder throwable/projectile, charge meter, and charge callbacks.
 - [x] Update the single-sword input test plan and keep the change on an isolated branch.
 - [x] Run JavaScript/JSON/package validation in GitHub Actions (run 40216401782 passed; artifact v0.5.26).
-- [ ] Verify Interact on passive and hostile mobs on iPhone, including no duplicate hits or vanilla melee.
-- [ ] Re-test Attack/Quick Slash, buffer, line of sight, and Sneak defence.
+- [x] User verified the mobile Attack/Interact controls work, including Interact while aiming at mobs.
+- [ ] Regression-test Quick Slash buffer, line of sight, and Sneak defence on the same build.
 
 Branch: `prototype/mobile-direct-heavy-input`, based on `prototype/single-sword-heavy-input`. Charged attacks remain temporarily disabled until a dependable mobile hold-and-release input is demonstrated. Stable `main` remains untouched.
