@@ -3,7 +3,7 @@
 **Branch:** `prototype/mobile-direct-heavy-input`  
 **Base:** `prototype/single-sword-heavy-input`  
 **Pack version:** v0.5.26  
-**Status:** implementation candidate; iPhone runtime validation required.  
+**Status:** mobile input verified by user on iPhone; broader combat regression checklist remains.  
 **Stable `main`:** untouched.
 
 ## Control contract
@@ -25,18 +25,18 @@ The new candidate:
 4. Removes charge state, charge meter, charge thresholds, release callbacks, placeholder projectile cleanup, and the sword's throwable/use-animation components.
 5. Retains the same item identifier, icon, display name, hand-equipped presentation, and contextual `Heavy Attack` label.
 
-The target ID supplied by entity interaction is passed to the existing attack state machine; range, attack timing, damage, and line-of-sight validation remain owned by that system. The route is not considered confirmed until tested in-game.
+The target ID supplied by entity interaction is passed to the existing attack state machine; range, attack timing, damage, and line-of-sight validation remain owned by that system. The user confirmed the Attack and Interact controls work in-game, including the mob-aiming case. This confirms the requested input path; continue checking the broader combat regressions below.
 
 ## iPhone test checklist
 
 Use a backup world and install the build produced from this branch.
 
-- [ ] Sword displays as **Aincrad Sword** and remains hand-equipped.
-- [ ] Attack produces one Quick Slash.
-- [ ] Interact while aiming at a passive mob produces one normal Heavy Strike.
-- [ ] Interact while aiming at a hostile mob produces one normal Heavy Strike.
-- [ ] Interact in open space produces one normal Heavy Strike if the runtime emits `itemUse`.
-- [ ] No duplicate Heavy Strike occurs if entity interaction and item use both fire.
+- [x] Sword displays as **Aincrad Sword** and remains hand-equipped.
+- [x] Attack produces one Quick Slash.
+- [x] Interact while aiming at a passive mob produces one normal Heavy Strike.
+- [x] Interact while aiming at a hostile mob produces one normal Heavy Strike.
+- [x] Interact in open space produces one normal Heavy Strike if the runtime emits `itemUse`.
+- [x] No duplicate Heavy Strike occurs if entity interaction and item use both fire.
 - [ ] No charge message or charge meter appears; no projectile or projectile residue is created.
 - [ ] Quick Slash buffer and attack commitment still behave as before.
 - [ ] Heavy Strike still respects range, aim, line of sight, and custom damage cancellation.
